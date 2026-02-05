@@ -7,120 +7,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
- /* === OLD ENGLISH TEXT FONT === */
-@font-face {
-  font-family: 'OldEnglishTextMT';
-  src: local('Old English Text MT'), local('OldEnglishTextMT');
-  font-style: normal;
-  font-weight: normal;
-}
-  /* === GENERAL TYPOGRAPHY === */
-  body {
-    font-family: "Bookman Old Style", "Times New Roman", serif;
-    font-size: 14px;
-    color: #111;
-  }
-    .domain-title {
-        background: #2c3e50 !important;
-        color: white !important;
-        font-weight: bold !important;
-    }
-  /* === HEADER STYLES === */
-  .header {
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    position: relative;
-  }
+   <link rel="stylesheet" href="{{ asset('css/ipcrf.css') }}">
 
-  .doc-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
-    font-size: 13px;
-  }
-  .doc-top .left { color: #111; }
-  .doc-top .right { font-style: italic; font-size: 13px; }
-
-  .dep-logo {
-    display: block;
-    margin: 0 auto 6px;
-    width: 78px;
-    height: auto;
-  }
-  .level-check {
-    pointer-events: none;   /* hindi clickable */
-    opacity: 1;             /* normal color */
-    cursor: default;
-}
-
-/* COI - YELLOW */
-.row-coi {
-  background-color: #fff8e1;
-}
-
-.row-coi td:first-child {
-  border-left: 6px solid #ffc107;
-}
-
-/* NCOI - GREEN */
-.row-ncoi {
-  background-color: #e9f7ef;
-}
-
-.row-ncoi td:first-child {
-  border-left: 6px solid #28a745;
-}
-
-/* === HEADER TEXT STYLES === */
-.dep-rc-title {
-  font-family: 'OldEnglishTextMT', 'Old English Text MT', serif;
-  font-size: 11pt;
-  font-weight: normal;
-}
-
-.dep-sub {
-  font-family: 'OldEnglishTextMT', 'Old English Text MT', serif;
-  font-size: 16pt;
-  font-weight: normal;
-}
-
-
-  .form-card { max-width: 980px; margin: 0 auto 30px; }
-
-  .levels-checkboxes label { margin-right:15px; cursor: pointer; }
-  table td[contenteditable="true"] { background: #f9f9f9; }
-
-  /* === PERFORMANCE TABLE HIGHLIGHT === */
-  .highlight-row {
-    background-color: #f8fff8 !important;
-    border: 2px solid #28a745 !important;
-    border-radius: 6px;
-    transition: all 0.25s ease-in-out;
-  }
-
-  #performanceTable tbody tr {
-    transition: all 0.25s ease-in-out;
-  }
-
-  /* === TABLE HEADERS === */
-  table.table thead th {
-    vertical-align: middle;
-  }
- /* === RESPONSIVE TWEAKS === */
-  @media (max-width: 576px) {
-    .doc-top { flex-direction: column; gap: 6px; }
-    .dep-logo { width: 64px; }
-  }
-</style>
 
 </head>
 <body>
+  
 <div class="container">
 
     <!-- Top reference + automatic "For ..." -->
@@ -145,13 +42,17 @@
           <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <form id="applicantForm" action="{{ route('applicants.store') }}" method="POST">
+        <form id="applicantForm"
+      action="{{ route('applicants.store') }}"
+      method="POST"
+      enctype="multipart/form-data">
+
             @csrf
 
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Name:</label>
-                    <input name="name" class="form-control" placeholder="Ex.Juan D. Cruz" value="{{ old('name') }}">
+                    <input name="name" id="name" class="form-control" placeholder="Ex.Juan D. Cruz" value="{{ old('name') }}">
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -185,7 +86,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Station / School:</label>
-                    <select id="school_id" name="station_school" class="form-select">
+                    <select id="school_id" name="station_school_id" class="form-select">
                         <option value="">-- Select School --</option>
 
                         {{-- Kindergarten Schools --}}
@@ -380,7 +281,7 @@
   <div class="row ps-5">  {{-- ps-5 ≈ 3rem (~1 inch) --}}
     <div class="col-md-6">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="levels[]" value="kindergarten" id="levelKindergarten">
+        <input class="form-check-input" type="checkbox" name="levels[]" value="kindergarten" id="levelKindergarten" {{ in_array('kindergarten', old('levels', [])) ? 'checked' : '' }}>
         <label class="form-check-label" for="levelKindergarten">Kindergarten</label>
       </div>
       <div class="form-check">
@@ -412,7 +313,6 @@
             <th>Elements</th>
             <th>QS of the Position</th>
             <th>QS of the Applicant</th>
-             <th>Upload Pdf File</th>
             <th>Remarks</th>
         </tr>
     </thead>
@@ -420,56 +320,97 @@
        <tr id="education-row">
     <td>Education</td>
     <td id="qs_education">—</td>
-    <td contenteditable="true" id="education_input"
-        style="border:1px solid #ccc; padding:6px; min-height:38px;">
-        <!-- Applicant types education here -->
-    </td>
     <td>
-        <input type="file" id="education_file"
-               accept="application/pdf" class="form-control">
+        <button type="button" class="btn btn-sm btn-primary add-education-btn">
+    ➕ Add Education
+</button>
+
+        <div id="education_summary" class="mt-2 small text-muted">
+            No Education Added.
+        </div>
     </td>
-    <td id="education_remark"></td>
+    <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
+</tr>
+       <tr>
+           <td>Training</td>
+           <td id="qs_training">—</td>
+           <td>
+               <button type="button"
+                       class="btn btn-sm btn-primary add-training-btn">
+                   ➕ Add Trainings
+               </button>
+
+               <div id="training_summary" class="mt-2 small text-muted">
+                   No trainings added.
+               </div>
+           </td>
+           <td id="training_remark"><span class="text-muted">Waiting for the QS</span></td>
+       </tr>
+
+     <tr>
+    <td>Experience</td>
+    <td id="qs_experience">—</td>
+    <td>
+        <button type="button"
+                class="btn btn-sm btn-primary add-experience-btn">
+            ➕ Add Experience
+        </button>
+
+        <div id="experience_summary" class="mt-2 small text-muted">
+            No experience added.
+        </div>
+    </td>
+    <td id="experience_remark">
+        <span class="text-muted">Waiting for the QS</span>
+    </td>
 </tr>
 
-        <tr>
-            <td>Training</td>
-            <td id="qs_training">—</td>
-            <td>
-            <input type="text" id="training_name" class="form-control mb-1"
-                  placeholder="Training Title / Seminar Name">
+    <tr>
+    <td>Eligibility</td>
+    <td id="qs_eligibility">—</td>
+    <td>
+        <button type="button"
+                class="btn btn-sm btn-primary add-eligibility-btn">
+            ➕ Add Eligibility
+        </button>
 
-            <input type="number" id="training_hours" class="form-control mb-1"
-                  placeholder="No. of Hours" min="1">
-
-            <input type="date" id="training_date" class="form-control">
-          </td>
-            <td>
-              <input type="file" id="training_file" accept="application/pdf" class="form-control">
-            </td>
-            <td id="training_remark"></td>
-        </tr>
-        <tr>
-            <td>Experience</td>
-            <td id="qs_experience">—</td>
-            <td contenteditable="true"></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>Eligibility</td>
-            <td id="qs_eligibility">—</td>
-            <td contenteditable="true"></td>
-            <td></td>
-        </tr>
+        <div id="eligibility_summary" class="mt-2 small text-muted">
+            No eligibility added.
+        </div>
+    </td>
+    <td id="eligibility_remark">
+        <span class="text-muted">Waiting for the QS</span>
+    </td>
+</tr>
     </tbody>
 </table>
 
-    <p class="text-muted mb-3 fst-italic">
-Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
-</p>
+
+   <div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="text-muted fst-italic mb-0">
+    Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
+  </p>
+  <!-- <button type="button" id="checkQSBtn" class="btn btn-primary">
+    Evaluate All Qualifications
+  </button> -->
+</div>
 
     <!-- PERFORMANCE REQUIREMENTS -->
+     <div id="performanceRequirements" style="display:none;">
     <h5 class="text-left fw-bold mt-4">II. PERFORMANCE REQUIREMENTS</h5>
-    <p>1. Copy of duly approved IPCRF for the school year immediately preceeding the application.</p>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+  <p class="mb-0">
+    1. Copy of duly approved IPCRF for the school year immediately preceeding the application.
+    <span id="ipcrfStatus" class="ms-2 d-none text-success fw-semibold">
+      <i class="bi bi-check-circle-fill me-1"></i> Uploaded
+    </span>
+  </p>
+
+  <button type="button" class="btn btn-sm btn-outline-primary"
+      data-bs-toggle="modal" data-bs-target="#ipcrfModal">
+      View/Upload IPCRF
+  </button>
+</div>
     <p>2. The applicant must meet the following performance requirements depending on the position applied for.</p>
 
     <table class="table table-bordered mt-3 text-center align-middle" id="performanceTable">
@@ -529,6 +470,20 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
                     and 8 Proficient NCOIs at Outstanding
                 </td>
             </tr>
+             <tr data-position="Master Teacher II">
+                <td>Master Teacher II</td>
+                <td>
+                    At least 10 Highly Proficient COIs at Outstanding; and At least 5 Highly Proficient NCOIs at Very Satisfactory 
+                    and 5 Highly Proficient NCOIs at Outstanding
+                </td>
+            </tr>
+            <tr data-position="Master Teacher III">
+                <td>Master Teacher III</td>
+                <td>
+                    21 Highly Proficient COIs at Outstanding; and At least 8 Highly Proficient NCOIs at Very Satisfactory 
+                    and 8 Highly Proficient NCOIs at Outstanding
+                </td>
+            </tr>
         </tbody>
     </table>
 
@@ -536,7 +491,7 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
 {{-- III. SUMMARY OF THE ACHIEVEMENT OF PPST INDICATORS --}}
 {{-- ========================================================= --}}
 <hr class="mt-4 mb-4">
-<h5 class="fw-bold text-uppercase">Summary of the Achievement of PPST Indicators</h5>
+<h5 class="fw-bold text-uppercase" id="ppst-summary">Summary of the Achievement of PPST Indicators</h5>
 
 <p class="text-muted mb-3 fst-italic">
   *Put a (/) mark if the applicant meets the required PPST indicators; if not, put an (X) mark in both the "O" and "VS" columns.
@@ -740,41 +695,29 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
       @endforeach
 
       {{-- ======= Totals OF O AND VS ======= --}}
-      <tr class="fw-semibold">
-  <td colspan="2" class="text-center">Total Number of O and VS</td>
-  <td>
-    O
-    <input type="number" id="totalO" name="total_outstanding" readonly class="form-control form-control-sm d-inline-block text-center" style="width:80px">
-  </td>
-  <td>
-    VS
-    <input type="number" id="totalVS" name="total_vs" readonly class="form-control form-control-sm d-inline-block text-center" style="width:80px">
+      <!-- TOTAL COI -->
+<tr class="fw-semibold">
+  <td colspan="2" class="text-center">Total Number of COI with Outstanding</td>
+  <td colspan="2">
+    <input type="number" id="totalCOI" name="total_coi" readonly
+           class="form-control form-control-sm d-inline-block text-center"
+           style="width:80px; font-weight:normal; font-size:0.9rem">
   </td>
 </tr>
 
-{{-- ======= Totals of NCOI AND COI ======= --}}
+<!-- TOTAL NCOI -->
 <tr class="fw-semibold">
-  <td colspan="2" class="text-center">Total Number of COI and NCOI</td>
-  <td>
-    COI
-    <input type="number" id="totalCOI" name="total_coi" readonly class="form-control form-control-sm d-inline-block text-center" style="width:80px">
-  </td>
-  <td>
-    NCOI
-    <input type="number" id="totalNCOI" name="total_ncoi" readonly class="form-control form-control-sm d-inline-block text-center" style="width:80px">
+  <td colspan="2" class="text-center">Total Number of NCOI with Outstanding</td>
+  <td colspan="2">
+    <input type="number" id="totalNCOI" name="total_ncoi" readonly
+           class="form-control form-control-sm d-inline-block text-center"
+           style="width:80px; font-weight:normal; font-size:0.9rem">
   </td>
 </tr>
     </tbody>
   </table>
 </div>
 
-<!-- === PRINT & SUBMIT BUTTONS === -->
-<div class="text-center my-4">
-    <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button>
-    <button type="submit" form="applicantForm" class="btn btn-success">💾 Submit</button>
-</div>
-        </form>
-    </div>
 
 {{-- ========================================================= --}}
 {{-- III. COMPARATIVE ASSESSMENT RESULT --}}
@@ -797,8 +740,8 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
     </thead>
     <tbody>
       <tr>
-        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"></td>
-        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"></td>
+        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center" readonly></td>
+        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center"></td>
         <td><input type="number" name="comparative[performance]" class="form-control form-control-sm text-center"></td>
         <td><input type="number" name="comparative[classroom]" class="form-control form-control-sm text-center"></td>
@@ -810,18 +753,20 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
 </div>
 
 
-<div class="row text-center mb-5">
-  <div class="col-md-6">
-    <p class="fw-semibold mb-1">Conforme:</p>
-    <br><br>
-    <p class="fw-bold text-decoration-underline"></p>
-    <p class="small mb-0">Teacher Applicant</p>
-  </div>
-  <div class="col-md-6">
-    <p class="fw-semibold mb-1">Attested by:</p>
-    <br><br>
-    <p class="fw-bold text-decoration-underline">ERNEST JOSEPH C. CABRERA</p>
-  </div>
+<div class="row text-center mb-5 mt-5">
+    <div class="col-md-6">
+        <p class="fw-semibold mb-1">Conforme:</p>
+        <br><br>
+        <p id="teacherApplicant" class="fw-bold text-decoration-underline mb-0">{{ old('name') }}</p>
+        <p class="small mb-0">Teacher Applicant</p>
+    </div>
+
+    <div class="col-md-6">
+        <p class="fw-semibold mb-1">Attested by:</p>
+        <br><br>
+        <p class="fw-bold text-decoration-underline">ERNEST JOSEPH C. CABRERA</p>
+        <p class="small mb-0">HRMPSB Chair</p>
+    </div>
 </div>
 
 {{-- ========================================================= --}}
@@ -856,23 +801,39 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
   </table>
 </div>
 
-<div class="row text-center mb-5">
-  <div class="col-md-12">
+<!-- ROW 1 : Evaluated (Right) -->
+<div class="row mb-4">
+  <div class="col-md-6"></div>
+  <div class="col-md-6 text-center">
     <p class="fw-semibold mb-1">Evaluated by:</p>
-    <p class="fw-bold text-decoration-underline mb-0">MA. CLARINDA L. OMO</p>
+    <br>
+    <p class="fw-bold text-decoration-underline mb-1">MA. CLARINDA L. OMO</p>
     <p class="small mb-0">Administrative Officer IV</p>
+  </div>
+</div>
 
-    <br>
+<!-- ROW 2 : Certified (Left) -->
+<div class="row mb-4">
+  <div class="col-md-6 text-center">
     <p class="fw-semibold mb-1">Certified Correct:</p>
-    <p class="fw-bold text-decoration-underline mb-0">CARMELITA D. MATUS</p>
-    <p class="small mb-0">Administrative Officer V</p>
-
     <br>
+    <p class="fw-bold text-decoration-underline mb-1">CARMELITA D. MATUS</p>
+    <p class="small mb-0">Administrative Officer V</p>
+  </div>
+  <div class="col-md-6"></div>
+</div>
+
+<!-- ROW 3 : Recommending (Center) -->
+<div class="row text-center mb-4">
+  <div class="col-md-12">
     <p class="fw-semibold mb-1">Recommending Approval:</p>
-    <p class="fw-bold text-decoration-underline mb-0">NOEL D. BAGANO</p>
+    <br>
+    <p class="fw-bold text-decoration-underline mb-1">NOEL D. BAGANO</p>
     <p class="small mb-0">Schools Division Superintendent</p>
   </div>
 </div>
+
+
 
 {{-- ========================================================= --}}
 {{-- V. DEPED REGIONAL OFFICE ACTION --}}
@@ -906,28 +867,837 @@ Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
   </table>
 </div>
 
-<div class="row text-center mb-5">
-  <div class="col-md-12">
+<!-- ROW 1 : Evaluated (Right) -->
+<div class="row mb-4">
+  <div class="col-md-6"></div>
+  <div class="col-md-6 text-center">
     <p class="fw-semibold mb-1">Evaluated by:</p>
-    <p class="fw-bold text-decoration-underline mb-0">Teachers Credential Evaluator</p>
-
     <br>
+    <p class="fw-bold text-decoration-underline mb-1">Teachers Credential Evaluator</p>
+  </div>
+</div>
+
+<!-- ROW 2 : Certified (Left) -->
+<div class="row mb-4">
+  <div class="col-md-6 text-center">
     <p class="fw-semibold mb-1">Certified Correct:</p>
-    <p class="fw-bold text-decoration-underline mb-0">Chief, Administrative Division</p>
-
     <br>
+    <p class="fw-bold text-decoration-underline mb-1">Chief, Administrative Division</p>
+  </div>
+  <div class="col-md-6"></div>
+</div>
+
+<!-- ROW 3 : Approved (Center) -->
+<div class="row text-center mb-4">
+  <div class="col-md-12">
     <p class="fw-semibold mb-1">Approved:</p>
-    <p class="fw-bold text-decoration-underline mb-0">JOCELYN DR. ANDAYA</p>
+    <br>
+    <p class="fw-bold text-decoration-underline mb-1">JOCELYN DR. ANDAYA</p>
     <p class="small mb-0">Regional Director, NCR</p>
     <p class="small mb-0">Concurrent Officer-In-Charge, Office of the Assistant Secretary for Operations</p>
   </div>
 </div>
-
-
+<!-- === PRINT & SUBMIT BUTTONS === -->
+<div class="text-center my-4">
+    <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button>
+    <button type="submit" form="applicantForm" class="btn btn-success">💾 Submit</button>
+</div>
+        </form>
+    </div>
+</div>
 </div> <!-- /.container -->
 
-<!-- SCRIPTS -->
+<!-- EDUCATION MODAL -->
+<div class="modal fade" id="educationModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-sm">
+
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Add Education</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div class="card shadow-sm p-3">
+          <div class="row g-3">
+
+            <!-- Degree / Education -->
+            <div class="col-md-6">
+              <label class="fw-bold">Degree / Education</label>
+              <input type="text" id="education_name" class="form-control" placeholder="Enter degree or qualification" required>
+            </div>
+
+            <!-- Highest Educational Attainment -->
+            <div class="col-md-6 position-relative">
+              <label for="education_units_select" class="fw-bold">Highest Educational Attainment</label>
+              <select id="education_units_select" class="form-select">
+                <option value="">Select Education Level</option>
+                <!-- Options populated by JS -->
+              </select>
+
+              <!-- Hidden input for "Others" units -->
+              <input type="number" id="education_units_other" class="form-control mt-2 d-none" placeholder="Enter custom units (e.g., 32)">
+              
+              <small class="text-muted d-block mt-1">CSC Qualification Level (0–31)</small>
+            </div>
+
+            <!-- Certificate Upload -->
+            <div class="mt-3">
+              <label class="fw-bold">Certificate (PDF)</label>
+              <input type="file" id="education_file" class="form-control" accept="application/pdf">
+              <div id="education_preview" class="mt-1 small text-muted">No file uploaded.</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer d-flex justify-content-end">
+        <button type="button" class="btn btn-success" id="saveEducation">
+          <i class="bi bi-check-circle me-1"></i> Save Education
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> Cancel </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- TRAINING MODAL -->
+<div class="modal fade" id="trainingModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-sm">
+
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Training / Seminars Attended</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+
+        <div id="trainingContainer">
+          <div class="training-item card shadow-sm mb-3 p-3 position-relative">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-training position-absolute top-0 end-0 m-2"
+                    style="font-size:0.85rem; padding:0.2rem 0.4rem;">✖</button>
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="fw-bold">Training Title</label>
+                <input type="text" name="trainings[0][title]" class="form-control" placeholder="Enter title" required>
+              </div>
+
+              <div class="col-md-4">
+                <label class="fw-bold">Training Type</label>
+                <select name="trainings[0][type]" class="form-select training_type" required>
+                  <option value="">Select Type</option>
+                  <option value="Face-to-Face">Face-to-Face</option>
+                  <option value="Online">Online</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="fw-bold">No. of Hours</label>
+                <input type="number" name="trainings[0][hours]" class="form-control training_hours" readonly>
+                <div class="form-text text-muted">Automatically computed from start and end dates.</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <div class="col-md-6">
+                <label class="fw-bold">Start Date</label>
+                <input type="date" name="trainings[0][start_date]" class="form-control training_date" required>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">End Date</label>
+                <input type="date" name="trainings[0][end_date]" class="form-control training_date" required>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <label class="fw-bold">Certificate (PDF)</label>
+              <input type="file" name="trainings[0][file]" class="form-control training_file" accept="application/pdf" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADD TRAINING BUTTON -->
+        <div class="mb-3 mt-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="addTraining">
+            ➕ Add Another Training
+          </button>
+        </div>
+
+        <!-- DETAILED SUMMARY (NEW SECTION) -->
+        <div id="modal_training_summary" class="mt-3">
+          <div class="alert alert-info p-2">
+            <strong>Training Summary</strong><br>
+            Required Hours: <span id="required_hours_display">0</span> hours<br>
+            Required Level: <span id="required_level_display">0</span><br>
+            Status: <span class="text-muted">No trainings added</span><br>
+            <strong>Points: 0</strong>
+          </div>
+        </div>
+
+        <!-- SIMPLE SUMMARY -->
+        <div class="mt-4 card p-3 shadow-sm">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Total Hours:</strong> <span id="total_training_hours">0</span>
+            </div>
+            <div class="col-md-6">
+              <strong>Status:</strong> <span id="training_remark" class="text-muted">Waiting for the QS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer (Buttons switched) -->
+      <div class="modal-footer d-flex justify-content-end">
+        <button type="button" class="btn btn-success" id="saveTraining">
+          <i class="bi bi-check-circle me-1"></i> Save Trainings
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPERIENCE MODAL -->
+<div class="modal fade" id="experienceModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-sm">
+
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Add Work Experience</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+
+        <!-- ALERT FOR REQUIRED EXPERIENCE -->
+        <div class="alert alert-info text-center">
+          <span id="expRequirementText">Required Experience: —</span>
+        </div>
+
+        <!-- EXPERIENCE CONTAINER (Two-Column Card Layout) -->
+        <div id="experienceContainer" class="mb-3 row g-3"></div>
+
+        <!-- ADD EXPERIENCE BUTTON -->
+        <div class="mb-3">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="addExperience">
+            ➕ Add Another Experience
+          </button>
+        </div>
+
+        <!-- SUMMARY DISPLAY -->
+        <div class="mt-4 card p-3 shadow-sm">
+          <div class="row">
+            <div class="col-md-3">
+              <strong>Total Years:</strong><br>
+              <span id="totalExperienceYears" class="h4">0.00</span>
+            </div>
+            <div class="col-md-3">
+              <strong>Increment Level:</strong><br>
+              <span id="incrementLevel" class="h4">0</span>
+            </div>
+            <div class="col-md-6">
+              <strong>Range:</strong><br>
+              <span id="experienceRange">—</span><br>
+              <div id="experience_remark" class="mt-1 text-muted">Waiting for QS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINAL SUMMARY (Will be filled after save) -->
+        <div id="experience_summary" class="mt-3"></div>
+
+        <!-- HIDDEN APPLIED POSITION / LEVEL FOR QS REFERENCE -->
+        <input type="hidden" id="appliedLevel" value="{{ $selectedLevel ?? 'kindergarten' }}">
+        <input type="hidden" id="appliedPosition" value="{{ $selectedPosition ?? 'Teacher III' }}">
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" id="saveExperienceBtn">
+          <i class="bi bi-check-circle me-1"></i> Save Experiences
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+ <!-- ELIGIBILITY MODAL -->
+<div class="modal fade" id="eligibilityModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-sm">
+
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Add Eligibility</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+
+        <!-- QS Requirement -->
+        <div class="alert alert-info text-center">
+          <span id="eligibilityRequirementText">Required Eligibility: —</span>
+        </div>
+
+        <div class="row g-3">
+          <!-- Eligibility Dropdown -->
+          <div class="col-12 col-md-6">
+            <div class="card p-3 shadow-sm h-100">
+              <label class="form-label fw-bold">Eligibility Name</label>
+              <select id="eligibilityInput" class="form-select">
+                <option value="">Select Eligibility</option>
+                <option value="LET">LET</option>
+                <option value="PBET">PBET</option>
+                <option value="MAGNA CARTA">MAGNA CARTA</option>
+              </select>
+              <small class="form-text text-muted">
+                Please select the eligibility as required by the QS above.
+              </small>
+            </div>
+          </div>
+
+          <!-- ID Expiry -->
+          <div class="col-12 col-md-6">
+            <div class="card p-3 shadow-sm h-100">
+              <label class="form-label fw-bold">ID Expiry Date</label>
+              <input type="date" id="eligibilityExpiry" class="form-control">
+              <small class="form-text text-muted">Enter the expiry date of your eligibility ID.</small>
+            </div>
+          </div>
+
+          <!-- Attachment -->
+          <div class="col-12">
+            <div class="card p-3 shadow-sm">
+              <label class="form-label fw-bold">Attachment (PDF, Word, Image)</label>
+              <input type="file" id="eligibilityAttachment" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif">
+              <small class="form-text text-muted">
+                Attach a scanned copy or photo of your ID. If recently renewed, attach the official receipt or renewed ID.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <!-- <div class="mt-4 card p-3 shadow-sm">
+          <strong>Summary:</strong>
+          <div id="eligibility_summary" class="mt-2"></div>
+          <div id="eligibility_remark" class="mt-1 text-muted">Waiting for the QS</div>
+        </div> -->
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" id="saveEligibilityBtn" onclick="saveEligibility()">
+          <i class="bi bi-check-circle me-1"></i> Save Eligibility
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Hidden inputs for QS -->
+<input type="hidden" id="appliedPosition" value="Teacher V">
+<input type="hidden" id="appliedLevel" value="kindergarten">
+
+
+<div class="modal fade" id="ipcrfModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Upload IPCRF Files</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p id="ipcrfInstruction" class="text-muted mb-3"></p>
+        <div class="row g-3" id="ipcrfContainer"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveIpcrfBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SCRIPTS - UPDATED VERSION -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- GLOBAL VARIABLES -->
+<script>
+    // ITO ANG IMPORTANTE: Check kung tama ang structure
+    window.qsConfig = @json(config('qs') ?? []);
+    
+    // Debug logging
+    console.log('=== QS CONFIG DEBUG ===');
+    console.log('Full config:', window.qsConfig);
+    console.log('Selected Level:', '{{ $selectedLevel ?? "kindergarten" }}');
+    console.log('Selected Position:', '{{ $selectedPosition ?? "Teacher III" }}');
+    console.log('=== END DEBUG ===');
+    
+    // Other globals
+    window.requiredExperienceYears = {{ $requiredYears ?? 0 }};
+    window.qsEducationUnits = @json($qsUnits ?? []);
+    window.requiredHours = {{ $requiredHours ?? 0 }};
+</script>
+
+<!-- LOAD JS FILES -->
+<script src="{{ asset('js/experience.js') }}"></script>
+<script src="{{ asset('js/education-points.js') }}"></script>
+<script src="{{ asset('js/training.js') }}"></script>
+
+<script>
+let uploadedIPCRFs = [];
+let savedIPCRFs = [];
+
+// ---------- IPCRF FUNCTIONS ----------
+const ipcrfContainer = document.getElementById('ipcrfContainer');
+const ipcrfInstruction = document.getElementById('ipcrfInstruction');
+
+function getRequiredIPCRFs(position) {
+  position = position.trim().toLowerCase();
+  if (position === 'teacher i' || position === 'teacher ii') return 2;
+  return 3;
+}
+
+function renderIPCRFBoxes() {
+  const position = document.getElementById('position_applied')?.value || 'Teacher II';
+  const required = getRequiredIPCRFs(position);
+
+  ipcrfInstruction.textContent = `Please upload ${required} IPCRF file${required > 1 ? 's' : ''}.`;
+
+  ipcrfContainer.innerHTML = '';
+  uploadedIPCRFs = savedIPCRFs.length ? [...savedIPCRFs] : Array(required).fill(null);
+
+  for (let i = 0; i < required; i++) {
+    const col = document.createElement('div');
+    col.className = 'col-md-4';
+
+    col.innerHTML = `
+      <div class="card p-3 border-dashed h-100 text-center" style="cursor:pointer;">
+        <i class="bi bi-file-earmark-pdf-fill ipcrf-icon"></i>
+        <strong>IPCRF ${i + 1}</strong>
+        <input type="file" class="d-none" id="ipcrf_file${i}" accept=".pdf">
+        <div class="mt-2" id="preview${i}">
+          <small class="text-muted">Drop or click to upload</small>
+        </div>
+        <div class="mt-2 d-flex justify-content-center gap-2">
+          <button class="btn btn-sm btn-outline-primary d-none" id="view${i}">View</button>
+          <button class="btn btn-sm btn-outline-danger d-none" id="remove${i}">Remove</button>
+        </div>
+      </div>
+    `;
+
+    ipcrfContainer.appendChild(col);
+
+    const card = col.querySelector('.card');
+    const input = col.querySelector('input');
+    const previewEl = col.querySelector(`#preview${i} small`);
+    const viewBtn = col.querySelector(`#view${i}`);
+    const removeBtn = col.querySelector(`#remove${i}`);
+
+    // If file already uploaded
+    if (uploadedIPCRFs[i]) {
+      previewEl.textContent = uploadedIPCRFs[i].name;
+      previewEl.classList.remove('text-muted');
+      viewBtn.classList.remove('d-none');
+      removeBtn.classList.remove('d-none');
+    }
+
+    // Click card → open file dialog
+    card.addEventListener('click', () => input.click());
+
+    // File selected
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      uploadedIPCRFs[i] = file;
+      previewEl.textContent = file.name;
+      previewEl.classList.remove('text-muted');
+      viewBtn.classList.remove('d-none');
+      removeBtn.classList.remove('d-none');
+    });
+
+    // View button
+    viewBtn.onclick = e => {
+      e.stopPropagation();
+      const file = uploadedIPCRFs[i];
+      if (file) window.open(URL.createObjectURL(file), '_blank');
+    };
+
+    // Remove button
+    removeBtn.onclick = e => {
+      e.stopPropagation();
+      uploadedIPCRFs[i] = null;
+      previewEl.textContent = 'Drop or click to upload';
+      previewEl.classList.add('text-muted');
+      viewBtn.classList.add('d-none');
+      removeBtn.classList.add('d-none');
+    };
+  }
+}
+
+// ---------- Save IPCRFs ----------
+document.getElementById('saveIpcrfBtn').addEventListener('click', () => {
+  const position = document.getElementById('position_applied')?.value || 'Teacher II';
+  const required = getRequiredIPCRFs(position);
+
+  if (uploadedIPCRFs.filter(f => f).length < required) {
+    Swal.fire('Missing file', `Please upload all ${required} required IPCRFs.`, 'warning');
+    return;
+  }
+
+  savedIPCRFs = [...uploadedIPCRFs];
+
+  const status = document.getElementById('ipcrfStatus');
+  status.classList.remove('d-none');
+  status.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Uploaded`;
+
+  Swal.fire({ icon: 'success', title: 'IPCRFs Saved', timer: 1200, showConfirmButton: false }).then(() => {
+    bootstrap.Modal.getInstance(document.getElementById('ipcrfModal')).hide();
+
+    // === SHOW PERFORMANCE REQUIREMENTS AFTER ALL MET ===
+    const perfDiv = document.getElementById('performanceRequirements');
+    if (perfDiv) perfDiv.style.display = 'block';
+    // Scroll to the section for user convenience
+    perfDiv.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ---------- Reset on Position Change ----------
+$(document).ready(function () {
+  $('#position_applied').on('change', function () {
+
+    // Reset all QS fields (education, training, experience, eligibility)
+    $('#education_name').val('');
+    $('#education_units_select').val('');
+    $('#education_units_other').val('').addClass('d-none');
+    $('#education_file').val('');
+    $('#education_preview').html('No file uploaded.');
+    $('#education_summary').html('<span class="text-muted">No education added.</span>');
+    $('#education_remark').html('<span class="text-muted">Waiting for QS</span>');
+
+    if (typeof trainingIndex !== 'undefined') trainingIndex = 1;
+    $('#trainingContainer').empty();
+    $('#training_summary').html('<span class="text-muted">No trainings added.</span>');
+    $('#total_training_hours').text('0');
+    $('#training_remark').html('<span class="text-muted">Waiting for QS</span>');
+
+    if (typeof resetExperience === 'function') resetExperience();
+    else {
+      $('#experience_summary').html('<span class="text-muted">No experience added.</span>');
+      $('#experience_remark').html('<span class="text-muted">Waiting for QS</span>');
+    }
+
+    if (typeof resetEligibility === 'function') resetEligibility();
+    else {
+      $('#eligibility_summary').html('<span class="text-muted">No eligibility added.</span>');
+      $('#eligibility_remark').html('<span class="text-muted">Waiting for QS</span>');
+    }
+
+    // Reset IPCRFs
+    uploadedIPCRFs = [];
+    savedIPCRFs = [];
+    $('#ipcrfStatus').addClass('d-none').html('');
+
+    // Hide performance requirements again
+    $('#performanceRequirements').hide();
+
+    Swal.fire({
+      icon: 'info',
+      title: 'Position Changed',
+      text: 'All qualifications were reset because QS changed.',
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  });
+});
+
+// ---------- Show Modal ----------
+document.getElementById('ipcrfModal')
+  .addEventListener('show.bs.modal', renderIPCRFBoxes);
+
+// ---------- AUTO CHECK QS (existing) ----------
+function autoCheckQS() {
+
+  Swal.fire({
+    title: 'Evaluating Qualifications',
+    html: `<p>Please wait while we check your records<span id="dots"></span></p>`,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      const dotsEl = document.getElementById('dots');
+      let dots = '';
+      let interval = setInterval(() => {
+        dots = dots.length < 3 ? dots + '.' : '';
+        dotsEl.textContent = dots;
+      }, 500);
+
+      // Simulate 7 seconds evaluation
+      setTimeout(() => {
+        clearInterval(interval);
+        Swal.close();
+
+        // === CHECK REMARKS ===
+        const educationRemark  = document.getElementById('education_remark')?.innerText || '';
+        const trainingRemark   = document.getElementById('training_remark')?.innerText || '';
+        const experienceRemark = document.getElementById('experience_remark')?.innerText || '';
+        const eligibilityRemark= document.getElementById('eligibility_remark')?.innerText || '';
+
+        const remarks = [educationRemark, trainingRemark, experienceRemark, eligibilityRemark];
+        const anyNotMet = remarks.some(r => r.toLowerCase().includes('not met'));
+
+        // === ALL MET ===
+        if (!anyNotMet) {
+          Swal.fire({
+            icon: 'success',
+            title: 'All Requirements MET',
+            text: 'You are eligible to proceed to the next step.',
+            confirmButtonText: 'Continue'
+          }).then(() => {
+            document.getElementById('submitApplication')?.removeAttribute('disabled');
+
+            // === SHOW PERFORMANCE REQUIREMENTS ===
+            const perfDiv = document.getElementById('performanceRequirements');
+            if (perfDiv) perfDiv.style.display = 'block';
+            perfDiv.scrollIntoView({ behavior: 'smooth' });
+
+            const ipcrfModalEl = document.getElementById('ipcrfModal');
+            if (ipcrfModalEl) new bootstrap.Modal(ipcrfModalEl).show();
+          });
+          return;
+        }
+
+        // === NOT MET ===
+        Swal.fire({
+          icon: 'info',
+          title: 'Some Requirements NOT MET',
+          html: `
+            <p>Some of your qualifications did not meet the standards.</p>
+            <p>Please enter your email for notification.</p>
+            <input type="email" id="depedEmail" class="swal2-input" placeholder="Your Email">
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Submit & Notify',
+          cancelButtonText: 'Review'
+        }).then((result) => {
+          if (!result.isConfirmed) return;
+          const email = document.getElementById('depedEmail').value;
+          if (!email) return;
+
+          fetch('/notify-unqualified', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ email, remarks })
+          })
+          .then(res => res.json())
+          .then(res => {
+            if (!res.success) throw new Error();
+            Swal.fire({
+              icon: 'success',
+              title: 'Email Sent!',
+              text: `A formal notice has been sent to ${email}`,
+              timer: 2500,
+              showConfirmButton: false
+            }).then(() => {
+              document.getElementById('applicantForm')?.reset();
+              $('#performanceRequirements').hide(); // hide again after reset
+            });
+          })
+          .catch(() => Swal.fire('Error', 'Failed to send email.', 'error'));
+        });
+
+      }, 7000);
+    }
+  });
+}
+</script>
+<script>
+function tryAutoEvaluate() {
+    const remarks = [
+        $('#education_remark').text(),
+        $('#training_remark').text(),
+        $('#experience_remark').text(),
+        $('#eligibility_remark').text()
+    ];
+
+    if (remarks.every(r => r.includes('MET') || r.includes('NOT MET'))) {
+        autoCheckQS();
+    }
+}
+
+// call after each save
+$('#saveEducation, #saveTraining, #saveExperienceBtn, #saveEligibilityBtn')
+    .on('click', () => setTimeout(tryAutoEvaluate, 500));
+</script>
+
+<script>
+let eligibilityRequired = '';
+let eligibilitySaved = false;
+
+/* ==========================
+   LOAD QS ELIGIBILITY
+========================== */
+function loadEligibilityQS() {
+    const position = document.getElementById('appliedPosition').value;
+
+    // Load requirement from QS data
+    eligibilityRequired = qsData[position]?.eligibility || '—';
+    document.getElementById('eligibilityRequirementText').innerText =
+        `Required Eligibility: ${eligibilityRequired}`;
+
+    // Reset remark if not saved
+    if (!eligibilitySaved) {
+        document.getElementById('eligibility_remark').innerHTML =
+            '<span class="text-muted">Waiting for the QS</span>';
+    }
+}
+
+/* ==========================
+   SAVE ELIGIBILITY
+========================== */
+function saveEligibility() {
+    const name = document.getElementById('eligibilityInput').value.trim();
+    const expiry = document.getElementById('eligibilityExpiry').value;
+    const file = document.getElementById('eligibilityAttachment').files[0];
+
+    if (!name || !expiry) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete',
+            text: 'Eligibility name and expiry date are required.'
+        });
+        return;
+    }
+
+    const today = new Date();
+    const expiryDate = new Date(expiry);
+    let status = '';
+
+    // Determine MET / NOT MET
+    if (expiryDate >= today) {
+        status = 'MET';
+    } else if (file) {
+        status = 'MET';
+    } else {
+        status = 'NOT MET';
+    }
+
+    // Update summary
+    let summary = `<strong>${name}</strong><br>`;
+    summary += `<small>Valid Until: ${expiry}</small>`;
+    if (file) summary += `<br><small>Attachment: ${file.name}</small>`;
+    document.getElementById('eligibility_summary').innerHTML = summary;
+
+    // Update remark
+    document.getElementById('eligibility_remark').innerHTML =
+        `<span class="${status.startsWith('MET') ? 'text-success' : 'text-danger'} fw-bold">${status}</span>`;
+
+    eligibilitySaved = true;
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Eligibility Saved',
+        text: `Eligibility status: ${status}`,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2200
+    });
+
+    // Close modal
+    bootstrap.Modal.getInstance(document.getElementById('eligibilityModal')).hide();
+}
+
+/* ==========================
+   RESET ELIGIBILITY
+========================== */
+function resetEligibility() {
+    document.getElementById('eligibilityInput').value = '';
+    document.getElementById('eligibilityExpiry').value = '';
+    document.getElementById('eligibilityAttachment').value = '';
+
+    document.getElementById('eligibility_summary').innerHTML = '';
+    document.getElementById('eligibility_remark').innerHTML =
+        '<span class="text-muted">Waiting for the QS</span>';
+
+    eligibilitySaved = false;
+}
+
+/* ==========================
+   RESET WHEN POSITION CHANGES
+========================== */
+$('#position_applied').on('change', function () {
+    $('#appliedPosition').val($(this).val());
+    resetEligibility();
+
+    Swal.fire({
+        icon: 'info',
+        title: 'Position Changed',
+        text: 'Eligibility has been reset.',
+        timer: 1500,
+        showConfirmButton: false
+    });
+});
+
+/* ==========================
+   LOAD QS ON MODAL OPEN
+========================== */
+document.getElementById('eligibilityModal')
+    .addEventListener('show.bs.modal', loadEligibilityQS);
+
+/* ==========================
+   FILE UPLOAD TOAST
+========================== */
+$('#eligibilityAttachment').on('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    Swal.fire({
+        icon: 'success',
+        title: 'File Selected',
+        text: file.name,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000
+    });
+});
+</script>
+
 <script>
   $(document).ready(function() {
 
@@ -1099,57 +1869,46 @@ $(document).ready(function() {
 
 });
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* ===============================
-     CHECKBOX REFERENCES
-     =============================== */
+  // ===============================
+  // CHECKBOX REFERENCES
+  // ===============================
   const oBoxes  = document.querySelectorAll('input[name^="ppst"][name$="[O]"]');
   const vsBoxes = document.querySelectorAll('input[name^="ppst"][name$="[VS]"]');
 
-  const totalO    = document.getElementById("totalO");
-  const totalVS   = document.getElementById("totalVS");
   const totalCOI  = document.getElementById("totalCOI");
   const totalNCOI = document.getElementById("totalNCOI");
 
-  /* ===============================
-     COI / NCOI REFERENCES
-     =============================== */
+  // ===============================
+  // COI / NCOI REFERENCES
+  // ===============================
   const coiNumbers  = [1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,23,24];
   const ncoiNumbers = [2,20,21,22,25,26,27,28,29,30,31,32,33,34,35,36,37];
 
-  /* ===============================
-     APPLY ROW COLOR (NO CHECK NEEDED)
-     =============================== */
+  // ===============================
+  // APPLY ROW COLOR (NO CHECK NEEDED)
+  // ===============================
   document.querySelectorAll("table tbody tr").forEach(row => {
-
     const firstCell = row.querySelector("td:first-child");
     if (!firstCell) return;
 
     const num = parseInt(firstCell.innerText.trim(), 10);
     if (isNaN(num)) return;
 
-    if (coiNumbers.includes(num)) {
-      row.classList.add("row-coi");
-    }
-
-    if (ncoiNumbers.includes(num)) {
-      row.classList.add("row-ncoi");
-    }
+    if (coiNumbers.includes(num)) row.classList.add("row-coi");
+    if (ncoiNumbers.includes(num)) row.classList.add("row-ncoi");
   });
 
-  /* ===============================
-     O vs VS LOCKING (MUTUAL EXCLUSIVE)
-     =============================== */
+  // ===============================
+  // O vs VS LOCKING (MUTUAL EXCLUSIVE)
+  // ===============================
   function syncOVS(num) {
     const o  = document.querySelector(`input[name='ppst[${num}][O]']`);
     const vs = document.querySelector(`input[name='ppst[${num}][VS]']`);
-
     if (!o || !vs) return;
 
-    // If O is checked → disable VS
     if (o.checked) {
       vs.checked = false;
       vs.disabled = true;
@@ -1157,7 +1916,6 @@ document.addEventListener("DOMContentLoaded", function () {
       vs.disabled = false;
     }
 
-    // If VS is checked → disable O
     if (vs.checked) {
       o.checked = false;
       o.disabled = true;
@@ -1166,153 +1924,39 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  /* ===============================
-     UPDATE TOTALS
-     =============================== */
+  // ===============================
+  // UPDATE TOTALS (O ONLY)
+  // ===============================
   function updateTotals() {
+    // Total Number of COI with Outstanding
+    const coiCount = coiNumbers.reduce((acc, num) => {
+      const o = document.querySelector(`input[name='ppst[${num}][O]']`);
+      return acc + (o && o.checked ? 1 : 0);
+    }, 0);
 
-    const countO  = Array.from(oBoxes).filter(b => b.checked).length;
-    const countVS = Array.from(vsBoxes).filter(b => b.checked).length;
-
-    totalO.value  = countO;
-    totalVS.value = countVS;
-
-    let coiCount  = 0;
-    let ncoiCount = 0;
-
-    coiNumbers.forEach(num => {
-      const o  = document.querySelector(`input[name='ppst[${num}][O]']`);
-      const vs = document.querySelector(`input[name='ppst[${num}][VS]']`);
-      if ((o && o.checked) || (vs && vs.checked)) coiCount++;
-    });
-
-    ncoiNumbers.forEach(num => {
-      const o  = document.querySelector(`input[name='ppst[${num}][O]']`);
-      const vs = document.querySelector(`input[name='ppst[${num}][VS]']`);
-      if ((o && o.checked) || (vs && vs.checked)) ncoiCount++;
-    });
+    // Total Number of NCOI with Outstanding
+    const ncoiCount = ncoiNumbers.reduce((acc, num) => {
+      const o = document.querySelector(`input[name='ppst[${num}][O]']`);
+      return acc + (o && o.checked ? 1 : 0);
+    }, 0);
 
     totalCOI.value  = coiCount;
     totalNCOI.value = ncoiCount;
   }
 
-  /* ===============================
-     EVENT LISTENERS
-     =============================== */
+  // ===============================
+  // EVENT LISTENERS
+  // ===============================
   [...oBoxes, ...vsBoxes].forEach(box => {
     box.addEventListener("change", function () {
-
-      // Extract number from name: ppst[8][O]
       const match = this.name.match(/ppst\[(\d+)\]/);
-      if (match) {
-        syncOVS(match[1]);
-      }
-
+      if (match) syncOVS(match[1]);
       updateTotals();
     });
   });
 
-});
-</script>
-<!-- EDUCATION JS -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    const levelSelect    = document.getElementById("level");
-    const positionSelect = document.getElementById("position_applied");
-    const applicantCell  = document.getElementById("education_input");
-    const remarkCell     = document.getElementById("education_remark");
-    const qsCell         = document.getElementById("qs_education");
-
-    let requiredLevel = null;
-
-    function normalize(text = "") {
-        return text
-            .toLowerCase()
-            .replace(/\u00A0/g, " ")   // remove nbsp
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function detectLevel(text = "") {
-        if (/(master|maed|m\.ed|masters)/i.test(text)) return "master";
-        if (/(bachelor|bachelors|bachelor’s|bachelor's|bsed|beed|b\.ed|b\.s\.ed)/i.test(text))
-            return "bachelor";
-        return null;
-    }
-
-    function fetchEducationQS() {
-
-        const level = levelSelect.value;
-        const position = positionSelect.value;
-
-        if (!level || !position) {
-            remarkCell.innerHTML =
-                '<span class="text-muted">Select level & position</span>';
-            return;
-        }
-
-        fetch(`/get-qs?level=${level}&position=${encodeURIComponent(position)}`)
-            .then(res => res.json())
-            .then(res => {
-                if (!res.success) {
-                    remarkCell.innerHTML =
-                        '<span class="text-muted">QS not found</span>';
-                    return;
-                }
-
-                qsCell.innerText = res.data.education;
-                requiredLevel = detectLevel(normalize(res.data.education));
-
-                evaluateEducation();
-            });
-    }
-
-    function evaluateEducation() {
-
-        if (!requiredLevel) {
-            remarkCell.innerHTML =
-                '<span class="text-muted">Waiting for QS</span>';
-            return;
-        }
-
-        const applicantText = normalize(applicantCell.textContent || "");
-
-        if (!applicantText) {
-            remarkCell.innerHTML =
-                '<span class="text-muted">Enter education details</span>';
-            return;
-        }
-
-        const applicantLevel = detectLevel(applicantText);
-
-        let isMet = false;
-
-        if (requiredLevel === "bachelor") {
-            isMet = applicantLevel === "bachelor" || applicantLevel === "master";
-        }
-
-        if (requiredLevel === "master") {
-            isMet = applicantLevel === "master";
-        }
-
-        remarkCell.innerHTML = isMet
-            ? '<span class="text-success fw-bold">MET</span>'
-            : '<span class="text-danger fw-bold">NOT MET</span>';
-    }
-
-    // 🔥 FIX: contenteditable events
-    ["keyup", "paste", "blur"].forEach(evt => {
-        applicantCell.addEventListener(evt, evaluateEducation);
-    });
-
-    levelSelect.addEventListener("change", fetchEducationQS);
-    positionSelect.addEventListener("change", fetchEducationQS);
-
-    // 🔥 auto-load QS on page load
-    if (levelSelect.value && positionSelect.value) {
-        fetchEducationQS();
-    }
+  // Initialize totals on page load
+  updateTotals();
 
 });
 </script>
@@ -1387,138 +2031,213 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+<!-- UPLOAD PDF FILE EDUCATION -->
 <script>
-// ================= GLOBAL QS STATE =================
-let requiredTrainingHours = 0;
-let requiresFiveYearsRule = false;
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('education_file');
+    const previewDiv = document.getElementById('education_preview');
 
-// ================= HELPERS =================
-function extractHours(text) {
-    const match = text.match(/(\d+)\s*hours/i);
-    return match ? parseInt(match[1]) : 0;
-}
+    fileInput.addEventListener('change', function() {
+        previewDiv.innerHTML = ''; // Clear previous preview
 
-function isWithinYears(dateStr, years) {
-    const d = new Date(dateStr);
-    const now = new Date();
+        if (fileInput.files.length === 0) return;
 
-    const limit = new Date(
-        now.getFullYear() - years,
-        now.getMonth(),
-        now.getDate()
-    );
+        const list = document.createElement('ul');
+        list.classList.add('list-group');
 
-    return d >= limit;
-}
+        Array.from(fileInput.files).forEach(file => {
+            // SweetAlert notification
+            Swal.fire({
+                icon: 'success',
+                title: 'File Selected',
+                text: file.name,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
 
-// ================= FETCH QS =================
-function fetchQS(level, position) {
-
-    if (!level || !position) return;
-
-    fetch(`/get-qs?level=${level}&position=${encodeURIComponent(position)}`)
-        .then(res => res.json())
-        .then(res => {
-            if (!res.success) return;
-
-            const trainingText = res.data.training || '';
-
-            requiredTrainingHours = extractHours(trainingText);
-            requiresFiveYearsRule =
-                trainingText.toLowerCase().includes('5 years');
-
-            checkTrainingQS();
+            // Show preview in list
+            const item = document.createElement('li');
+            item.classList.add('list-group-item');
+            item.textContent = file.name;
+            list.appendChild(item);
         });
-}
 
-// ================= QS CHECKER =================
-function checkTrainingQS() {
+        previewDiv.appendChild(list);
+    });
+});
+</script>
+<script>
+$(document).ready(function () {
 
-    const name  = document.getElementById('training_name')?.value.trim();
-    const hours = parseInt(
-        document.getElementById('training_hours')?.value
-    );
-    const date  = document.getElementById('training_date')?.value;
+  $('#position_applied').on('change', function () {
 
-    const remark = document.getElementById('training_remark');
-    if (!remark) return;
+    // =========================
+    // EDUCATION RESET
+    // =========================
+    $('#education_name').val('');
+    $('#education_units_select').val('');
+    $('#education_units_other').val('').addClass('d-none');
+    $('#education_file').val('');
+    $('#education_preview').html('No file uploaded.');
+    $('#education_summary').html('<span class="text-muted">No education added.</span>');
+    $('#education_remark').html('<span class="text-muted">Waiting for QS</span>');
 
-    // ================= NO TRAINING REQUIRED =================
-    if (requiredTrainingHours === 0) {
-        remark.innerHTML =
-          '<span class="text-success">QS MET – No Training Required</span>';
-        return;
+    // =========================
+    // TRAINING RESET
+    // =========================
+    if (typeof trainingIndex !== 'undefined') trainingIndex = 1;
+    $('#trainingContainer').empty();
+    $('#training_summary').html('<span class="text-muted">No trainings added.</span>');
+    $('#total_training_hours').text('0');
+    $('#training_remark').html('<span class="text-muted">Waiting for QS</span>');
+
+    // =========================
+    // EXPERIENCE RESET
+    // =========================
+    if (typeof resetExperience === 'function') {
+      resetExperience();
+    } else {
+      $('#experience_summary').html('<span class="text-muted">No experience added.</span>');
+      $('#experience_remark').html('<span class="text-muted">Waiting for QS</span>');
     }
 
-    // ================= INCOMPLETE INPUT =================
-    if (!name || isNaN(hours) || hours <= 0 || !date) {
-        remark.innerHTML =
-          '<span class="text-muted">Waiting for complete input</span>';
-        return;
+    // =========================
+    // ELIGIBILITY RESET
+    // =========================
+    if (typeof resetEligibility === 'function') {
+      resetEligibility();
+    } else {
+      $('#eligibility_summary').html('<span class="text-muted">No eligibility added.</span>');
+      $('#eligibility_remark').html('<span class="text-muted">Waiting for QS</span>');
     }
 
-    // ================= VALIDATION =================
-    const hoursOk = hours >= requiredTrainingHours;
-    let dateOk = true;
+    // =========================
+    // IPCRF RESET
+    // =========================
+    if (typeof uploadedIPCRFs !== 'undefined') uploadedIPCRFs = [];
+    if (typeof savedIPCRFs !== 'undefined') savedIPCRFs = [];
+    $('#ipcrfStatus').addClass('d-none').html('');
 
-    if (requiresFiveYearsRule) {
-        dateOk = isWithinYears(date, 5);
-    }
-
-    // ================= MET =================
-    if (hoursOk && dateOk) {
-        let meta = `${hours}/${requiredTrainingHours} hrs`;
-        if (requiresFiveYearsRule) meta += ', within 5 years';
-
-        remark.innerHTML = `
-          <span class="text-success">
-            QS MET (${meta})
-          </span>`;
-        return;
-    }
-
-    // ================= NOT MET =================
-    let reasons = [];
-
-    if (!hoursOk) {
-        reasons.push(
-            `Insufficient hours (${hours}/${requiredTrainingHours})`
-        );
-    }
-
-    if (!dateOk) {
-        reasons.push('Training date beyond 5 years');
-    }
-
-    remark.innerHTML = `
-      <span class="text-danger">
-        QS NOT MET – ${reasons.join(' & ')}
-      </span>`;
-}
-
-// ================= EVENT BINDING =================
-document.addEventListener('DOMContentLoaded', function () {
-
-    // training inputs
-    ['training_name','training_hours','training_date'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', checkTrainingQS);
-            el.addEventListener('change', checkTrainingQS);
-        }
+    Swal.fire({
+      icon: 'info',
+      title: 'Position Changed',
+      text: 'All qualifications were reset because QS changed.',
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false
     });
 
-    // level / position
-    const levelSelect = document.getElementById('level');
-    const positionSelect = document.getElementById('position_applied');
+  });
 
-    function reloadQS() {
-        fetchQS(levelSelect.value, positionSelect.value);
+});
+</script>
+<!-- JS for live update -->
+<script>
+    const nameInput = document.getElementById('name');
+    const teacherApplicant = document.getElementById('teacherApplicant');
+
+    nameInput.addEventListener('input', function() {
+        teacherApplicant.textContent = this.value;
+    });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    function isFormFilled() {
+        const name = document.getElementById('name').value.trim();
+        const currentPosition = document.querySelector('select[name="current_position"]').value;
+        const positionApplied = document.getElementById('position_applied').value;
+        const itemNumber = document.querySelector('input[name="item_number"]').value.trim();
+        const school = document.getElementById('school_id').value;
+        const sgSalary = document.querySelector('input[name="sg_annual_salary"]').value;
+        const levels = document.querySelectorAll('input[name="levels[]"]:checked');
+
+        return name && currentPosition && positionApplied && itemNumber && school && sgSalary && levels.length > 0;
     }
 
-    levelSelect?.addEventListener('change', reloadQS);
-    positionSelect?.addEventListener('change', reloadQS);
+    function handleModal(buttonClass, modalId) {
+        const btn = document.querySelector(buttonClass);
+        btn.addEventListener('click', function() {
+            if(!isFormFilled()) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Oops!',
+                    text: 'Please fill out all required fields in the form above before adding Qualifications Standard.',
+                    confirmButtonText: 'OK',
+                    timer: 5000
+                });
+            } else {
+                const modal = new bootstrap.Modal(document.getElementById(modalId));
+                modal.show();
+            }
+        });
+    }
+
+    // Attach handlers for all four buttons
+    handleModal('.add-education-btn', 'educationModal');
+    handleModal('.add-training-btn', 'trainingModal');
+    handleModal('.add-experience-btn', 'experienceModal');
+    handleModal('.add-eligibility-btn', 'eligibilityModal');
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Trigger when the section scrolls into view
+    const ppstSection = document.getElementById('ppst-summary');
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if(entry.isIntersecting) {
+                // Show SweetAlert info only once
+                Swal.fire({
+                    title: 'PPST Indicators Legend',
+                    html: `
+                      <div style="text-align:left; margin-top:1rem; margin-bottom:2rem; display:flex; flex-direction:column; gap:0.5rem;">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:4px; height:24px; background-color:yellow;"></div>
+        <span style="font-weight:bold; color:yellow;">COI</span> - Classroom Observation Indicators
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:4px; height:24px; background-color:green;"></div>
+        <span style="font-weight:bold; color:green;">NCOI</span> - Non-Classroom Observation Indicators
+    </div>
+
+    <p style="margin-top:0.5rem; color:#555; font-size:0.9rem;">
+        These indicators summarize your professional achievements. Please review them carefully after submitting your IPCRF.
+    </p>
+</div>
+
+
+                    `,
+                    icon: 'info',
+                    confirmButtonText: 'Got it!',
+                    timer: 10000,
+                    timerProgressBar: true
+                });
+                observer.unobserve(ppstSection); // so it shows only once
+            }
+        });
+    }, { threshold: 0.5 }); // trigger when 50% visible
+
+    observer.observe(ppstSection);
+});
+</script>
+<script>
+$(document).ready(function() {
+    // Auto-initialize experience if QS data is available
+    if (window.requiredExperienceYears > 0) {
+        if (typeof window.experienceModule !== 'undefined') {
+            window.experienceModule.initializeExperienceFromQS(window.requiredExperienceYears);
+        }
+    }
 });
 </script>
 </body>
 </html>
+

@@ -1,16 +1,29 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\ApplicationController;
 use Illuminate\Http\Request;
 use Smalot\PdfParser\Parser;
 
 // Applicant form
-Route::get('/applicants/create', [ApplicantController::class, 'create']);
-Route::post('/applicants', [ApplicantController::class, 'store'])->name('applicants.store');
+Route::get('/', function() {
+    return redirect('/applicants/create');
+});
+
+Route::get('/applicants/create', [ApplicationController::class, 'create'])
+     ->name('applicants.create');
+Route::post('/applicants', [ApplicationController::class, 'store'])->name('applicants.store');
+
+Route::post('/qs/experience-requirement', 
+    [ApplicationController::class, 'experienceRequirement']
+);
+
+Route::post('/notify-unqualified', [ApplicationController::class, 'notifyUnqualified'])
+    ->name('applicants.notifyUnqualified');
+
 
 // Get QS via AJAX
-Route::get('/get-qs', [ApplicantController::class, 'getQS'])->name('get.qs');
+Route::get('/get-qs', [ApplicationController::class, 'getQS'])->name('get.qs');
 
 // Validate uploaded education PDF
 Route::post('/validate-education-file', function(Request $request){
