@@ -41,12 +41,17 @@ function loadExperienceTable() {
     ];
 }
 
+function formatYearsMonths(decimalYears) {
+    const years = Math.floor(decimalYears);
+    const months = Math.round((decimalYears - years) * 12);
+    return `${years} year${years !== 1 ? 's' : ''}${months > 0 ? ' and ' + months + ' month' + (months !== 1 ? 's' : '') : ''}`;
+}
+
 // ==========================
 // GET LEVEL FROM YEARS
 // ==========================
 function getLevelFromYears(years) {
     if (!window.experienceIncrementTable) loadExperienceTable();
-    
     const roundedYears = parseFloat(years.toFixed(2));
     
     for (let i = 0; i < window.experienceIncrementTable.length; i++) {
@@ -88,98 +93,185 @@ function calculateQSPoints(actualLevel, requiredLevel) {
 }
 
 // ==========================
-// FETCH QS EXPERIENCE REQUIREMENT
+// FETCH QS EXPERIENCE REQUIREMENT (FOR MODAL ONLY)
 // ==========================
 function loadExperienceQS() {
-    const level = $('#appliedLevel').val();
-    const position = $('#appliedPosition').val();
-
+    // Get values from main page
+    const position = $('#position_applied').val();
+    const level = getSelectedLevel(); // Use the function from main blade
+    
+    // Clear muna
+    requiredYears = 0;
+    
+    // Check if may laman ang position at level
+    if (!position || !level) {
+        $('#expRequirementText').html(`
+            <strong>No Position/Level Selected</strong><br>
+            <small>Please select a position and school first</small>
+        `);
+        $('#saveExperienceBtn').prop('disabled', true);
+        return;
+    }
+    
     // Check from qsConfig
     if (window.qsConfig && window.qsConfig[level] && window.qsConfig[level][position]) {
         const positionConfig = window.qsConfig[level][position];
         requiredYears = parseFloat(positionConfig.experience_years) || 0;
-        
         const requiredLevel = getLevelFromYears(requiredYears);
         
-        // DITO: Gamitin ang 'experience' text hindi lang years number
+        // Gamitin ang 'experience' text hindi lang years number
         const experienceText = positionConfig.experience || `${requiredYears} year(s)`;
-        
-        $('#expRequirementText').html(`
-            <strong>${position}</strong><br>
-            <small>Required: ${experienceText} (Level ${requiredLevel})</small>
-        `);
-        
+         
         $('#saveExperienceBtn').prop('disabled', false);
         return;
     }
-
-    // Fallback
-    requiredYears = 0;
-    $('#expRequirementText').html('Required Experience: —');
+    
+    // Fallback - walang configuration
+    $('#expRequirementText').html(`
+        <strong>${position}</strong><br>
+        <small class="text-muted">No experience requirement found</small>
+    `);
     $('#saveExperienceBtn').prop('disabled', true);
 }
 
-// ==========================
-// ADD EXPERIENCE ROW
-// ==========================
+
 $('#addExperience').on('click', function() {
     const html = `
-    <div class="col-md-6">
-        <div class="experience-item card shadow-sm p-3 position-relative h-100 mb-3">
-            <button type="button" class="btn btn-sm btn-outline-danger remove-experience position-absolute top-0 end-0 m-2" style="font-size:0.85rem; padding:0.2rem 0.4rem;">✖</button>
+    <div class="col-12">
+      <div class="experience-item card shadow-sm p-3 position-relative mb-3">
 
-            <div class="mb-2">
-                <label class="fw-bold">Position</label>
-                <select name="experiences[${experienceIndex}][position]" class="form-control exp_position" required>
-                    <option value="">Select Position</option>
-                    <option>Teacher I</option>
-                    <option>Teacher II</option>
-                    <option>Teacher III</option>
-                    <option>Teacher IV</option>
-                    <option>Teacher V</option>
-                    <option>Teacher VI</option>
-                    <option>Teacher VII</option>
-                    <option>Master Teacher I</option>
-                    <option>Master Teacher II</option>
-                    <option>Master Teacher III</option>
-                </select>
-            </div>
+        <button type="button"
+                class="btn btn-sm btn-outline-danger remove-experience
+                position-absolute top-0 end-0 m-2">✖</button>
 
-            <div class="mb-2">
-                <label class="fw-bold">Start Date</label>
-                <input type="date" name="experiences[${experienceIndex}][start]" class="form-control exp_start" required>
-            </div>
-
-            <div class="mb-2">
-                <label class="fw-bold">End Date</label>
-                <input type="date" name="experiences[${experienceIndex}][end]" class="form-control exp_end" required>
-            </div>
+        <!-- SCHOOL TYPE + NAME (2 columns) -->
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="fw-bold">School Type</label>
+            <select name="experiences[${experienceIndex}][school_type]"
+                    class="form-select exp_school_type" required>
+              <option value="">Select School Type</option>
+              <option value="Public">Public School</option>
+              <option value="Private">Private School</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="fw-bold">School Name</label>
+            <input type="text"
+                   name="experiences[${experienceIndex}][school]"
+                   class="form-control exp_school"
+                   placeholder="Enter School Name"
+                   required>
+          </div>
         </div>
-    </div>`;
+
+        <!-- POSITION -->
+        <div class="mb-2 position-wrapper">
+          <label class="fw-bold">Position</label>
+          <select name="experiences[${experienceIndex}][position]"
+                  class="form-select exp_position" required>
+            <option value="">Select Position</option>
+            <option>Teacher I</option>
+            <option>Teacher II</option>
+            <option>Teacher III</option>
+            <option>Teacher IV</option>
+            <option>Teacher V</option>
+            <option>Teacher VI</option>
+            <option>Teacher VII</option>
+            <option>Master Teacher I</option>
+            <option>Master Teacher II</option>
+            <option>Master Teacher III</option>
+            <option>Master Teacher IV</option>
+            <option>Master Teacher V</option>
+          </select>
+        </div>
+
+        <!-- START + END DATES (2 columns) -->
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="fw-bold">Start Date</label>
+            <input type="date"
+                   name="experiences[${experienceIndex}][start]"
+                   class="form-control exp_start"
+                   required>
+          </div>
+          <div class="col-md-6">
+            <label class="fw-bold">End Date</label>
+            <input type="date"
+                   name="experiences[${experienceIndex}][end]"
+                   class="form-control exp_end"
+                   required>
+          </div>
+        </div>
+
+        <!-- FILE UPLOAD -->
+        <div class="mb-2">
+          <label class="fw-bold">Upload Certificate (PDF)</label>
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="No file chosen" readonly id="file-display-${experienceIndex}">
+            <label class="btn btn-secondary mb-0">
+              Browse
+              <input type="file"
+                     name="experiences[${experienceIndex}][file]"
+                     class="exp_file"
+                     accept="application/pdf"
+                     style="display:none;"
+                     data-display="#file-display-${experienceIndex}"
+                     required>
+            </label>
+          </div>
+          <small class="text-muted">Accepted format: PDF only</small>
+        </div>
+
+      </div>
+    </div>
+    `;
 
     $('#experienceContainer').append(html);
     experienceIndex++;
+});
+
+// UPDATE FILE DISPLAY NAME
+$(document).on('change', '.exp_file', function() {
+    const fileName = this.files[0]?.name || '';
+    const displayId = $(this).data('display');
+    $(displayId).val(fileName);
 });
 
 // ==========================
 // REMOVE EXPERIENCE ROW
 // ==========================
 $(document).on('click', '.remove-experience', function() {
-    $(this).closest('.col-md-6').remove();
+    // Remove the whole card instead of a column
+    $(this).closest('.experience-item').remove();
     computeExperienceTotal();
+    updateExperienceModalSummary();
 });
 
+function resetExperience(){
+
+    $('#experienceContainer').html('');
+    $('#experience_summary').html('<span class="text-muted">No experience added.</span>');
+
+    $('#experience_summary_modal').html('');
+    
+    $('input[name="comparative[experience]"]').val(0);
+
+    $('#experience_remark').html('<span class="text-muted">Waiting for The QS</span>');
+
+    experienceIndex = 0;
+}
 // ==========================
 // COMPUTE TOTAL EXPERIENCE
 // ==========================
 function computeExperienceTotal() {
     let totalYears = 0;
     let allItemsValid = true;
-
+    
     $('.experience-item').each(function() {
         const start = new Date($(this).find('.exp_start').val());
         const end = new Date($(this).find('.exp_end').val());
-
+        
         if (!isNaN(start) && !isNaN(end) && end >= start) {
             let years = end.getFullYear() - start.getFullYear();
             let months = end.getMonth() - start.getMonth();
@@ -187,12 +279,12 @@ function computeExperienceTotal() {
             
             if (days < 0) {
                 months--;
-                days += 30;
+                days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
             }
             
-            if (months < 0) { 
-                years--; 
-                months += 12; 
+            if (months < 0) {
+                years--;
+                months += 12;
             }
             
             // Convert to decimal years
@@ -202,7 +294,7 @@ function computeExperienceTotal() {
             allItemsValid = false;
         }
     });
-
+    
     // Get levels
     const actualLevel = getLevelFromYears(totalYears);
     const requiredLevel = getLevelFromYears(requiredYears);
@@ -211,30 +303,6 @@ function computeExperienceTotal() {
     const qsPoints = calculateQSPoints(actualLevel, requiredLevel);
     const levelDifference = actualLevel - requiredLevel;
     
-    // Update modal summary (like training)
-    const modalSummary = $('#experience_summary_modal');
-    if (totalYears > 0 && requiredYears > 0) {
-        const status = totalYears >= requiredYears ? 
-            '<span class="text-success fw-bold">MET</span>' : 
-            '<span class="text-danger fw-bold">NOT MET</span>';
-        
-        modalSummary.html(`
-            <div class="alert alert-info p-2">
-                <strong>Experience Summary</strong><br>
-                Total Years: ${totalYears.toFixed(2)} years<br>
-                Applicant Level: ${actualLevel}<br>
-                Required Years: ${requiredYears} year(s)<br>
-                Required Level: ${requiredLevel}<br>
-                Level Difference: ${levelDifference}<br>
-                Status: ${status}<br>
-                <strong>Points: ${qsPoints}</strong>
-            </div>
-        `);
-    } else {
-        modalSummary.html('<div class="alert alert-warning p-2">No experiences added or waiting for QS</div>');
-    }
-
-    // Return result
     return {
         totalYears: parseFloat(totalYears.toFixed(2)),
         actualLevel: actualLevel,
@@ -246,104 +314,235 @@ function computeExperienceTotal() {
 }
 
 // ==========================
-// SAVE EXPERIENCE
+// UPDATE EXPERIENCE MODAL SUMMARY
 // ==========================
+// ==========================
+// UPDATE EXPERIENCE MODAL SUMMARY WITH LIVE DATE VALIDATION
+// ==========================
+function updateExperienceModalSummary() {
+    const modalSummary = $('#experience_summary_modal');
+    const items = $('.experience-item');
+
+    if (items.length === 0) {
+        modalSummary.html('<div class="alert alert-warning p-2">No experience(s) added</div>');
+        $('input[name="comparative[experience]"]').val(0); // Reset points
+        $('#experience_remark').html('<span class="text-muted">Waiting for The QS</span>');
+        return;
+    }
+
+    let allFilled = true;
+    let dateError = false;
+
+    // Loop through experience items
+    items.each(function() {
+        const startVal = $(this).find('.exp_start').val();
+        const endVal = $(this).find('.exp_end').val();
+        const pos = $(this).find('.exp_position').val();
+
+        // Check required fields
+        if (!startVal || !endVal || !pos) {
+            allFilled = false;
+        }
+
+        // Check live date validation
+        if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+            dateError = true;
+        }
+    });
+
+    // If fields are incomplete or dates invalid
+    if (!allFilled) {
+        modalSummary.html(`
+            <div class="alert alert-info p-2">
+                <strong>Experience Summary</strong><br>
+                Status: <span class="text-muted">Waiting... (Incomplete Fields)</span>
+            </div>
+        `);
+        $('input[name="comparative[experience]"]').val(0);
+        $('#experience_remark').html('<span class="text-muted">Waiting for The QS</span>');
+        return;
+    }
+
+    if (dateError) {
+        modalSummary.html(`
+            <div class="alert alert-danger p-2">
+                <strong>Experience Summary</strong><br>
+                Status: <span class="text-danger fw-bold">Invalid Dates Detected</span><br>
+                Please correct end dates that are earlier than start dates.
+            </div>
+        `);
+        $('input[name="comparative[experience]"]').val(0);
+        $('#experience_remark').html('<span class="text-muted">Waiting for The QS</span>');
+        return;
+    }
+
+    // If all good, compute total
+    const result = computeExperienceTotal();
+
+    const status = result.totalYears >= requiredYears ?
+        '<span class="text-success fw-bold">MET</span>' :
+        '<span class="text-danger fw-bold">NOT MET</span>';
+
+    // Display summary
+    modalSummary.html(`
+        <div class="alert alert-info p-2">
+            <strong>Experience Summary</strong><br>
+            Total Years: ${formatYearsMonths(result.totalYears)}<br>
+            Status: ${status}<br>
+        </div>
+    `);
+
+    // Update comparative points and remark
+    $('input[name="comparative[experience]"]').val(result.qsPoints);
+    $('#experience_remark').html(status);
+}
+
 // ==========================
 // SAVE EXPERIENCE
 // ==========================
 $('#saveExperienceBtn').on('click', function() {
+
     const result = computeExperienceTotal();
-    
-    // Validate
+
     let incomplete = false;
+    let missingFile = false;
+
     $('.experience-item').each(function() {
+
         const pos = $(this).find('.exp_position').val();
         const start = $(this).find('.exp_start').val();
         const end = $(this).find('.exp_end').val();
-        
+        const file = $(this).find('.exp_file')[0]?.files[0];
+
+        // Required fields validation
         if (!pos || !start || !end) {
             incomplete = true;
         }
+
+        // ❗ DATE VALIDATION (ilagay dito)
+        if (start && end && new Date(end) < new Date(start)) {
+
+            Swal.fire({
+                icon:'error',
+                title:'Invalid Dates',
+                text:'End date cannot be earlier than start date.'
+            });
+
+            incomplete = true;
+            return false; // stop loop
+        }
+
+        // Certificate validation
+        if (!file) {
+            missingFile = true;
+        }
+
     });
-    
-    if (incomplete || !result.isValid) {
+
+    if (incomplete) {
         Swal.fire({
             icon: 'warning',
-            title: 'Incomplete or Invalid Data',
-            text: 'Please complete all fields with valid dates.'
+            title: 'Incomplete Data',
+            text: 'Please complete all experience fields.'
         });
         return;
     }
 
-    // Build summary for main table (POSITION, PERIOD, YEAR only) - like training
-    let summary = '';
-    let experienceList = [];
+    if (missingFile) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Missing Certificate',
+            text: 'Please upload the Certificate of Employment / Service Record.'
+        });
+        return;
+    }
+
     
-    $('.experience-item').each(function() {
-        const pos = $(this).find('.exp_position').val();
-        const start = $(this).find('.exp_start').val();
-        const end = $(this).find('.exp_end').val();
-        
-        if (pos && start && end) {
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            let years = endDate.getFullYear() - startDate.getFullYear();
-            let months = endDate.getMonth() - startDate.getMonth();
-            if (months < 0) {
-                years--;
-                months += 12;
-            }
+   // Build summary for main table (POSITION, PERIOD, YEAR only)
+        let summary = '';
+        let experienceList = [];
+
+        $('.experience-item').each(function() {
+            const pos = $(this).find('.exp_position').val();
+            const start = $(this).find('.exp_start').val();
+            const end = $(this).find('.exp_end').val();
             
-            const formattedYears = years + (months / 12);
-            
-            // Format dates like "Jan 2020"
-            const startFormatted = startDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                year: 'numeric' 
-            });
-            const endFormatted = endDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                year: 'numeric' 
-            });
-            
-            experienceList.push({
+            if (pos && start && end) {
+                const startDate = new Date(start);
+                const endDate = new Date(end);
+                
+                // Basic difference
+                let years = endDate.getFullYear() - startDate.getFullYear();
+                let months = endDate.getMonth() - startDate.getMonth();
+                let days = endDate.getDate() - startDate.getDate();
+
+                // Adjust if days are negative
+                if (days < 0) {
+                    months--;
+                }
+
+                // Adjust if months are negative
+                if (months < 0) {
+                    years--;
+                    months += 12;
+                }
+
+                // Build clean readable text
+                let yearText = '';
+                let monthText = '';
+
+                if (years > 0) {
+                    yearText = `${years} year${years > 1 ? 's' : ''}`;
+                }
+
+                if (months > 0) {
+                    monthText = `${months} month${months > 1 ? 's' : ''}`;
+                }
+
+                let finalText = '';
+
+                if (yearText && monthText) {
+                    finalText = `${yearText} and ${monthText}`;
+                } else if (yearText) {
+                    finalText = yearText;
+                } else if (monthText) {
+                    finalText = monthText;
+                } else {
+                    finalText = 'Less than 1 month';
+                }
+
+                // Format dates like "Jan 2020"
+                const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+                experienceList.push({
                 position: pos,
+                school: $(this).find('.exp_school').val(),
                 period: `${startFormatted} - ${endFormatted}`,
-                years: formattedYears.toFixed(2)
-            });
-        }
-    });
+                years: finalText
+                });
+            }
+        });
 
-    // Create simple list summary like training - WITH POINTS
-    if (experienceList.length > 0) {
-        summary = experienceList.map(exp => 
-            `<div class="mb-1">
+        // Create simple list summary - WITHOUT POINTS
+        if (experienceList.length > 0) {
+           summary = experienceList.map(exp => `
+                <div class="mb-2">
+
                 <strong>${exp.position}</strong><br>
-                <small>${exp.period} (${exp.years} years)</small>
-            </div>`
-        ).join('');
-        
-        summary += `<div class="mt-2 pt-2 border-top">
-            <strong>Total: ${result.totalYears} years</strong><br>
-            <strong class="text-primary">Points: ${result.qsPoints}</strong>
-        </div>`;
-    }
 
-    // Update main table (like training)
+                <small class="text-muted">${exp.school}</small><br>
+
+                <small>${exp.period} (${exp.years})</small>
+
+                </div>
+                `).join('');
+        } else {
+            summary = '<span class="text-muted">No experience added.</span>';
+        }
+    
+    // Update main table experience summary (list of experiences)
     $('#experience_summary').html(summary || '<span class="text-muted">No experience added.</span>');
-    
-    // =========== IMPORTANT: HUWAG BAGUHIN ANG QS COLUMN ===========
-    // Panatilihin ang QS requirement text sa QS column
-    const level = $('#appliedLevel').val();
-    const position = $('#appliedPosition').val();
-    let qsExperienceText = '—';
-    
-    if (window.qsConfig && window.qsConfig[level] && window.qsConfig[level][position]) {
-        qsExperienceText = window.qsConfig[level][position].experience || `${requiredYears} year(s)`;
-    }
-    
-    $('#qs_experience').text(qsExperienceText); // "3 years of teaching experience"
-    // =========== END IMPORTANT ===========
     
     // Update comparative points input
     $('input[name="comparative[experience]"]').val(result.qsPoints);
@@ -355,18 +554,17 @@ $('#saveExperienceBtn').on('click', function() {
     } else {
         remark.html('<span class="text-danger fw-bold">NOT MET</span>');
     }
-
+    
     // Show success message
     Swal.fire({
         icon: 'success',
         title: 'Experience Saved',
-        html: `Successfully saved ${experienceList.length} experience(s)<br>Total Years: ${result.totalYears} years<br>Points: ${result.qsPoints}`,
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
         timer: 3000
     });
-
+    
     // Hide modal
     setTimeout(() => {
         bootstrap.Modal.getInstance(document.getElementById('experienceModal')).hide();
@@ -376,41 +574,90 @@ $('#saveExperienceBtn').on('click', function() {
 // ==========================
 // AUTO COMPUTE WHEN DATES CHANGE
 // ==========================
-$(document).on('change', '.exp_start, .exp_end', computeExperienceTotal);
+$(document).on('change', '.exp_start, .exp_end, .exp_position', updateExperienceModalSummary);
+$(document).on('change', '.exp_school_type', function () {
 
-// ==========================
-// RESET EXPERIENCE
-// ==========================
-function resetExperience() {
-    $('#experienceContainer').empty();
-    $('#experience_summary').html('<span class="text-muted">No experience added.</span>');
-    $('#experience_remark').html('<span class="text-muted">Waiting for the QS</span>');
-    $('#qs_experience').text('—');
-    $('input[name="comparative[experience]"]').val('');
-    experienceIndex = 0;
-}
+    const container = $(this).closest('.experience-item');
+    const type = $(this).val();
+    const index = $(this).attr('name').match(/\d+/)[0];
 
+    if (type === 'Public') {
+
+        container.find('.position-wrapper').html(`
+
+        <label class="fw-bold">Position</label>
+
+        <select name="experiences[${index}][position]"
+        class="form-control exp_position" required>
+
+        <option value="">Select Position</option>
+
+        <option>Teacher I</option>
+        <option>Teacher II</option>
+        <option>Teacher III</option>
+        <option>Teacher IV</option>
+        <option>Teacher V</option>
+        <option>Teacher VI</option>
+        <option>Teacher VII</option>
+
+        <option>Master Teacher I</option>
+        <option>Master Teacher II</option>
+        <option>Master Teacher III</option>
+        <option>Master Teacher IV</option>
+        <option>Master Teacher V</option>
+
+        </select>
+
+        `);
+    }
+
+    if (type === 'Private') {
+
+        container.find('.position-wrapper').html(`
+
+        <label class="fw-bold">Position</label>
+
+        <input type="text"
+        name="experiences[${index}][position]"
+        class="form-control exp_position"
+        placeholder="Enter Position (ex. Science Teacher)"
+        required>
+
+        `);
+    }
+
+});
 // ==========================
-// MODAL INITIALIZATION
+// INITIAL LOAD AND EVENT LISTENERS
 // ==========================
 $(document).ready(function() {
     loadExperienceTable();
+    
+    // Initial reset ng experience
+    resetExperience();
+    
+    // Kapag nagbago ang position o school, i-reset ang experience at i-update ang QS
+    $('#position_applied, #school_id').on('change', function() {
+        resetExperience();
+        
+        // If both have values, update the modal requirement text
+        const position = $('#position_applied').val();
+        const school = $('#school_id').val();
+        if (position && school) {
+            loadExperienceQS();
+        }
+    });
     
     // When modal opens
     $('#experienceModal').on('show.bs.modal', function() {
         loadExperienceQS();
         
-        // Add modal summary area (like training)
+        // Create modal summary container if not exists
         if ($('#experience_summary_modal').length === 0) {
-            $('#experienceContainer').after(`
-                <div id="experience_summary_modal" class="mt-3">
-                    <div class="alert alert-warning p-2">
-                        No experiences added or waiting for QS
-                    </div>
-                </div>
-            `);
-        } else {
-            $('#experience_summary_modal').html('<div class="alert alert-warning p-2">No experiences added or waiting for QS</div>');
+            $('#experienceContainer').after('<div id="experience_summary_modal" class="mt-3"></div>');
         }
+        
+        // Rebuild summary dynamically
+        updateExperienceModalSummary();
     });
 });

@@ -1,0 +1,316 @@
+/* public/print.css */
+
+@media print {
+    /* Itago ang mga button at form controls pag nag-print */
+    .btn, 
+    button, 
+    .text-center.my-4,
+    .form-control,
+    .form-select,
+    .form-check-input,
+    input[type="checkbox"],
+    input[type="number"],
+    input[type="text"],
+    input[type="date"],
+    select,
+    .btn-success,
+    .btn-secondary,
+    .btn-primary,
+    .add-education-btn,
+    .add-training-btn,
+    .add-experience-btn,
+    .add-eligibility-btn,
+    [onclick="window.print()"] {
+        display: none !important;
+    }
+    
+    /* Gawing black and white ang lahat */
+    * {
+        color: black !important;
+        background: white !important;
+        background-color: white !important;
+        border-color: black !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Ipakita ang text values imbes na inputs */
+    input[readonly] {
+        display: inline-block !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-weight: normal !important;
+        color: black !important;
+    }
+    
+    /* Ipakita ang mga checkbox marks */
+    .form-check-input:checked {
+        content: "✓";
+        display: inline-block !important;
+        font-size: 16px;
+    }
+    
+    /* Ipakita ang mga naka-check na checkbox */
+    .form-check-input:checked + .form-check-label::before {
+        content: "✓ ";
+        font-weight: bold;
+    }
+    
+    /* I-adjust ang tables para sa print */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    
+    th, td {
+        border: 1px solid black !important;
+        padding: 8px !important;
+    }
+    
+    /* Ipakita ang mga placeholder text */
+    input:not([readonly])::placeholder {
+        color: black !important;
+        opacity: 1 !important;
+    }
+    
+    /* Para sa "For —" na text */
+    #forPosition {
+        display: block !important;
+        color: black !important;
+    }
+    
+    /* Siguraduhing visible ang lahat ng content */
+    .container, 
+    .card, 
+    .form-card, 
+    .doc-top, 
+    .header {
+        background: white !important;
+        border: none !important;
+    }
+    
+    /* Ipakita ang mga text values mula sa inputs */
+    input[type="text"], 
+    input[type="number"], 
+    input[type="date"], 
+    select,
+    .form-control,
+    .form-select {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
+        color: black !important;
+    }
+    
+    /* Ipakita ang selected value sa dropdowns */
+    select {
+        display: inline-block !important;
+        border: none !important;
+        background: transparent !important;
+    }
+    
+    select:after {
+        content: attr(data-selected) !important;
+    }
+    
+    /* Para sa education summary at iba pang dynamic content */
+    #education_summary, 
+    #training_summary, 
+    #experience_summary, 
+    #eligibility_summary {
+        display: block !important;
+        color: black !important;
+        border: 1px solid black !important;
+        padding: 5px !important;
+        margin-top: 5px !important;
+    }
+    
+    /* Siguraduhing visible ang lahat ng text */
+    p, 
+    label, 
+    h1, 
+    h2, 
+    h3, 
+    h4, 
+    h5, 
+    h6, 
+    span, 
+    div {
+        color: black !important;
+        background: transparent !important;
+    }
+    
+    /* Itago ang mga MET colors */
+    .bg-primary, 
+    .bg-success, 
+    .bg-info, 
+    .bg-warning, 
+    .bg-danger,
+    [class*="bg-"],
+    [class*="text-"] {
+        background: white !important;
+        color: black !important;
+    }
+    
+    /* Ipakita ang mga checkboxes na may checkmark */
+    input[type="checkbox"]:checked {
+        content: "✓";
+        display: inline-block;
+        width: auto;
+        height: auto;
+    }
+    
+    /* Siguraduhing may laman ang mga input fields */
+    input:not([readonly]):not([type="checkbox"]):not([type="radio"]) {
+        position: relative;
+        min-height: 1.2em;
+    }
+    
+    /* Display input values */
+    input:not([readonly]):not([type="checkbox"]):not([type="radio"])::before {
+        content: attr(value);
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        color: black;
+        padding: 0;
+    }
+    
+    /* Para sa mga walang value na input, ipakita ang placeholder */
+    input:not([readonly]):not([type="checkbox"]):not([type="radio"]):not([value])::before {
+        content: attr(placeholder);
+        color: #666 !important;
+        font-style: italic;
+    }
+    
+    /* Para sa select dropdowns, ipakita ang selected option */
+    select:not([multiple]) {
+        position: relative;
+    }
+    
+    select:not([multiple])::before {
+        content: attr(data-selected);
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: white;
+        color: black;
+        padding: 0;
+    }
+    
+    /* Siguraduhing hindi mag-overlap ang content */
+    .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .col-md-6 {
+        width: 50% !important;
+        float: left !important;
+    }
+    
+    /* Ipakita ang mga label */
+    .form-label {
+        font-weight: bold !important;
+        margin-bottom: 5px !important;
+        display: block !important;
+    }
+    
+    /* I-adjust ang spacing */
+    .mb-3, 
+    .my-4 {
+        margin-bottom: 15px !important;
+    }
+    
+    /* Siguraduhing visible ang mga borders */
+    .table-bordered {
+        border: 1px solid black !important;
+    }
+    
+    /* Ipakita ang mga remarks */
+    #education_remark,
+    #training_remark,
+    #experience_remark,
+    #eligibility_remark {
+        display: table-cell !important;
+        color: black !important;
+    }
+    
+    /* Ipakita ang QS values - ALIS ANG BOXES */
+    #qs_education,
+    #qs_training,
+    #qs_experience,
+    #qs_eligibility {
+        color: black !important;
+        font-weight: normal !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Ipakita ang total COI at NCOI values */
+    #totalCOI,
+    #totalNCOI,
+    input[name="total_coi"],
+    input[name="total_ncoi"] {
+        border: none !important;
+        background: transparent !important;
+        color: black !important;
+        font-weight: bold !important;
+    }
+    
+    /* Ipakita ang comparative assessment values */
+    input[name^="comparative"] {
+        border: none !important;
+        background: transparent !important;
+        color: black !important;
+    }
+    
+    /* Ipakita ang division at regional office values */
+    input[name^="division"],
+    input[name^="regional"] {
+        border: none !important;
+        background: transparent !important;
+        color: black !important;
+    }
+    
+    /* Siguraduhing nasa tamang position ang mga signature lines */
+    .text-decoration-underline {
+        text-decoration: underline !important;
+        text-decoration-color: black !important;
+    }
+    
+    /* Iwasan ang page breaks sa loob ng tables */
+    tr, 
+    td, 
+    th {
+        page-break-inside: avoid !important;
+    }
+    
+    /* Siguraduhing maganda ang page breaks */
+    h5 {
+        page-break-after: avoid !important;
+    }
+    
+    table {
+        page-break-inside: auto !important;
+    }
+    
+    /* Ipakita ang mga borders ng form-check */
+    .form-check {
+        display: block !important;
+        margin-bottom: 5px !important;
+    }
+}
