@@ -50,6 +50,20 @@
         <form id="applicantForm" action="{{ route('applicants.store') }}" method="POST" enctype="multipart/form-data">
 
             @csrf
+            <!-- HIDDEN INPUTS FOR EDUCATION -->
+            <div id="educationHiddenInputs"></div>
+            <!-- ELIGIBILITY HIDDEN CONTAINER -->
+            <div id="eligibilityHiddenContainer"></div>
+            <input type="hidden" name="education[degree]" id="input_education_degree">
+            <input type="hidden" name="education[school]" id="input_education_school">
+            <input type="hidden" name="education[date_graduated]" id="input_education_date">
+            <input type="hidden" name="education[units]" id="input_education_units">
+            
+            @include('modals.education')
+            @include('modals.training')
+            @include('modals.experience')
+            @include('modals.eligibility')
+            @include('modals.ipcrf')
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -201,6 +215,8 @@
   </div>
 </div>
 
+
+
     <!-- QS TABLE -->
 <hr class="mt-2">
 <h5 class="text-left fw-bold mt-3">I. QUALIFICATION STANDARDS</h5>
@@ -229,8 +245,8 @@
     </td>
     <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
      <!-- Hidden input for submission -->
-    <input type="hidden" name="qs_applicant_education" id="input_qs_education" value="">
-    <input type="hidden" name="remarks_education" id="input_remarks_education" value="">
+    <!-- <input type="hidden" name="qs_applicant_education" id="input_qs_education" value="">
+    <input type="hidden" name="remarks_education" id="input_remarks_education" value=""> -->
 </tr>
        <tr>
            <td>Training</td>
@@ -427,7 +443,7 @@
         <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="number" name="comparative[performance]" class="form-control form-control-sm text-center"></td>
+        <td><input type="number" name="comparative[performance]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[classroom]" 
                  class="form-control form-control-sm text-center" 
                  id="comparativeClassroom"
@@ -605,531 +621,16 @@
     <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button>
     <button type="submit" form="applicantForm" class="btn btn-success">💾 Submit</button>
 </div>
+
+
         </form>
     </div>
 </div>
 </div> <!-- /.container -->
 
-<!-- EDUCATION MODAL -->
 
-<div class="modal fade" id="educationModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow-sm">
-  <!-- Modal Header -->
-  <div class="modal-header bg-primary text-white">
-    <h6 class="modal-title fw-bold">
-      <i class="fas fa-graduation-cap me-2"></i>Add Education
-    </h6>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-  </div>
 
-  <!-- Modal Body -->
-  <div class="modal-body p-4">
-    <div class="row g-4">
 
-      <!-- ================= LEFT SIDE ================= -->
-      <!-- RUBRICS + SUMMARY -->
-      <div class="col-md-4 d-flex">
-        <div class="education-rubrics-sticky w-100">
-
-          <!-- RUBRICS CARD -->
-          <div class="card border-0 shadow-sm mb-3 border-light-green flex-fill">
-            <div class="card-header bg-light-green">
-              <h6 class="mb-0 fw-semibold text-green">
-                <i class="fas fa-list-check me-2"></i>Education Rubrics
-              </h6>
-            </div>
-            <div class="card-body small">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <strong>Bachelor’s Degree</strong><br>
-                  Required for Teacher I–V
-                </li>
-                <li class="list-group-item">
-                  <strong>Master’s Degree Units</strong><br>
-                  Required for Teacher VI–VII
-                </li>
-                <li class="list-group-item">
-                  <strong>Master’s Degree</strong><br>
-                  Required for Master Teacher
-                </li>
-                <li class="list-group-item text-muted">
-                  Points are based on excess units earned
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- SUMMARY CARD -->
-          <div class="card border-0 shadow-sm border-light-green">
-            <div class="card-body bg-light-green">
-              <strong>Education Summary</strong><br>
-              Degree: <span id="edu_degree_display">—</span><br>
-              Education Level: <span id="edu_level_display">—</span><br>
-              Status: <span id="edu_status_display" class="text-muted">Waiting</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ================= RIGHT SIDE ================= -->
-      <!-- EDUCATION FORM -->
-      <div class="col-md-8">
-
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-header bg-light py-3">
-            <h6 class="mb-0 fw-semibold text-primary">
-              Education Information
-            </h6>
-          </div>
-
-          <div class="card-body p-4">
-            <div class="row g-4">
-
-              <!-- DEGREE -->
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-book me-2 text-primary"></i>
-                  Degree
-                </label>
-                <input type="text"
-                       id="education_name"
-                       class="form-control education-modal-border"
-                       placeholder="e.g. Bachelor of Secondary Education"
-                       required>
-              </div>
-
-              <!-- SCHOOL GRADUATED -->
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-school me-2 text-primary"></i>
-                  School Graduated
-                </label>
-                <input type="text"
-                       id="education_school"
-                       class="form-control education-modal-border"
-                       placeholder="e.g. University of Manila"
-                       required>
-              </div>
-
-              <!-- DATE GRADUATED -->
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                  Date Graduated
-                </label>
-                <input type="date"
-                       id="education_date"
-                       class="form-control education-modal-border"
-                       required>
-              </div>
-
-              <!-- EDUCATION LEVEL -->
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-certificate me-2 text-primary"></i>
-                  Highest Educational Attainment
-                </label>
-                <select id="education_units_select"
-                        class="form-select education-modal-border">
-                  <option value="">Select Education Level</option>
-                </select>
-              </div>
-
-              <!-- OTHER UNITS -->
-              <div class="col-md-12 d-none" id="education_units_other_container">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-hashtag me-2 text-primary"></i>
-                  Specify Units
-                </label>
-                <input type="number"
-                       id="education_units_other"
-                       class="form-control education-modal-border"
-                       min="0"
-                       placeholder="Enter number of units">
-              </div>
-
-              <!-- CERTIFICATE UPLOAD -->
-              <div class="col-md-12">
-                <label class="form-label fw-semibold">
-                  <i class="fas fa-file-pdf me-2 text-danger"></i>
-                  Certificate (PDF)
-                </label>
-
-                <div class="education-modal-border-dashed rounded-3 p-4 text-center bg-light"
-                     style="cursor:pointer"
-                     onclick="document.getElementById('education_file').click()">
-
-                  <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-
-                  <input type="file"
-                         id="education_file"
-                         class="d-none"
-                         accept="application/pdf"
-                         required>
-
-                  <span class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-upload me-2"></i>
-                    Choose PDF File
-                  </span>
-
-                  <div class="education-modal-form-text mt-2">
-                    Max file size: 10MB (PDF only)
-                  </div>
-
-                  <div id="education_file_name"
-                       class="fw-semibold text-muted mt-2">
-                    No file chosen
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Footer -->
-  <div class="modal-footer">
-    <button type="button"
-            class="btn btn-success"
-            id="saveEducation">
-      <i class="bi bi-check-circle me-1"></i>
-      Save Education
-    </button>
-
-    <button type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal">
-      Cancel
-    </button>
-  </div>
-
-</div>
-  </div>
-</div>
-
-
-<!-- TRAINING MODAL -->
-<div class="modal fade" id="trainingModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow-sm">
-
-      <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold">
-          <i class="fas fa-chalkboard-teacher me-2"></i>Training / Seminars Attended
-        </h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body p-4">
-        <div class="row g-4">
-
-          <!-- ================= LEFT SIDE ================= -->
-          <!-- RUBRICS + SUMMARY (30%) -->
-          <div class="col-md-4">
-            <div class="training-summary-sticky">
-
-              <!-- TRAINING RUBRICS -->
-              <div class="card border-0 shadow-sm mb-3 border-light-green">
-                <div class="card-header bg-light-green">
-                  <h6 class="mb-0 fw-semibold text-green">
-                    <i class="fas fa-list-check me-2"></i>Training Rubrics
-                  </h6>
-                </div>
-                <div class="card-body small training-card-body">
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                      <strong>Face-to-Face Training</strong><br>
-                      8 hours per day
-                    </li>
-                    <li class="list-group-item">
-                      <strong>Online / Virtual Training</strong><br>
-                      3 hours per day (As per DepEd guidelines and legal basis for online training)
-                    </li>
-                    <li class="list-group-item text-muted">
-                      Points are based on total accumulated hours
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- TRAINING SUMMARY -->
-              <div id="modal_training_summary">
-                <div class="alert bg-light-green border-light-green mb-0 p-3">
-                  <strong>Training Summary</strong><br>
-                  Required Hours: <span id="required_hours_display">0</span> hours<br>
-                  Current Total: <span id="total_training_hours">0</span> hours<br>
-                  Status: <span class="text-muted">No trainings added</span><br>
-                  Points: <span class="fw-bold">0</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- ================= RIGHT SIDE ================= -->
-          <!-- TRAINING FORM (70%) -->
-          <div class="col-md-8">
-
-            <div id="trainingContainer">
-              <!-- JS will inject training items here -->
-            </div>
-
-            <!-- ADD TRAINING BUTTON -->
-            <div class="mb-3 mt-2">
-              <button type="button" class="btn btn-outline-primary btn-sm" id="addTraining">
-                ➕ Add Another Training
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer d-flex justify-content-end">
-        <button type="button" class="btn btn-success" id="saveTraining">
-          <i class="bi bi-check-circle me-1"></i> Save Training
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancel
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- EXPERIENCE MODAL -->
-<div class="modal fade" id="experienceModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow-sm">
-
-      <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold">Add Work Experience</h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body p-0 d-flex">
-
-        <!-- LEFT SIDE: RUBRICS + SUMMARY (30%) -->
-        <div class="col-md-4 p-4 border-end" style="flex: 0 0 30%; max-width: 30%;">
-          <div class="experience-summary-sticky">
-
-            <!-- EXPERIENCE RUBRICS -->
-            <div class="card border-0 shadow-sm mb-3 border-light-green">
-              <div class="card-header bg-light-green">
-                <h6 class="mb-0 fw-semibold text-green">
-                  <i class="fas fa-list-check me-2"></i>Experience Rubrics
-                </h6>
-              </div>
-              <div class="card-body small">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <strong>1-5 years</strong><br>
-                    Level 1-10
-                  </li>
-                  <li class="list-group-item">
-                    <strong>6-10 years</strong><br>
-                    Level 11-20
-                  </li>
-                  <li class="list-group-item">
-                    <strong>11-15 years</strong><br>
-                    Level 21-32
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- EXPERIENCE SUMMARY -->
-            <div id="experience_summary_modal">
-              <div class="alert bg-light-green border-light-green mb-0 p-3">
-                <strong>Experience Summary</strong><br>
-                Required Years: <span id="required_exp_years_display">0</span><br>
-                Current Total: <span id="total_exp_years_display">0</span><br>
-                Status: <span class="text-muted">No experiences added</span><br>
-                QS Points: <span class="fw-bold">0</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- RIGHT SIDE: FORM (70%) SCROLLABLE -->
-        <div class="col-md-8 p-4" style="flex: 1; max-height: 70vh; overflow-y: auto;">
-
-          <!-- EXPERIENCE CONTAINER -->
-          <div id="experienceContainer" class="mb-3 row g-3"></div>
-
-          <!-- ADD EXPERIENCE BUTTON -->
-          <div class="mb-3">
-            <button type="button" class="btn btn-outline-primary btn-sm" id="addExperience">
-              ➕ Add Another Experience
-            </button>
-          </div>
-
-          <!-- FINAL SUMMARY (for dynamic updates) -->
-          <div id="experience_summary" class="mt-3"></div>
-
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-success" id="saveExperienceBtn">
-          <i class="bi bi-check-circle me-1"></i> Save Experience
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
- <!-- ELIGIBILITY MODAL -->
-<div class="modal fade" id="eligibilityModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow-sm">
-
-      <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title">Add Eligibility</h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body d-flex p-0">
-
-      <!-- LEFT SIDE: RUBRICS + SUMMARY -->
-<div class="col-md-4 p-4 border-end" style="flex: 0 0 30%; max-width: 30%;">
-  <div class="eligibility-summary-sticky">
-
-    <!-- ELIGIBILITY RUBRICS -->
-    <div class="card shadow-sm mb-3 border-light-green bg-light-green">
-      <div class="card-header text-green fw-bold">
-        <i class="fas fa-list-check me-2"></i>Eligibility Rubrics
-      </div>
-      <div class="card-body small text-dark">
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">RA 1080 (Teacher)</li>
-      <li class="list-group-item">Expired ID → Upload renewal receipt or renewed ID</li>
-      <li class="list-group-item">Accepted formats: PDF, Word, Images</li>
-    </ul>
-  </div>
-</div>
-
-    <!-- ELIGIBILITY SUMMARY -->
-    <div id="eligibility_summary_modal" class="card shadow-sm border-light-green bg-light-green">
-      <div class="card-body p-3 text-green">
-        <strong>Eligibility Summary</strong><br>
-        Status: <span class="badge bg-secondary">Waiting...</span><br>
-        Selected Eligibility: <span class="fw-bold">—</span>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-        <!-- RIGHT SIDE: FORM (SCROLLABLE) -->
-        <div class="col-md-8 p-4" style="flex: 1; max-height: 70vh; overflow-y: auto;">
-
-          <div class="row g-3">
-
-            <!-- Eligibility Dropdown -->
-            <div class="col-12">
-              <div class="card p-3 shadow-sm border-0">
-                <label class="form-label fw-bold text-primary">Eligibility Name</label>
-                <select id="eligibilityInput" class="form-select">
-                  <option value="">Select Eligibility</option>
-                  <option value="LET">LET</option>
-                  <option value="PBET">PBET</option>
-                  <option value="MAGNA CARTA">MAGNA CARTA</option>
-                </select>
-                <small class="form-text text-muted">Select eligibility as required by QS.</small>
-              </div>
-            </div>
-
-            <!-- ID Expiry -->
-            <div class="col-12">
-              <div class="card p-3 shadow-sm border-0">
-                <label class="form-label fw-bold text-primary">ID Expiry Date</label>
-                <input type="date" id="eligibilityExpiry" class="form-control">
-                <small class="form-text text-muted">Enter expiry date. If expired, upload renewal proof.</small>
-              </div>
-            </div>
-
-            <!-- Attachment -->
-            <div class="col-12">
-              <div class="card p-3 shadow-sm border-0">
-                <label class="form-label fw-bold text-primary">Attachment (PDF, Word, Image)</label>
-                <input type="file" id="eligibilityAttachment" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif">
-                <small class="form-text text-muted">
-                  Upload scanned ID. If expired, attach official receipt or renewed ID.
-                </small>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-success" id="saveEligibilityBtn" onclick="saveEligibility()">
-          <i class="bi bi-check-circle me-1"></i> Save Eligibility
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- Hidden inputs for QS -->
-<input type="hidden" id="appliedPosition" value="Teacher V">
-<input type="hidden" id="appliedLevel" value="kindergarten">
-
-
-<div class="modal fade" id="ipcrfModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-3">
-
-      <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white border-0">
-        <h6 class="modal-title">Upload IPCRF Files</h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-
-        <p id="ipcrfInstruction" class="text-muted mb-4"></p>
-
-        <div class="row g-3" id="ipcrfContainer">
-          <!-- IPCRF cards will render here dynamically -->
-        </div>
-
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="saveIpcrfBtn">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- QS Premium Loading Overlay -->
 <div id="qsLoadingOverlay">
@@ -1178,6 +679,7 @@
   <script src="{{ asset('js/dataprivacy.js') }}"></script>
   <script src="{{ asset('js/ppstlegend.js') }}"></script>
   <script src="{{ asset('js/indicators.js') }}"></script>
+  <script src="{{ asset('js/fillout.js') }}"></script>
 
   <script src="{{ asset('js/mapping-sg.js') }}"></script>
   <script src="{{ asset('js/position-ranking.js') }}"></script>
@@ -1342,47 +844,6 @@
       });
   </script>
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-
-      function isFormFilled() {
-          const name = document.getElementById('name').value.trim();
-          const currentPosition = document.querySelector('select[name="current_position"]').value;
-          const positionApplied = document.getElementById('position_applied').value;
-          const itemNumber = document.querySelector('input[name="item_number"]').value.trim();
-          const school = document.getElementById('school_id').value;
-          const sgSalary = document.querySelector('input[name="sg_annual_salary"]').value;
-          const levels = document.querySelectorAll('input[name="levels[]"]:checked');
-
-          return name && currentPosition && positionApplied && itemNumber && school && sgSalary && levels.length > 0;
-      }
-
-      function handleModal(buttonClass, modalId) {
-          const btn = document.querySelector(buttonClass);
-          btn.addEventListener('click', function() {
-              if(!isFormFilled()) {
-                  Swal.fire({
-                      icon: 'warning',
-                      title: 'Oops!',
-                      text: 'Please fill out all required fields in the form above before adding Qualifications Standard.',
-                      confirmButtonText: 'OK',
-                      timer: 5000
-                  });
-              } else {
-                  const modal = new bootstrap.Modal(document.getElementById(modalId));
-                  modal.show();
-              }
-          });
-      }
-
-      // Attach handlers for all four buttons
-      handleModal('.add-education-btn', 'educationModal');
-      handleModal('.add-training-btn', 'trainingModal');
-      handleModal('.add-experience-btn', 'experienceModal');
-      handleModal('.add-eligibility-btn', 'eligibilityModal');
-
-  });
-  </script>
-  <script>
   $(document).ready(function() {
       // Auto-initialize experience if QS data is available
       if (window.requiredExperienceYears > 0) {
@@ -1465,6 +926,40 @@
 
   });
   </script>
+  <script>
+ document.getElementById("saveEducation").addEventListener("click", function () {
+
+    let degree = document.getElementById("education_name").value;
+    let school = document.getElementById("education_school").value;
+    let date = document.getElementById("education_date").value;
+    let units = document.getElementById("education_units_select").value;
+    let fileInput = document.getElementById("education_file");
+
+    if (!degree || !school || !date || !fileInput.files.length) {
+        alert("Complete education fields");
+        return;
+    }
+
+    let container = document.getElementById("educationHiddenInputs");
+
+    container.innerHTML = `
+        <input type="hidden" name="education[degree]" value="${degree}">
+        <input type="hidden" name="education[school]" value="${school}">
+        <input type="hidden" name="education[date_graduated]" value="${date}">
+        <input type="hidden" name="education[units]" value="${units}">
+    `;
+
+    // clone file input para hindi mawala sa modal
+    let clone = fileInput.cloneNode(true);
+    clone.name = "education[file]";
+    clone.files = fileInput.files;
+
+    container.appendChild(clone);
+
+    alert("Education saved!");
+
+});
+</script>
 </body>
 </html>
 

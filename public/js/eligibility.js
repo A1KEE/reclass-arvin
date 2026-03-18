@@ -143,6 +143,7 @@ $('#eligibilityInput, #eligibilityExpiry, #eligibilityAttachment').on('change in
    SAVE ELIGIBILITY (UPDATED - Simple summary lang)
 ========================== */
 function saveEligibility() {
+
     const name = document.getElementById('eligibilityInput').value;
     const expiry = document.getElementById('eligibilityExpiry').value;
     const fileInput = document.getElementById('eligibilityAttachment');
@@ -152,8 +153,7 @@ function saveEligibility() {
         Swal.fire({
             icon: 'warning',
             title: 'Incomplete Information',
-            text: 'Please select eligibility and enter expiry date.',
-            confirmButtonText: 'OK'
+            text: 'Please select eligibility and expiry date.'
         });
         return;
     }
@@ -162,62 +162,55 @@ function saveEligibility() {
         Swal.fire({
             icon: 'warning',
             title: 'Attachment Required',
-            text: 'Please upload a copy of your eligibility document.',
-            confirmButtonText: 'OK'
+            text: 'Please upload your eligibility document.'
         });
         return;
     }
 
-    if (!isValidFileType(file)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid File Type',
-            text: 'Please upload only PDF, Word, or Image files.',
-            confirmButtonText: 'OK'
-        });
-        return;
-    }
+    // ==========================
+    // 🔥 ADD TO MAIN FORM
+    // ==========================
+    const container = document.getElementById('eligibilityHiddenContainer');
 
-    if (file.size > 5 * 1024 * 1024) {
-        Swal.fire({
-            icon: 'error',
-            title: 'File Too Large',
-            text: 'Maximum file size is 5MB.',
-            confirmButtonText: 'OK'
-        });
-        return;
-    }
+    // CLEAR OLD DATA (single entry muna)
+    container.innerHTML = '';
 
-    const isExpired = isEligibilityExpired(expiry);
-    const status = 'MET';
+    // TEXT DATA
+    container.insertAdjacentHTML('beforeend', `
+        <input type="hidden" name="eligibility_files[0][eligibility]" value="${name}">
+        <input type="hidden" name="eligibility_files[0][expiry]" value="${expiry}">
+    `);
 
-    // SIMPLE SUMMARY - name at expiry date lang
+    // FILE INPUT (CLONE TRICK)
+    const clonedInput = fileInput.cloneNode(true);
+    clonedInput.name = "eligibility_files[0][file]";
+
+    container.appendChild(clonedInput);
+
+    // ==========================
+    // UI UPDATE
+    // ==========================
     $('#eligibility_summary').html(`
         <span class="text-muted">${name} (${formatDate(expiry)})</span>
     `);
 
-    // Update remark
     $('#eligibility_remark').html(`
-        <span class="text-success fw-bold">${status}</span>
+        <span class="text-success fw-bold">MET</span>
     `);
 
     eligibilitySaved = true;
 
-    // Success message
     Swal.fire({
         icon: 'success',
         title: 'Eligibility Saved',
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
+        timer: 2000
     });
 
-    // Close modal
     $('#eligibilityModal').modal('hide');
 }
-
 /* ==========================
    RESET ELIGIBILITY
 ========================== */

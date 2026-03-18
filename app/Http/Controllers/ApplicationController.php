@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 use App\Models\Application;
-use App\Models\Applicant;
 use App\Models\School;
+use App\Models\Education;
 use App\Models\Training;
-use App\Models\EducationFile;
+use App\Models\Experience;
+use App\Models\Eligibility;
+use App\Models\Ipcrf;
 use App\Models\PpstIndicator;
 
 class ApplicationController extends Controller
@@ -19,60 +21,182 @@ class ApplicationController extends Controller
     /* =====================================================
      | STORE FINAL APPLICANT (SUBMIT)
      ===================================================== */
- public function store(Request $request)
+public function store(Request $request)
 {
-    // 1️⃣ Validate required fields
+    // =========================
+    // 1️⃣ VALIDATION
+    // =========================
     $request->validate([
         'name' => 'required|string|max:255',
         'position_applied' => 'required|string',
-        'levels' => 'required|array', // multiple levels
+        'levels' => 'required|array',
         'school_name' => 'required|string',
     ]);
 
-    $position = $request->position_applied;
-    $levels = $request->levels; // array of selected levels
-
-    // 2️⃣ Prepare combined QS data for selected levels
-    $qsCombined = [];
-    foreach ($levels as $level) {
-        $levelKey = strtolower($level); // ensure lowercase matches config keys
-        $qsData = config("qs.$levelKey.$position", []);
-
-        $qsCombined[$levelKey] = [
-            'qs_position_education'   => $qsData['education'] ?? null,
-            'qs_position_training'    => $qsData['training'] ?? null,
-            'qs_position_experience'  => $qsData['experience'] ?? null,
-            'qs_position_eligibility' => $qsData['eligibility'] ?? null,
-        ];
-    }
-
-    // 3️⃣ Save Application
-    Application::create([
+    // =========================
+    // 2️⃣ CREATE APPLICATION FIRST (IMPORTANT FIX)
+    // =========================
+    $application = Application::create([
         'name' => $request->name,
         'current_position' => $request->current_position,
-        'position_applied' => $position,
+        'position_applied' => $request->position_applied,
         'item_number' => $request->item_number,
         'school_name' => $request->school_name,
         'sg_annual_salary' => $request->sg_annual_salary,
-        'levels' => json_encode($levels),
-
-        // QS combined per level
-        'qs_data' => json_encode($qsCombined), // single JSON column for all selected levels
-
-        // Applicant inputs & remarks (optional)
-        'qs_applicant_education'   => $request->qs_applicant_education,
-        'remarks_education'        => $request->remarks_education,
-        'qs_applicant_training'    => $request->qs_applicant_training,
-        'remarks_training'         => $request->remarks_training,
-        'qs_applicant_experience'  => $request->qs_applicant_experience,
-        'remarks_experience'       => $request->remarks_experience,
-        'qs_applicant_eligibility' => $request->qs_applicant_eligibility,
-        'remarks_eligibility'      => $request->remarks_eligibility,
-
+        'levels' => json_encode($request->levels),
         'status' => 'submitted',
         'last_activity_at' => now(),
     ]);
 
+    $applicantId = $application->id;
+
+    // =========================
+    // 3️⃣ CREATE BASE FOLDER
+    // =========================
+    Storage::disk('public')->makeDirectory("applications/$applicantId");
+
+    $getPath = function($type) use ($applicantId) {
+        return "applications/{$applicantId}/{$type}";
+    };
+
+    // =========================
+    // 4️⃣ TRAININGS
+    // =========================
+    if ($request->trainings) {
+        foreach ($request->trainings as $index => $training) {
+
+            if ($request->hasFile("trainings.$index.file")) {
+
+                $file = $training['file'];
+
+                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $training['title'] ?? 'training');
+
+                $fileName = $safeName . '_' . time() . '.pdf';
+
+                $filePath = $file->storeAs($getPath('trainings'), $fileName, 'public');
+
+                Training::create([
+                    'application_id' => $applicantId,
+                    'title' => $training['title'] ?? null,
+                    'type' => $training['type'] ?? null,
+                    'start_date' => $training['start_date'] ?? null,
+                    'end_date' => $training['end_date'] ?? null,
+                    'hours' => $training['hours'] ?? 0,
+                    'file_path' => $filePath
+                ]);
+            }
+        }
+    }
+
+    // =========================
+    // 5️⃣ EDUCATION
+    // =========================
+    if ($request->file('education.file')) {
+
+        $file = $request->file('education.file');
+
+        $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $request->education['degree'] ?? 'education');
+
+        $fileName = $safeName . '_' . time() . '.pdf';
+
+        $filePath = $file->storeAs($getPath('educations'), $fileName, 'public');
+
+        Education::create([
+            'application_id' => $applicantId,
+            'degree' => $request->education['degree'] ?? null,
+            'school' => $request->education['school'] ?? null,
+            'date_graduated' => $request->education['date_graduated'] ?? null,
+            'units' => $request->education['level'] ?? null,
+            'file_path' => $filePath,
+        ]);
+    }
+
+    // =========================
+    // 6️⃣ EXPERIENCE
+    // =========================
+    if ($request->has('experiences')) {
+        foreach ($request->experiences as $index => $exp) {
+
+            if (empty($exp['position']) || empty($exp['start']) || empty($exp['end'])) {
+                continue;
+            }
+
+            $filePath = null;
+
+            if ($request->hasFile("experiences.$index.file")) {
+                $file = $request->file("experiences.$index.file");
+                $fileName = time().'_'.$index.'.'.$file->getClientOriginalExtension();
+                $filePath = $file->storeAs($getPath('experience'), $fileName, 'public');
+            }
+
+            Experience::create([
+                'application_id' => $applicantId,
+                'school_type' => $exp['school_type'],
+                'school' => $exp['school'],
+                'position' => $exp['position'],
+                'start_date' => $exp['start'],
+                'end_date' => $exp['end'],
+                'file_path' => $filePath,
+            ]);
+        }
+    }
+
+    // =========================
+    // 7️⃣ ELIGIBILITY (FIXED 🔥)
+    // =========================
+    if ($request->eligibility_files) {
+
+        foreach ($request->eligibility_files as $index => $eligFile) {
+
+            if ($request->hasFile("eligibility_files.$index.file")) {
+
+                $file = $request->file("eligibility_files.$index.file");
+
+                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $eligFile['eligibility'] ?? 'eligibility');
+
+                $fileName = $safeName . '_' . time() . '.pdf';
+
+                $filePath = $file->storeAs($getPath('eligibility'), $fileName, 'public');
+
+                Eligibility::create([
+                    'application_id' => $applicantId,
+                    'eligibility_name' => $eligFile['eligibility'] ?? null,
+                    'expiry_date' => $eligFile['expiry_date'] ?? null, // ✅ ADD THIS
+                    'file_path' => $filePath
+                ]);
+            }
+        }
+    }
+
+    // =========================
+    // 8️⃣ IPCRF
+    // =========================
+    if ($request->ipcrf_files) {
+
+        foreach ($request->ipcrf_files as $index => $ipcrf) {
+
+            if ($request->hasFile("ipcrf_files.$index.file")) {
+
+                $file = $request->file("ipcrf_files.$index.file");
+
+                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ipcrf['title'] ?? 'ipcrf');
+
+                $fileName = $safeName . '_' . time() . '.pdf';
+
+                $filePath = $file->storeAs($getPath('ipcrf'), $fileName, 'public');
+
+                Ipcrf::create([
+                    'application_id' => $applicantId,
+                    'file_name' => $ipcrf['title'] ?? null,
+                    'file_path' => $filePath
+                ]);
+            }
+        }
+    }
+
+    // =========================
+    // ✅ SUCCESS
+    // =========================
     return redirect()->back()->with('success', 'Application submitted successfully.');
 }
     /* =====================================================
@@ -201,39 +325,6 @@ public function loadPPST(Request $request)
 
     return view('applicants.ppst-table', compact('ppstIndicators'));
 }
-    /* =====================================================
-     | STORE TRAINING
-     ===================================================== */
-    public function storeTraining(Request $request)
-    {
-        $request->validate([
-            'training_name' => 'required|string|max:255',
-            'training_date' => 'required|date',
-            'training_file' => 'required|mimes:pdf|max:5120',
-            'applicant_id'  => 'required|integer|exists:applicants,id',
-        ]);
-
-        $file = $request->file('training_file');
-
-        $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $request->training_name);
-        $fileName = $safeName . '_' . $request->training_date . '.pdf';
-
-        $path = $file->storeAs(
-            "applicants/{$request->applicant_id}/training",
-            $fileName,
-            'public'
-        );
-
-        Training::create([
-            'applicant_id'  => $request->applicant_id,
-            'training_name' => $request->training_name,
-            'training_date' => $request->training_date,
-            'file_path'     => $path,
-        ]);
-
-        return response()->json(['status' => 'success']);
-    }
-
     /* =====================================================
      | AJAX: FETCH QS
      ===================================================== */

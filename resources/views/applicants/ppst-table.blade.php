@@ -152,7 +152,7 @@ data-column="S">
 
 <tr class="fw-bold table-secondary text-center">
     <td colspan="5">
-        Final Rating: <span id="finalRating">-</span>
+        Final Result: <span id="finalRating">-</span>
     </td>
 </tr>
 

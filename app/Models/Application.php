@@ -9,8 +9,7 @@ class Application extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-    'uuid',
+   protected $fillable = [
     'name',
     'current_position',
     'position_applied',
@@ -18,34 +17,40 @@ class Application extends Model
     'school_name',
     'sg_annual_salary',
     'levels',
-
-    'qs_position_education',
-    'qs_applicant_education',
-    'remarks_education',
-
-    'qs_position_training',
-    'qs_applicant_training',
-    'remarks_training',
-
-    'qs_position_experience',
-    'qs_applicant_experience',
-    'remarks_experience',
-
-    'qs_position_eligibility',
-    'qs_applicant_eligibility',
-    'remarks_eligibility',
-
     'status',
-    'folder_path',
     'last_activity_at'
 ];
 
     protected $casts = [
-        'uuid' => 'string',
+        'levels' => 'array'
     ];
 
-    public function getRouteKeyName()
+    /* =========================
+       RELATIONSHIPS
+    ========================== */
+
+    public function educations()
     {
-        return 'uuid';
+        return $this->hasMany(Education::class);
+    }
+
+    public function trainings()
+    {
+        return $this->hasMany(Training::class);
+    }
+
+    public function experiences()
+    {
+        return $this->hasMany(Experience::class);
+    }
+
+    public function eligibilities()
+    {
+        return $this->hasMany(Eligibility::class);
+    }
+
+    public function ipcrf()
+    {
+        return $this->hasMany(Ipcrf::class);
     }
 }

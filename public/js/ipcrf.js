@@ -354,5 +354,45 @@ if(ipcrfModalEl){
     ipcrfModalEl.addEventListener('show.bs.modal',renderIPCRFBoxes);
 
 }
+function setPerformancePR(score){
+    const perfInput = document.querySelector('input[name="comparative[performance]"]');
+    if(!perfInput) return;
+
+    if(isNaN(score) || score <= 0){
+        perfInput.value = '';
+        return;
+    }
+
+    perfInput.value = Math.round((score / 5) * 30); // integer PR points
+}
+
+// Example: kapag na-save ang score mula sa modal input
+// setPerformancePR(4.5); // auto-fill sa Performance input
+function computePerformance(){
+    const input = document.getElementById("performanceInput");
+    const output = document.getElementById("performanceScore");
+
+    if(!input || !output) return;
+
+    let value = parseFloat(input.value);
+
+    if(isNaN(value)){
+        output.value = "";
+        return;
+    }
+
+    // 🔥 Compute PR directly
+    const score = (value / 5) * 30;
+
+    // Convert to integer, no decimal
+    output.value = Math.round(score); // <-- PR integer
+}
+
+// LIVE COMPUTE
+document.addEventListener("input", function(e){
+    if(e.target.id === "performanceInput"){
+        computePerformance();
+    }
+});
 
 });
