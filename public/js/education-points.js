@@ -98,32 +98,56 @@ const ctpUnits = {
 
 function isEducationDegree(degree) {
 
-    const text = degree.toLowerCase();
+    const text = degree.toLowerCase().replace(/[^a-z0-9\s]/g, '');
 
-    const educationKeywords = [
-        'beed',
-        'bsed',
-        'bachelor of elementary education',
-        'bachelor of secondary education',
-        'elementary education',
-        'secondary education',
-        'teacher education',
-        'education',
-        'teaching',
-        'early childhood education',
-        'special education',
-        'sped',
-        'physical education',
-        'technology and livelihood education',
-        'tle education',
-        'mapeh education',
-        'values education',
-        'mathematics education',
-        'science education',
-        'english education',
-        'filipino education'
-        ];
-    return educationKeywords.some(keyword => text.includes(keyword));
+    // ============================
+    // 1. MASTER / DOCTOR CHECK FIRST (HIGHEST PRIORITY)
+    // ============================
+    if (/(phd|edd|doctor of|doctorate)/.test(text)) {
+        return true;
+    }
+
+    if (/(maed|med|master of|masters of|master in|master's)/.test(text)) {
+        return true;
+    }
+
+    // ============================
+    // 2. STRICT EDUC DEGREE CHECK
+    // (ONLY IF CLEARLY EDUC, NOT JUST "SCIENCE")
+    // ============================
+    if (/(beed|bsed|bachelor of education)/.test(text)) {
+        return true;
+    }
+
+    // ============================
+    // 3. GENERAL EDUC TERMS (LIMITED)
+    // ============================
+    if (/(education|teaching|teacher education)/.test(text)) {
+        return true;
+    }
+
+    // ============================
+    // 4. ❌ EXPLICIT NON-EDUC DEGREE DETECTION
+    // ============================
+    const nonEducIndicators = [
+        'information technology',
+        'computer science',
+        'engineering',
+        'business',
+        'accounting',
+        'management',
+        'technology',
+        'science' // IMPORTANT: treated as NON-EDUC unless matched earlier
+    ];
+
+    // If it only contains "science" WITHOUT education context → NON-EDUC
+    for (let keyword of nonEducIndicators) {
+        if (text.includes(keyword)) {
+            return false;
+        }
+    }
+
+    return false;
 }
 // ================================
 // GET EDUCATION POINTS - FIXED POINTS SYSTEM (2,4,6,8,10)
@@ -211,15 +235,32 @@ if (!isEducationDegree(degreeName)) {
 function buildUnitsDropdown(requiredLevel = 0) {
 
     const select = $('#education_units_select');
-    const degreeName = ($('#education_name').val() || '').toLowerCase();
+    const degreeName = ($('#education_name').val() || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s]/g, ''); // clean input
 
     select.empty();
     select.append('<option value="">Select Education Level</option>');
 
     // ============================
-    // NON EDUC DEGREE → CTP UNITS
+    // DEGREE TYPE DETECTION (SAFE + PRIORITY)
     // ============================
-    if (degreeName && !isEducationDegree(degreeName)) {
+
+    const isDoctor = /(phd|edd|doctor of|doctorate)/.test(degreeName);
+
+    const isMaster = (
+    /(master|masters|master's|maed|med|ms|ma|m\.a|m\.s|m\.ed)/i.test(degreeName)
+    || degreeName.includes('master of')
+    || degreeName.includes('master in')
+);
+
+    const isEduc = isEducationDegree(degreeName);
+
+    // ============================
+    // NON EDUC DEGREE → CTP ONLY
+    // ============================
+    if (degreeName && !isEduc && !isMaster && !isDoctor) {
 
         Object.entries(ctpUnits).forEach(([label, value]) => {
             select.append(`<option value="${value}">${label}</option>`);
@@ -229,7 +270,7 @@ function buildUnitsDropdown(requiredLevel = 0) {
     }
 
     // ============================
-    // EDUC DEGREE → NORMAL UNITS
+    // EDUC / MASTER / DOCTOR → NORMAL UNITS
     // ============================
     Object.entries(educationLevels)
         .filter(([label, value]) => value >= requiredLevel)

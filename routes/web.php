@@ -2,19 +2,27 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Smalot\PdfParser\Parser;
 
-// Redirect root to applicant form
-Route::get('/', function() {
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES (APPLICANT SIDE)
+|--------------------------------------------------------------------------
+*/
+require __DIR__.'/auth.php';
+
+// Root → Applicant Form
+Route::get('/', function () {
     return redirect('/applicants/create');
 });
 
-// Show applicant creation form
+// Applicant form page
 Route::get('/applicants/create', [ApplicationController::class, 'create'])
     ->name('applicants.create');
 
-// Submit final applicant form
+// Submit application
 Route::post('/applicants', [ApplicationController::class, 'store'])
     ->name('applicants.store');
 
@@ -29,4 +37,35 @@ Route::post('/qs/experience-requirement', [ApplicationController::class, 'experi
 Route::post('/notify-unqualified', [ApplicationController::class, 'notifyUnqualified'])
     ->name('applicants.notifyUnqualified');
 
+// Load PPST data
 Route::get('/load-ppst', [ApplicationController::class, 'loadPPST']);
+
+
+
+
+Route::post('/admin/applicants/{id}/status', [AdminController::class, 'updateStatus'])
+    ->name('admin.applicants.status');
+/*
+|--------------------------------------------------------------------------
+| AUTH ROUTES (ADMIN SIDE)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::prefix('admin')->group(function () {
+
+        // Dashboard
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])
+            ->name('admin.dashboard');
+
+        // Applicants list
+        Route::get('/applicants', [AdminController::class, 'applicants'])
+            ->name('admin.applicants');
+
+        // View applicant details
+        Route::get('/applicants/{id}', [AdminController::class, 'show'])
+            ->name('admin.applicants.show');
+    });
+
+});

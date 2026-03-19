@@ -178,7 +178,7 @@ function saveEligibility() {
     // TEXT DATA
     container.insertAdjacentHTML('beforeend', `
         <input type="hidden" name="eligibility_files[0][eligibility]" value="${name}">
-        <input type="hidden" name="eligibility_files[0][expiry]" value="${expiry}">
+        <input type="hidden" name="eligibility_files[0][expiry_date]" value="${expiry}">
     `);
 
     // FILE INPUT (CLONE TRICK)
