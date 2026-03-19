@@ -67,10 +67,6 @@
               ➕ Add Another Experience
             </button>
           </div>
-
-          <!-- FINAL SUMMARY (for dynamic updates) -->
-          <div id="experience_summary" class="mt-3"></div>
-
         </div>
       </div>
 

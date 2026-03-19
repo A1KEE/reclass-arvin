@@ -14,6 +14,7 @@ use App\Models\Training;
 use App\Models\Experience;
 use App\Models\Eligibility;
 use App\Models\Ipcrf;
+use App\Models\ApplicationPpstRating;
 use App\Models\PpstIndicator;
 
 class ApplicationController extends Controller
@@ -142,7 +143,7 @@ public function store(Request $request)
     }
 
     // =========================
-    // 7️⃣ ELIGIBILITY (FIXED 🔥)
+    // 7️⃣ ELIGIBILITY
     // =========================
     if ($request->eligibility_files) {
 
@@ -171,29 +172,71 @@ public function store(Request $request)
     // =========================
     // 8️⃣ IPCRF
     // =========================
-    if ($request->ipcrf_files) {
+   if($request->has('ipcrf_files')){
+    
+    foreach($request->ipcrf_files as $ipcrf){
 
-        foreach ($request->ipcrf_files as $index => $ipcrf) {
+        if(isset($ipcrf['file'])){
 
-            if ($request->hasFile("ipcrf_files.$index.file")) {
+            $file = $ipcrf['file'];
 
-                $file = $request->file("ipcrf_files.$index.file");
+            $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ipcrf['title'] ?? 'ipcrf');
 
-                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ipcrf['title'] ?? 'ipcrf');
+            $fileName = $safeName . '_' . time() . '.pdf';
 
-                $fileName = $safeName . '_' . time() . '.pdf';
+            $filePath = $file->storeAs("applications/{$application->id}/ipcrf", $fileName, 'public');
 
-                $filePath = $file->storeAs($getPath('ipcrf'), $fileName, 'public');
-
-                Ipcrf::create([
-                    'application_id' => $applicantId,
-                    'file_name' => $ipcrf['title'] ?? null,
-                    'file_path' => $filePath
-                ]);
-            }
+            \App\Models\IpcrfFile::create([
+                'application_id' => $application->id,
+                'file_name' => $ipcrf['title'] ?? null,
+                'file_path' => $filePath
+            ]);
         }
     }
+}
+// =========================
+    // 8️⃣ PPST_RATINGS_APPLICATION
+    // =========================
+if ($request->has('ppst')) {
 
+    foreach ($request->ppst as $indicatorId => $values) {
+
+        if (!is_array($values)) continue;
+
+        $selectedRating = null;
+
+        // 🔍 hanapin kung alin ang naka-check (O / VS / S)
+        foreach (['O', 'VS', 'S'] as $rating) {
+
+            if (!empty($values[$rating])) {
+                $selectedRating = $rating;
+                break; // 👉 isa lang dapat per indicator
+            }
+
+        }
+
+        // ✅ SAVE ONLY IF MAY NAKA-CHECK
+        if ($selectedRating) {
+
+            \DB::table('application_ppst_ratings')->updateOrInsert(
+                [
+                    'application_id' => $application->id,
+                    'ppst_indicator_id' => $indicatorId,
+                ],
+                [
+                    'rating' => $selectedRating,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+
+        }
+
+        // ❗ WALANG CHECK → WALANG SAVE → TREAT AS NULL
+
+    }
+
+}
     // =========================
     // ✅ SUCCESS
     // =========================

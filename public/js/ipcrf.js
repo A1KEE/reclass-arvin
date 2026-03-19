@@ -306,23 +306,51 @@ if(saveBtn){
 // MAIN FORM SUBMIT
 // =====================
 
-$('#mainForm').on('submit',function(e){
+$('#applicantForm').on('submit', function(e){
+
+    e.preventDefault();
 
     const count = draftMetaIPCRFs.filter(f=>f).length;
 
     if(count === 0){
-
-        e.preventDefault();
-
         Swal.fire({
             icon:'warning',
             title:'Missing IPCRF',
             text:'Please upload at least one IPCRF before submitting'
         });
-
-        return false;
-
+        return;
     }
+
+    let formData = new FormData(this);
+
+    // 🔥 append files
+    uploadedIPCRFs.forEach((file, index) => {
+        if(file){
+            formData.append(`ipcrf_files[${index}][file]`, file);
+            formData.append(`ipcrf_files[${index}][title]`, `IPCRF ${new Date().getFullYear() - (2 - index)}`);
+        }
+    });
+
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res){
+            Swal.fire({
+                icon:'success',
+                title:'Saved successfully'
+            }).then(()=> location.reload());
+        },
+        error: function(err){
+            console.error(err);
+            Swal.fire({
+                icon:'error',
+                title:'Upload failed'
+            });
+        }
+    });
 
 });
 
@@ -354,45 +382,4 @@ if(ipcrfModalEl){
     ipcrfModalEl.addEventListener('show.bs.modal',renderIPCRFBoxes);
 
 }
-function setPerformancePR(score){
-    const perfInput = document.querySelector('input[name="comparative[performance]"]');
-    if(!perfInput) return;
-
-    if(isNaN(score) || score <= 0){
-        perfInput.value = '';
-        return;
-    }
-
-    perfInput.value = Math.round((score / 5) * 30); // integer PR points
-}
-
-// Example: kapag na-save ang score mula sa modal input
-// setPerformancePR(4.5); // auto-fill sa Performance input
-function computePerformance(){
-    const input = document.getElementById("performanceInput");
-    const output = document.getElementById("performanceScore");
-
-    if(!input || !output) return;
-
-    let value = parseFloat(input.value);
-
-    if(isNaN(value)){
-        output.value = "";
-        return;
-    }
-
-    // 🔥 Compute PR directly
-    const score = (value / 5) * 30;
-
-    // Convert to integer, no decimal
-    output.value = Math.round(score); // <-- PR integer
-}
-
-// LIVE COMPUTE
-document.addEventListener("input", function(e){
-    if(e.target.id === "performanceInput"){
-        computePerformance();
-    }
-});
-
 });

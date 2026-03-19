@@ -23,16 +23,6 @@
         <div class="row g-3" id="ipcrfContainer">
           <!-- IPCRF upload cards rendered dynamically -->
         </div>
-
-        <!-- Performance Score Input -->
-        <div class="mt-4 p-3 border rounded-2 bg-light">
-          <label class="form-label fw-bold">Performance Score</label>
-          <input type="number" name="comparative[performance]" class="form-control form-control-sm text-center" readonly>
-          <div class="text-muted small mt-1">
-            Formula: (Input ÷ 5 × 30) → Performance Rating
-          </div>
-        </div>
-
       </div>
 
       <!-- Modal Footer -->

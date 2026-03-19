@@ -50,10 +50,9 @@
         <form id="applicantForm" action="{{ route('applicants.store') }}" method="POST" enctype="multipart/form-data">
 
             @csrf
-            <!-- HIDDEN INPUTS FOR EDUCATION -->
             <div id="educationHiddenInputs"></div>
-            <!-- ELIGIBILITY HIDDEN CONTAINER -->
-            <div id="eligibilityHiddenContainer"></div>
+            <div id="eligibilityHiddenContainer" class="d-none"></div>
+            <div id="ipcrfContainerInputs"></div>
             <input type="hidden" name="education[degree]" id="input_education_degree">
             <input type="hidden" name="education[school]" id="input_education_school">
             <input type="hidden" name="education[date_graduated]" id="input_education_date">
@@ -64,6 +63,7 @@
             @include('modals.experience')
             @include('modals.eligibility')
             @include('modals.ipcrf')
+            @include('modals.performance')
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -443,7 +443,12 @@
         <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center" readonly></td>
         <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="number" name="comparative[performance]" class="form-control form-control-sm text-center" readonly></td>
+        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center" readonly><button type="button" 
+            class="btn btn-sm btn-outline-success"
+            data-bs-toggle="modal" 
+            data-bs-target="#performanceModal">
+        Compute
+    </button></td>
         <td><input type="number" name="comparative[classroom]" 
                  class="form-control form-control-sm text-center" 
                  id="comparativeClassroom"
@@ -680,6 +685,7 @@
   <script src="{{ asset('js/ppstlegend.js') }}"></script>
   <script src="{{ asset('js/indicators.js') }}"></script>
   <script src="{{ asset('js/fillout.js') }}"></script>
+  <script src="{{ asset('js/performancerating.js') }}"></script>
 
   <script src="{{ asset('js/mapping-sg.js') }}"></script>
   <script src="{{ asset('js/position-ranking.js') }}"></script>

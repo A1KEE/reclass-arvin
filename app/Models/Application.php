@@ -53,4 +53,8 @@ class Application extends Model
     {
         return $this->hasMany(Ipcrf::class);
     }
+    public function ppstRatings()
+    {
+        return $this->hasMany(ApplicationPpstRating::class);
+    }
 }
