@@ -549,6 +549,9 @@ $('#saveEducation').on('click', function() {
     const file = $('#education_file')[0].files[0];
     const position = $('#position_applied').val();
 
+    // =========================
+    // VALIDATION
+    // =========================
     if (!name || !units || !file) {
         Swal.fire({
             icon: 'warning',
@@ -562,49 +565,62 @@ $('#saveEducation').on('click', function() {
         return;
     }
 
+    // =========================
+    // COMPUTE POINTS
+    // =========================
     const result = computeEducationPoints(position, units, name);
 
-   let status = '';
+    // =========================
+    // COMPUTE REMARKS (MAS SAFE)
+    // =========================
+    let remarkText = '';
 
-if (!isEducationDegree(name) && position.toLowerCase().includes('teacher')) {
-
-    if (units >= 11) {
-        status = '<span class="text-success fw-bold">MET</span>';
+    if (!isEducationDegree(name) && position.toLowerCase().includes('teacher')) {
+        remarkText = units >= 11 ? 'MET' : 'NOT MET';
     } else {
-        status = '<span class="text-danger fw-bold">NOT MET</span>';
+        remarkText = result.userLevel >= result.requiredLevel ? 'MET' : 'NOT MET';
     }
 
-} else {
+    // =========================
+    // SET HIDDEN INPUTS (FOR DB)
+    // =========================
+    $('#education_points').val(result.points);
+    $('#remarksEducation').val(remarkText);
 
-    status = result.userLevel >= result.requiredLevel
+    // =========================
+    // UI STATUS (DISPLAY LANG)
+    // =========================
+    let status = remarkText === 'MET'
         ? '<span class="text-success fw-bold">MET</span>'
         : '<span class="text-danger fw-bold">NOT MET</span>';
 
-}
-
-    /* =========================
-       UPDATE MAIN TABLE HERE
-    ========================= */
-
-    // Update modal summary
-        $('#education_summary').html(`
+    // =========================
+    // UPDATE SUMMARY
+    // =========================
+    $('#education_summary').html(`
         <small><strong>${name}</strong></small><br>
         <small>${school}</small><br>
         <small>${date}</small><br>
         <small>${unitsLabel}</small>
     `);
 
-    // ✅ Keep points for CAR
+    // =========================
+    // SET VALUES FOR OTHER PARTS
+    // =========================
     $('input[name="comparative[education]"]').val(result.points);
-
-    // ✅ Set QS applicant education (degree + units) for DB
     $('#input_qs_applicant_education').val(`${name} (${unitsLabel})`);
 
-    // Update status
+    // Update UI remark
     $('#education_remark').html(status);
 
+    // =========================
+    // CLOSE MODAL
+    // =========================
     $('#educationModal').modal('hide');
 
+    // =========================
+    // SUCCESS MESSAGE
+    // =========================
     Swal.fire({
         icon: 'success',
         title: 'Education Saved',
@@ -613,5 +629,6 @@ if (!isEducationDegree(name) && position.toLowerCase().includes('teacher')) {
         showConfirmButton: false,
         timer: 3000
     });
+
 });
 });

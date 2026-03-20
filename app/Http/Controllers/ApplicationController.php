@@ -238,6 +238,23 @@ if ($request->has('ppst')) {
 
 }
     // =========================
+    // 9️⃣ SAVE SCORES + REMARKS
+    // =========================
+    \DB::table('application_scores')->updateOrInsert(
+        ['application_id' => $applicantId],
+        [
+            'education_points'   => $request->education_points,
+            'education_remarks'  => $request->education_remarks,
+            'training_points'    => $request->training_points,
+            'training_remarks'   => $request->training_remarks,
+            'experience_points'  => $request->experience_points,
+            'experience_remarks' => $request->experience_remarks,
+            'performance_points' => $request->performance_points,
+            'updated_at' => now(),
+            'created_at' => now(),
+        ]
+    );
+    // =========================
     // ✅ SUCCESS
     // =========================
     return redirect()->back()->with('success', 'Application submitted successfully.');

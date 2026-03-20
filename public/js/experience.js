@@ -394,6 +394,14 @@ function updateExperienceModalSummary() {
 
     // Update comparative points and remark
     $('input[name="comparative[experience]"]').val(result.qsPoints);
+    // SAVE to hidden inputs (ito yung papunta sa DB)
+    $('#experience_points').val(result.qsPoints);
+
+    if (result.totalYears >= requiredYears) {
+        $('#remarksExperience').val('MET');
+    } else {
+        $('#remarksExperience').val('NOT MET');
+    }
     $('#experience_remark').html(status);
 }
 

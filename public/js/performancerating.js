@@ -27,23 +27,25 @@ $(function(){
     // APPLY BUTTON
     // =====================
     $(document).on("click", "#applyPerfBtn", function(e){
-        e.preventDefault();
+    e.preventDefault();
 
-        let result = $("#perfResultModal").val();
+    let result = $("#perfResultModal").val();
 
-        if(!result){
-            alert("Please enter a score first");
-            return;
-        }
+    if(!result){
+        alert("Please enter a score first");
+        return;
+    }
 
-        // ilagay sa table (CAR)
-        $("#performanceFinal").val(result);
+    // display
+    $("#performanceFinal").val(result);
 
-        // close modal
-        let modal = bootstrap.Modal.getInstance(document.getElementById('performanceModal'));
-        if(modal){
-            modal.hide();
-        }
-    });
+    // SAVE to DB
+    $("#performance_points").val(result);
 
+    // close modal
+    let modal = bootstrap.Modal.getInstance(document.getElementById('performanceModal'));
+    if(modal){
+        modal.hide();
+    }
+});
 });

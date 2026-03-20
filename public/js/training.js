@@ -48,6 +48,21 @@ const nonTeachingKeywords = [
     "ict", "computer", "leadership", "seminar", "orientation", "workshop"
 
 ];
+// ✅ GLOBAL FUNCTION (TOP NG FILE)
+function setPointsAndRemarks(points, remarkText, pointsInput, remarksInput) {
+
+    $(pointsInput).val(points);
+
+    let cleanRemark = '';
+
+    if (remarkText.includes('NOT MET')) {
+        cleanRemark = 'NOT MET';
+    } else if (remarkText.includes('MET')) {
+        cleanRemark = 'MET';
+    }
+
+    $(remarksInput).val(cleanRemark);
+}
 
 function isTeachingRelevant(title) {
     if (!title) return false;
@@ -497,6 +512,7 @@ $(document).on('change', '.training_file', function () {
 // SAVE TRAINING (FIXED)
 // ==========================
 $('#saveTraining').on('click', function () {
+
     let trainingList = [];
     let totalHours = 0;
     let missingFile = false;
@@ -514,6 +530,7 @@ $('#saveTraining').on('click', function () {
         if (title && hours && file) {
             const relevant = isTeachingRelevant(title);
             if (relevant) totalHours += hours;
+
             trainingList.push({
                 title: title,
                 hours: hours,
@@ -543,19 +560,43 @@ $('#saveTraining').on('click', function () {
         return;
     }
 
+    // =========================
+    // COMPUTE POINTS
+    // =========================
     const applicantLevel = getQualificationLevel(totalHours);
     const increments = Math.max(0, applicantLevel - requiredTrainingLevel);
     const trainingPoints = getTrainingPoints(increments);
 
+    // =========================
+    // SUMMARY
+    // =========================
     let summary = trainingList.map(t => 
-        `${t.title} (${t.hours} hrs)` + (t.relevant ? '' : ' <small class="text-muted">(Not Teaching Relevant)</small>')
+        `${t.title} (${t.hours} hrs)` +
+        (t.relevant ? '' : ' <small class="text-muted">(Not Teaching Relevant)</small>')
     ).join('<br>');
 
     $('#training_summary').html(summary);
     $('input[name="comparative[training]"]').val(trainingPoints);
     $('#total_training_hours').text(totalHours);
 
+    // =========================
+    // STATUS (IMPORTANT)
+    // =========================
     updateTrainingStatus();
+
+    // 👉 GET REMARK FROM UI
+    let trainingRemark = $('#training_remark').text();
+
+    // =========================
+    // SAVE TO HIDDEN INPUTS ✅
+    // =========================
+    setPointsAndRemarks(
+        trainingPoints,
+        trainingRemark,
+        '#training_points',
+        '#remarksTraining'
+    );
+
     $('#trainingModal').modal('hide');
 
     Swal.fire({

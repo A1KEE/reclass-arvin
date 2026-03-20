@@ -53,6 +53,18 @@
             <div id="educationHiddenInputs"></div>
             <div id="eligibilityHiddenContainer" class="d-none"></div>
             <div id="ipcrfContainerInputs"></div>
+
+            <input type="hidden" name="education_points" id="education_points">
+            <input type="hidden" name="education_remarks" id="remarksEducation">
+
+            <input type="hidden" name="training_points" id="training_points">
+            <input type="hidden" name="training_remarks" id="remarksTraining">
+
+            <input type="hidden" name="experience_points" id="experience_points">
+            <input type="hidden" name="experience_remarks" id="remarksExperience">
+
+            <input type="hidden" name="performance_points" id="performance_points">
+
             <input type="hidden" name="education[degree]" id="input_education_degree">
             <input type="hidden" name="education[school]" id="input_education_school">
             <input type="hidden" name="education[date_graduated]" id="input_education_date">
@@ -449,18 +461,8 @@
             data-bs-target="#performanceModal">
         Compute
     </button></td>
-        <td><input type="number" name="comparative[classroom]" 
-                 class="form-control form-control-sm text-center" 
-                 id="comparativeClassroom"
-                 value="0"
-                 readonly>
-        </td>
-        <td><input type="number" name="comparative[non_classroom]" 
-                 class="form-control form-control-sm text-center"
-                 id="comparativeNonClassroom"
-                 value="0"
-                 readonly>
-        </td>
+        <td><input type="number" name="comparative[classroom]" class="form-control form-control-sm text-center" id="comparativeClassroom"value="0"></td>
+        <td><input type="number" name="comparative[non_classroom]" class="form-control form-control-sm text-center"id="comparativeNonClassroom"value="0"></td>
         <td><input type="number" name="comparative[BEI]" class="form-control form-control-sm text-center"></td>
         <td><input type="number" name="comparative[total]" class="form-control form-control-sm text-center"></td>
       </tr>
@@ -626,29 +628,23 @@
     <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button>
     <button type="submit" form="applicantForm" class="btn btn-success">💾 Submit</button>
 </div>
-
-
         </form>
     </div>
 </div>
 </div> <!-- /.container -->
 
-
-
-
-
-<!-- QS Premium Loading Overlay -->
 <div id="qsLoadingOverlay">
     <div class="qs-loader-wrapper">
-        <div class="loader"></div>
+
+        <img src="{{ asset('images/DO-LOGO.png') }}" class="loader-logo">
+
         <div class="qs-loading-text">
             Please wait while we load your Qualification Standards
         </div>
+
     </div>
 </div>
   
-
-
   <!-- SCRIPTS - UPDATED VERSION -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
