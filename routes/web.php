@@ -64,6 +64,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/admin/applicants/{id}/status', [AdminController::class, 'updateStatus'])
         ->name('admin.applicants.status');
+
+        Route::get('/admin/settings', [AdminController::class, 'settings'])
+        ->name('admin.settings')
+        ->middleware('auth');
     });
 
 });

@@ -5,61 +5,206 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 4 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+    <style>
+        body {
+            background: #f4f6f9;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            height: 100vh;
+            width: 240px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #1e1e2d;
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .sidebar a {
+            color: #cfcfcf;
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #343a40;
+            color: #fff;
+        }
+
+        .sidebar .brand {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px 20px;
+            background: #111;
+        }
+
+        /* CONTENT */
+        .content {
+            margin-left: 240px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        /* NAVBAR */
+        .topbar {
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* COLLAPSED */
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar a span {
+            display: none;
+        }
+
+        .sidebar-collapsed .content {
+            margin-left: 70px;
+        }
+        /* DARK MODE */
+        body.dark-mode {
+            background: #121212;
+            color: #eee;
+        }
+
+        body.dark-mode .topbar {
+            background: #1f1f1f;
+            border-color: #333;
+        }
+
+        body.dark-mode .sidebar {
+            background: #111;
+        }
+
+        body.dark-mode .card {
+            background: #1e1e1e;
+            color: #fff;
+        }
+
+        body.dark-mode a {
+            color: #ccc;
+        }
+        /* MOBILE */
+        @media(max-width: 768px){
+            .sidebar {
+                left: -240px;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-    <a class="navbar-brand fw-bold" href="#">Admin Panel</a>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="brand">⚙️ RFTP</div>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+        <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+    </a>
 
-    <div class="collapse navbar-collapse" id="adminNavbar">
-        <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.applicants') }}">Applicants</a>
-            </li>
-        </ul>
+    <a href="{{ route('admin.applicants') }}" class="{{ request()->routeIs('admin.applicants') ? 'active' : '' }}">
+        <i class="bi bi-people"></i> <span>Applicants</span>
+    </a>
 
-        <ul class="navbar-nav">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                    👤 {{ auth()->user()->name ?? 'Admin' }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="dropdown-item text-danger">Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-</nav>
+    <hr style="border-color:#444;">
+
+<a href="{{ route('admin.settings') }}" class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
+    <i class="bi bi-gear"></i> <span>Settings</span>
+</a>
+</div>
 
 <!-- CONTENT -->
-@yield('content')
+<div class="content" id="content">
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- TOPBAR -->
+    <div class="topbar d-flex justify-content-between align-items-center">
 
-<!-- Chart.js -->
+        <!-- TOGGLE -->
+        <button class="btn btn-sm btn-dark" id="toggleSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- USER -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle text-dark" data-toggle="dropdown">
+                👤 {{ auth()->user()->name ?? 'Admin' }}
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" href="#">Profile</a>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="dropdown-item text-danger">Logout</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <div class="mt-3">
+        @yield('content')
+    </div>
+
+</div>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- PAGE SCRIPTS -->
+<script>
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const body = document.body;
+    const sidebar = document.getElementById('sidebar');
+
+    toggleBtn.addEventListener('click', function () {
+
+        // Desktop collapse
+        body.classList.toggle('sidebar-collapsed');
+
+        // Mobile show
+        sidebar.classList.toggle('show');
+    });
+</script>
+<script>
+    // AUTO APPLY THEME ON LOAD
+    document.addEventListener("DOMContentLoaded", function () {
+        let theme = localStorage.getItem('theme') || 'light';
+
+        if(theme === 'dark'){
+            document.body.classList.add('dark-mode');
+        }
+    });
+</script>
+
 @stack('scripts')
 
 </body>

@@ -1,36 +1,68 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mt-4">
+<div class="container-fluid mt-3">
 
-    <h3 class="mb-4">📊 Admin Dashboard</h3>
+    <h4 class="mb-4 fw-bold">📊 Admin Dashboard</h4>
 
-    <div class="row text-center">
-        <div class="col-md-4">
-            <div class="card shadow p-3">
-                <h5>Total</h5>
-                <h2>{{ $total }}</h2>
+    <!-- STATS CARDS -->
+    <div class="row">
+
+        <!-- TOTAL -->
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Applications</h6>
+                        <h2 class="fw-bold">{{ $total }}</h2>
+                        <span class="badge badge-dark">All Records</span>
+                    </div>
+                    <i class="bi bi-collection" style="font-size: 40px;"></i>
+                </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow p-3">
-                <h5>Submitted</h5>
-                <h2>{{ $submitted }}</h2>
+        <!-- SUBMITTED -->
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Submitted</h6>
+                        <h2 class="fw-bold text-success">{{ $submitted }}</h2>
+                        <span class="badge badge-success">
+                            {{ $total > 0 ? round(($submitted / $total) * 100) : 0 }}%
+                        </span>
+                    </div>
+                    <i class="bi bi-check-circle" style="font-size: 40px;"></i>
+                </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow p-3">
-                <h5>Draft</h5>
-                <h2>{{ $draft }}</h2>
+        <!-- DRAFT -->
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Draft</h6>
+                        <h2 class="fw-bold text-danger">{{ $draft }}</h2>
+                        <span class="badge badge-danger">
+                            {{ $total > 0 ? round(($draft / $total) * 100) : 0 }}%
+                        </span>
+                    </div>
+                    <i class="bi bi-pencil-square" style="font-size: 40px;"></i>
+                </div>
             </div>
         </div>
+
     </div>
 
-    <!-- CHART -->
-    <div class="card mt-4 p-4">
-        <canvas id="myChart"></canvas>
+    <!-- CHART CARD -->
+    <div class="card shadow-sm border-0 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">📈 Applications Overview</h5>
+        </div>
+
+        <canvas id="myChart" height="100"></canvas>
     </div>
 
 </div>
@@ -56,6 +88,13 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         options: {
             responsive: true,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
         }
     });
 

@@ -27,4 +27,8 @@ class AdminController extends Controller
         $applicant = Application::findOrFail($id);
         return view('admin.view', compact('applicant'));
     }
+    public function settings()
+    {
+        return view('admin.settings');
+    }
 }
