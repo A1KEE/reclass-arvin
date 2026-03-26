@@ -113,14 +113,33 @@
                   </div>
 
                   </div> -->
+            @php
+                $groupedSchools = $schools->groupBy('level_type');
+            @endphp
+          @php
+$levels = [];
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold">Position Applied:</label>
-                  <select id="position_applied" name="position_applied" class="form-select">
-                  <option value="">-- Select Position Applied --</option>
-                  </select>
-                  </div>
+if(isset($application) && $application->levels){
+    $levels = is_array($application->levels)
+        ? $application->levels
+        : json_decode($application->levels, true);
+}
+@endphp
+
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Position Applied:</label>
+        <select id="position_applied" name="position_applied" class="form-select">
+            <option value="">-- Select Position Applied --</option>
+
+            @foreach($positions as $p)
+                <option value="{{ $p }}" {{ $application->position_applied == $p ? 'selected' : '' }}>
+                    {{ $p }}
+                </option>
+            @endforeach
+        </select>
+    </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Item No. of Current Position:</label>
@@ -129,62 +148,62 @@
             </div>
 
          <div class="row">
+    {{-- ========================= --}}
+    {{-- SCHOOL --}}
+    {{-- ========================= --}}
     <div class="col-md-6 mb-3">
         <label class="form-label fw-bold">Station / School:</label>
         <select id="school_id" name="school_name" class="form-select">
             <option value="">-- Select School --</option>
 
-            @php
-                $groupedSchools = $schools->groupBy('level_type');
-            @endphp
-
-            {{-- Kindergarten Schools --}}
+            {{-- Kindergarten --}}
             @if(isset($groupedSchools['kindergarten']))
                 <optgroup label="Kindergarten Schools">
                     @foreach($groupedSchools['kindergarten'] as $school)
                         <option value="{{ $school->name }}" data-level="kindergarten"
-                            {{ old('school_name') == $school->name ? 'selected' : '' }}>
+                            {{ $application->school_name == $school->name ? 'selected' : '' }}>
                             {{ $school->name }}
                         </option>
                     @endforeach
                 </optgroup>
             @endif
 
-            {{-- Elementary Schools --}}
+            {{-- Elementary --}}
             @if(isset($groupedSchools['elementary']))
                 <optgroup label="Elementary Schools">
                     @foreach($groupedSchools['elementary'] as $school)
                         <option value="{{ $school->name }}" data-level="elementary"
-                            {{ old('school_name') == $school->name ? 'selected' : '' }}>
+                            {{ $application->school_name == $school->name ? 'selected' : '' }}>
                             {{ $school->name }}
                         </option>
                     @endforeach
                 </optgroup>
             @endif
 
-            {{-- Junior High Schools --}}
+            {{-- Junior High --}}
             @if(isset($groupedSchools['junior_high']))
                 <optgroup label="Junior High Schools">
                     @foreach($groupedSchools['junior_high'] as $school)
                         <option value="{{ $school->name }}" data-level="junior_high"
-                            {{ old('school_name') == $school->name ? 'selected' : '' }}>
+                            {{ $application->school_name == $school->name ? 'selected' : '' }}>
                             {{ $school->name }}
                         </option>
                     @endforeach
                 </optgroup>
             @endif
 
-            {{-- Senior High Schools --}}
+            {{-- Senior High --}}
             @if(isset($groupedSchools['senior_high']))
                 <optgroup label="Senior High Schools">
                     @foreach($groupedSchools['senior_high'] as $school)
                         <option value="{{ $school->name }}" data-level="senior_high"
-                            {{ old('school_name') == $school->name ? 'selected' : '' }}>
+                            {{ $application->school_name == $school->name ? 'selected' : '' }}>
                             {{ $school->name }}
                         </option>
                     @endforeach
                 </optgroup>
             @endif
+
         </select>
     </div>
 
@@ -201,39 +220,70 @@
                 </div>
             </div>
 
-    <div class="mb-3">
+
+<div class="mb-3">
   <label class="form-label fw-bold">Level:</label>
-  <div class="row ps-5">  {{-- ps-5 ≈ 3rem (~1 inch) --}}
+
+  <div class="row ps-5">
+
     <div class="col-md-6">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="levels[]" value="kindergarten" id="levelKindergarten" {{ in_array('kindergarten', old('levels', [])) ? 'checked' : '' }}>
-        <label class="form-check-label" for="levelKindergarten">Kindergarten</label>
+        <input class="form-check-input"
+               type="checkbox"
+               name="levels[]"
+               value="kindergarten"
+               id="levelKindergarten"
+               {{ in_array('kindergarten', $levels) ? 'checked' : '' }}>
+        <label class="form-check-label" for="levelKindergarten">
+          Kindergarten
+        </label>
       </div>
+
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="levels[]" value="elementary" id="levelElementary">
-        <label class="form-check-label" for="levelElementary">Elementary</label>
+        <input class="form-check-input"
+               type="checkbox"
+               name="levels[]"
+               value="elementary"
+               id="levelElementary"
+               {{ in_array('elementary', $levels) ? 'checked' : '' }}>
+        <label class="form-check-label" for="levelElementary">
+          Elementary
+        </label>
       </div>
     </div>
 
     <div class="col-md-6">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="levels[]" value="junior_high" id="levelJuniorHigh">
-        <label class="form-check-label" for="levelJuniorHigh">Junior High School</label>
+        <input class="form-check-input"
+               type="checkbox"
+               name="levels[]"
+               value="junior_high"
+               id="levelJuniorHigh"
+               {{ in_array('junior_high', $levels) ? 'checked' : '' }}>
+        <label class="form-check-label" for="levelJuniorHigh">
+          Junior High School
+        </label>
       </div>
+
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="levels[]" value="senior_high" id="levelSeniorHigh">
-        <label class="form-check-label" for="levelSeniorHigh">Senior High School</label>
+        <input class="form-check-input"
+               type="checkbox"
+               name="levels[]"
+               value="senior_high"
+               id="levelSeniorHigh"
+               {{ in_array('senior_high', $levels) ? 'checked' : '' }}>
+        <label class="form-check-label" for="levelSeniorHigh">
+          Senior High School
+        </label>
       </div>
     </div>
   </div>
 </div>
-
-
+<input type="hidden" id="isEditMode" value="{{ isset($application) ? 1 : 0 }}">
 
     <!-- QS TABLE -->
 <hr class="mt-2">
 <h5 class="text-left fw-bold mt-3">I. QUALIFICATION STANDARDS</h5>
-
 <table class="table table-bordered mt-3 text-center align-middle">
     <thead>
         <tr>
@@ -247,80 +297,39 @@
        <tr id="education-row">
     <td>Education</td>
     <td id="qs_education">—</td>
-    <td>
-        <button type="button" class="btn btn-sm btn-primary add-education-btn">
-    ➕ Add Education
-</button>
-
-        <div id="education_summary" class="mt-2 small text-muted">
-            No Education Added.
-        </div>
+    <td><button type="button" class="btn btn-sm btn-primary add-education-btn">➕ Add Education</button>
+        <div id="education_summary" class="mt-2 small text-muted">No Education Added.</div>
     </td>
     <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
 </tr>
        <tr>
            <td>Training</td>
            <td id="qs_training">—</td>
-           <td>
-               <button type="button"
-                       class="btn btn-sm btn-primary add-training-btn">
-                   ➕ Add Training
-               </button>
-
-               <div id="training_summary" class="mt-2 small text-muted">
-                   No trainings added.
-               </div>
-           </td>
+           <td><button type="button"class="btn btn-sm btn-primary add-training-btn">➕ Add Training</button>
+               <div id="training_summary" class="mt-2 small text-muted"></div></td>
            <td id="training_remark"><span class="text-muted">Waiting for the QS</span></td>
-
-           <input type="hidden" name="qs_applicant_training" id="input_qs_training" value="">
-           <input type="hidden" name="remarks_training" id="input_remarks_training" value=""> 
        </tr>
-
      <tr>
     <td>Experience</td>
     <td id="qs_experience">—</td>
-    <td>
-        <button type="button"
-                class="btn btn-sm btn-primary add-experience-btn">
-            ➕ Add Experience
-        </button>
-
-        <div id="experience_summary" class="mt-2 small text-muted">
-            No experience added.
-        </div>
+    <td><button type="button"class="btn btn-sm btn-primary add-experience-btn">➕ Add Experience</button>
+        <div id="experience_summary" class="mt-2 small text-muted">No experience added.</div>
     </td>
     <td id="experience_remark">
         <span class="text-muted">Waiting for the QS</span>
     </td>
-
-    <input type="hidden" name="qs_applicant_experience" id="input_qs_experience" value="">
-    <input type="hidden" name="remarks_experience" id="input_remarks_experience" value="">
 </tr>
-
     <tr>
     <td>Eligibility</td>
     <td id="qs_eligibility">—</td>
-    <td>
-        <button type="button"
-                class="btn btn-sm btn-primary add-eligibility-btn">
-            ➕ Add Eligibility
-        </button>
-
-        <div id="eligibility_summary" class="mt-2 small text-muted">
-            No eligibility added.
-        </div>
+    <td><button type="button"class="btn btn-sm btn-primary add-eligibility-btn">➕ Add Eligibility</button>
+        <div id="eligibility_summary" class="mt-2 small text-muted">No eligibility added.</div>
     </td>
     <td id="eligibility_remark">
-        <span class="text-muted">Waiting for the QS</span>
-    </td>
-
-    <input type="hidden" name="qs_applicant_eligibility" id="input_qs_eligibility" value="">
-    <input type="hidden" name="remarks_eligibility" id="input_remarks_eligibility" value="">
+        <span class="text-muted">Waiting for the QS</span></td>
 </tr>
     </tbody>
 </table>
-
 
    <div class="d-flex justify-content-between align-items-center mb-3">
   <p class="text-muted fst-italic mb-0">
@@ -427,15 +436,6 @@
     @include('applicants.ppst-table')
 </div>
 
-<!-- === PRINT & SUBMIT BUTTONS === -->
-    <div class="text-center my-4">
-        <!-- <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button> -->
-        <button type="button" id="submitBtn" class="btn btn-success">
-        💾 Submit Application
-    </button>
-</div>
-
-
 {{-- ========================================================= --}}
 {{-- III. COMPARATIVE ASSESSMENT RESULT --}}
 {{-- ========================================================= --}}
@@ -459,10 +459,10 @@
     </thead>
     <tbody>
       <tr>
-        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center" readonly><button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
+        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"></td>
+        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"></td>
+        <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center"></td>
+        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center"><button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
         <td><input type="number" name="comparative[classroom]" class="form-control form-control-sm text-center" id="comparativeClassroom"value="0"></td>
         <td><input type="number" name="comparative[non_classroom]" class="form-control form-control-sm text-center"id="comparativeNonClassroom"value="0"></td>
         <td><input type="number" name="comparative[BEI]" class="form-control form-control-sm text-center"></td>
@@ -510,10 +510,10 @@
     <tbody>
       <tr>
         <td>Reclassification of Position</td>
-        <td><input type="text" id="from_position" name="division[from_position]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="text" id="from_grade" name="division[from_grade]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="text" id="to_position" name="division[to_position]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="text" id="to_grade" name="division[to_grade]" class="form-control form-control-sm text-center" readonly></td>
+        <td><input type="text" id="from_position" name="division[from_position]" class="form-control form-control-sm text-center"></td>
+        <td><input type="text" id="from_grade" name="division[from_grade]" class="form-control form-control-sm text-center"></td>
+        <td><input type="text" id="to_position" name="division[to_position]" class="form-control form-control-sm text-center"></td>
+        <td><input type="text" id="to_grade" name="division[to_grade]" class="form-control form-control-sm text-center"></td>
         <td><input type="date" name="division[date_processed]" class="form-control form-control-sm text-center"></td>
         <td><input type="text" name="division[remarks]" class="form-control form-control-sm text-center"></td>
       </tr>
@@ -621,6 +621,13 @@
 </div>
         </form>
     </div>
+    <!-- === PRINT & SUBMIT BUTTONS === -->
+    <div class="text-center my-4">
+        <!-- <button type="button" class="btn btn-secondary me-2" onclick="window.print()">🖨️ Print</button> -->
+        <button type="button" id="submitBtn" class="btn btn-success">
+        💾 Submit Application
+    </button>
+</div>
 </div>
 </div>
 </div> <!-- /.container -->
@@ -685,6 +692,9 @@
       window.requiredExperienceYears = {{ $requiredYears ?? 0 }};
       window.qsEducationUnits = @json($qsUnits ?? []);
   </script>
+  <script>
+    window.savedLevels = @json($levels);
+</script>
 
   <!-- LOAD JS FILES -->
   <script src="{{ asset('js/ipcrf.js') }}"></script>
@@ -817,6 +827,10 @@
           },
           complete: function() {
               hideQSLoading(5000); // 5000ms = 5 seconds delay
+             
+              if (window.savedLevels) {
+        restoreLevels(window.savedLevels);
+    }
           }
       });
   }
@@ -1011,6 +1025,15 @@ function hideSubmitLoading() {
     // alert("Education saved!");
 
 });
+</script>
+<script>
+    function restoreLevels(levels) {
+    $('input[name="levels[]"]').prop('checked', false);
+
+    levels.forEach(level => {
+        $('input[value="'+level+'"]').prop('checked', true);
+    });
+}
 </script>
 </body>
 </html>

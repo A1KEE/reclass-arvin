@@ -9,14 +9,31 @@ use App\Models\PpstIndicator;
 
 class AdminController extends Controller
 {
-    public function dashboard()
-    {
-        return view('admin.dashboard', [
-            'total' => Application::count(),
-            'submitted' => Application::where('status', 'submitted')->count(),
-            'draft' => Application::where('status', 'draft')->count(),
-        ]);
+   public function dashboard()
+{
+    $positions = [
+        'Teacher I',
+        'Teacher II',
+        'Teacher III',
+        'Teacher IV',
+        'Master Teacher I',
+        'Master Teacher II',
+        'Master Teacher III',
+    ];
+
+    $positionCounts = [];
+
+    foreach ($positions as $pos) {
+        $positionCounts[$pos] = Application::where('position_applied', $pos)->count();
     }
+
+    return view('admin.dashboard', [
+        'total' => Application::count(),
+        'pending' => Application::where('status', 'pending')->count(),
+        'draft' => Application::where('status', 'draft')->count(),
+        'positionCounts' => $positionCounts
+    ]);
+}
 
     public function applicants()
     {
@@ -56,5 +73,5 @@ public function show($id)
     {
         return view('admin.settings');
     }
-    
 }
+

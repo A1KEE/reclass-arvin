@@ -150,12 +150,35 @@ data-column="S">
     <td></td>
 </tr>
 
-<tr class="fw-bold table-secondary text-center">
+<tr class="fw-bold table-secondary">
     <td colspan="5">
-        Final Result: <span id="finalRating">-</span>
+
+        <!-- ✅ DITO MO ILALAGAY -->
+        <div class="p-2 rounded bg-light border">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+                <!-- LEFT: FINAL RESULT -->
+                <div>
+                    Final Result: 
+                    <span id="finalRating" class="fw-bold">-</span>
+                </div>
+
+                <!-- RIGHT: WARNING + PROGRESS -->
+                <div class="text-end">
+                    <div id="ncoiWarning" style="color:red; font-size:13px;"></div>
+                    <div id="ppstProgress" style="color:#555; font-size:13px;"></div>
+                </div>
+
+            </div>
+
+        </div>
+        <!-- ✅ END WRAPPER -->
+
     </td>
 </tr>
 
 </tbody>
 </table>
 </div>
+

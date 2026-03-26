@@ -29,23 +29,36 @@ public function store(Request $request)
     // =========================
     $request->validate([
         'name' => 'required|string|max:255',
+        'email' => 'required|email',
         'position_applied' => 'required|string',
         'levels' => 'required|array',
         'school_name' => 'required|string',
     ]);
 
     // =========================
-    // 2️⃣ CREATE APPLICATION FIRST (IMPORTANT FIX)
+    // 2️⃣ DETERMINE STATUS (🔥 DYNAMIC)
+    // =========================
+    $status = 'draft'; // default
+
+    if ($request->ppst_result === 'qualified') {
+        $status = 'pending';
+    } elseif ($request->ppst_result === 'disqualified') {
+        $status = 'draft';
+    }
+
+    // =========================
+    // 3️⃣ CREATE APPLICATION
     // =========================
     $application = Application::create([
         'name' => $request->name,
+        'email' => $request->email,
         'current_position' => $request->current_position,
         'position_applied' => $request->position_applied,
         'item_number' => $request->item_number,
         'school_name' => $request->school_name,
         'sg_annual_salary' => $request->sg_annual_salary,
-        'levels' => json_encode($request->levels),
-        'status' => 'submitted',
+        'levels' => $request->levels,
+        'status' => $status, 
         'last_activity_at' => now(),
     ]);
 

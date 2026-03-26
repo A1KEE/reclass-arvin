@@ -10,7 +10,6 @@ function syncRow(id){
 
     if(!o || !vs || !s) return;
 
-    // reset disable
     o.disabled = false;
     vs.disabled = false;
     s.disabled = false;
@@ -18,7 +17,6 @@ function syncRow(id){
     if(o.checked){
         vs.checked = false;
         s.checked = false;
-
         vs.disabled = true;
         s.disabled = true;
     }
@@ -26,7 +24,6 @@ function syncRow(id){
     if(vs.checked){
         o.checked = false;
         s.checked = false;
-
         o.disabled = true;
         s.disabled = true;
     }
@@ -34,21 +31,20 @@ function syncRow(id){
     if(s.checked){
         o.checked = false;
         vs.checked = false;
-
         o.disabled = true;
         vs.disabled = true;
     }
 }
 
 
+/* =======================================
+TOTALS
+======================================= */
+
 function updateTotals(){
 
-    let coiO = 0;
-    let coiVS = 0;
-    let ncoiO = 0;
-    let ncoiVS = 0;
-    let totalS = 0;
-    let totalVS = 0;
+    let coiO = 0, coiVS = 0, ncoiO = 0, ncoiVS = 0;
+    let totalS = 0, totalVS = 0;
 
     document.querySelectorAll('.ppst-checkbox, .ppst-checkbox-s').forEach(box=>{
 
@@ -69,9 +65,7 @@ function updateTotals(){
                 if(col === "O") ncoiO++;
                 if(col === "VS") ncoiVS++;
             }
-
         }
-
     });
 
     document.getElementById("totalCOI_O").value = coiO;
@@ -90,54 +84,56 @@ FINAL RATING
 function calculateFinalRating(totalS = 0, totalVS = 0){
 
     const position = document.getElementById("position_applied")?.value;
-
-    const coiO = parseInt(document.getElementById("totalCOI_O").value) || 0;
-    const coiVS = parseInt(document.getElementById("totalCOI_VS").value) || 0;
-    const ncoiO = parseInt(document.getElementById("totalNCOI_O").value) || 0;
-    const ncoiVS = parseInt(document.getElementById("totalNCOI_VS").value) || 0;
-
     const finalEl = document.getElementById("finalRating");
+    const warningEl = document.getElementById("ncoiWarning");
+    const progressEl = document.getElementById("ppstProgress");
+    const resultInput = document.getElementById("ppst_result"); // ✅ hidden input
 
-    /* =============================
-    NO POSITION
-    ============================= */
+    const coiO = +document.getElementById("totalCOI_O").value || 0;
+    const coiVS = +document.getElementById("totalCOI_VS").value || 0;
+    const ncoiO = +document.getElementById("totalNCOI_O").value || 0;
+    const ncoiVS = +document.getElementById("totalNCOI_VS").value || 0;
+
+    // =============================
+    // INITIAL STATES
+    // =============================
     if(!position){
         finalEl.textContent = "WAITING ⏳";
+        if(resultInput) resultInput.value = "draft";
         return;
     }
 
-    /* =============================
-    TOTAL CHECKED
-    ============================= */
     const totalChecked = coiO + coiVS + ncoiO + ncoiVS + totalS;
 
     if(totalChecked === 0){
         finalEl.textContent = "WAITING ⏳";
+        if(resultInput) resultInput.value = "draft";
         return;
     }
 
-    /* =============================
-    DISQUALIFICATION RULE
-    ============================= */
+    // =============================
+    // DISQUALIFICATION RULES
+    // =============================
     if(["Teacher IV","Teacher V","Teacher VI","Teacher VII"].includes(position)){
-        if(totalS >= 4){
-            finalEl.textContent = "DISQUALIFIED ❌ (Too many S)";
+        if(totalS >= 3){
+            finalEl.textContent = "DISQUALIFIED ❌ - 3 Satisfactor(S) reached";
+            if(resultInput) resultInput.value = "disqualified";
             return;
         }
     }
 
     if(["Master Teacher I","Master Teacher II","Master Teacher III"].includes(position)){
-        if(totalVS >= 4){
-            finalEl.textContent = "DISQUALIFIED ❌ (Too many VS)";
+        if(totalVS >= 3){
+            finalEl.textContent = "DISQUALIFIED ❌ - 3 Very Satisfactor(VS) reached";
+            if(resultInput) resultInput.value = "disqualified";
             return;
         }
     }
 
-    /* =============================
-    PR REQUIREMENTS
-    ============================= */
+    // =============================
+    // REQUIREMENTS
+    // =============================
     const prRequirements = {
-
         "Teacher II": { coiVS:6 , ncoiVS:4 },
         "Teacher III": { coiVS:12 , ncoiVS:8 },
         "Teacher IV": { coiVS:21 , ncoiVS:16 },
@@ -147,82 +143,120 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
         "Master Teacher I": { coiO:21 , ncoiVS:8 , ncoiO:8 },
         "Master Teacher II": { coiO:10 , ncoiVS:5 , ncoiO:5 },
         "Master Teacher III": { coiO:21 , ncoiVS:8 , ncoiO:8 }
-
     };
 
     const req = prRequirements[position];
 
     if(!req){
-        finalEl.textContent = "WAITING ⏳";
+        finalEl.textContent = "WAITING... ⏳";
+        if(resultInput) resultInput.value = "draft";
         return;
     }
 
-    /* =============================
-    CHECK IF PASSED
-    ============================= */
-    const meetsAllRequirements = (
-        (!req.coiO || coiO >= req.coiO) &&
-        (!req.coiVS || coiVS >= req.coiVS) &&
-        (!req.ncoiO || ncoiO >= req.ncoiO) &&
-        (!req.ncoiVS || ncoiVS >= req.ncoiVS)
-    );
+    let meetsAllRequirements = true;
 
+    // =============================
+    // COI CHECK
+    // =============================
+    if(req.coiO && coiO < req.coiO) meetsAllRequirements = false;
+    if(req.coiVS && coiVS < req.coiVS) meetsAllRequirements = false;
+
+    // =============================
+    // NCOI LOGIC
+    // =============================
+    const requiredNCOI = (req.ncoiO || 0) + (req.ncoiVS || 0);
+    const actualNCOI = ncoiO + ncoiVS;
+
+    const isHighPosition = ["Teacher VI","Teacher VII","Master Teacher I","Master Teacher II","Master Teacher III"].includes(position);
+
+    // =============================
+    // WARNING
+    // =============================
+    if(isHighPosition && ncoiO < ncoiVS){
+        warningEl.textContent = "⚠ NCOIs Very Satisfactor is higher than Outstanding";
+    }else{
+        warningEl.textContent = "";
+    }
+
+    // =============================
+    // PROGRESS
+    // =============================
+    let remaining = Math.max(requiredNCOI - actualNCOI, 0);
+
+    progressEl.textContent = remaining > 0 
+        ? `Remaining NCOI needed: ${remaining}` 
+        : `NCOI requirement complete ✔`;
+
+    // =============================
+    // CHECK IF COMPLETE
+    // =============================
+    const isComplete = actualNCOI >= requiredNCOI;
+
+    if(!isComplete){
+        finalEl.textContent = "IN PROGRESS ⏳";
+        if(resultInput) resultInput.value = "draft";
+        return;
+    }
+
+    // =============================
+    // FINAL DISQUALIFICATION
+    // =============================
+    if(isHighPosition && ncoiO < ncoiVS){
+        finalEl.textContent = "DISQUALIFIED ❌ - NCOIs Very Satisfactor higher than Outstanding";
+        if(resultInput) resultInput.value = "disqualified";
+        return;
+    }
+
+    // =============================
+    // NORMAL CHECK
+    // =============================
+    if(!isHighPosition){
+        if(req.ncoiO && ncoiO < req.ncoiO) meetsAllRequirements = false;
+        if(req.ncoiVS && ncoiVS < req.ncoiVS) meetsAllRequirements = false;
+    }
+
+    // =============================
+    // FINAL RESULT
+    // =============================
     if(meetsAllRequirements){
         finalEl.textContent = "QUALIFIED ✅";
-        return;
+        if(resultInput) resultInput.value = "qualified";
+    }else{
+        finalEl.textContent = "IN PROGRESS ⏳";
+        if(resultInput) resultInput.value = "draft";
     }
-    finalEl.textContent = "IN PROGRESS ⏳";
 }
 document.addEventListener("change", function(e){
-
     if(e.target.classList.contains("ppst-checkbox") || 
        e.target.classList.contains("ppst-checkbox-s")){
-
         const id = e.target.dataset.id;
-
         syncRow(id);
         updateTotals();
     }
-
 });
-
-
-/* =======================================
-INIT
-======================================= */
-
 function initPPST(){
     updateTotals();
 }
-
-
 /* =======================================
-POSITION CHANGE (LOAD NEW TABLE)
+POSITION CHANGE
 ======================================= */
-
 document.getElementById("position_applied")?.addEventListener("change", function(){
 
     const position = this.value;
-
     document.getElementById("finalRating").textContent = "Loading...";
 
     fetch(`/load-ppst?position=${encodeURIComponent(position)}`)
         .then(res => res.text())
         .then(html => {
-
             document.getElementById("ppst-container").innerHTML = html;
-
-            // 🔥 re-init after reload
             initPPST();
         });
 
 });
 
-
 /* =======================================
-ON PAGE LOAD
+ON LOAD
 ======================================= */
-
 document.addEventListener("DOMContentLoaded", function(){
     initPPST();
 });

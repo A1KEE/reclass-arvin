@@ -69,6 +69,9 @@
             <input type="hidden" name="education[school]" id="input_education_school">
             <input type="hidden" name="education[date_graduated]" id="input_education_date">
             <input type="hidden" name="education[units]" id="input_education_units">
+
+            <input type="hidden" name="ppst_result" id="ppst_result">
+            <input type="hidden" name="email" id="applicant_email">
             
             @include('modals.education')
             @include('modals.training')

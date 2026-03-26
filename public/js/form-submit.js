@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let isSubmitting = false;
 
-    submitBtn.addEventListener("click", function () {
+    submitBtn.addEventListener("click", async function () {
 
         if (isSubmitting) return;
 
@@ -22,7 +22,39 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        Swal.fire({
+        // =========================
+        // 📧 ASK EMAIL BEFORE SUBMIT
+        // =========================
+        const { value: email, isConfirmed } = await Swal.fire({
+            title: 'Enter Your Email',
+            html: `
+                <p style="margin-bottom:10px;">We will send your application status here:</p>
+                <input type="email" id="swal_email" class="swal2-input" placeholder="Enter your email" required>
+            `,
+            confirmButtonText: 'Continue',
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#28a745',
+            allowOutsideClick: false,
+            focusConfirm: false,
+            preConfirm: () => {
+                const val = document.getElementById('swal_email')?.value.trim();
+                if (!val) {
+                    Swal.showValidationMessage('Email is required');
+                }
+                return val;
+            }
+        });
+
+        if (!isConfirmed) return;
+
+        // ✅ SET EMAIL TO HIDDEN INPUT
+        document.getElementById("applicant_email").value = email;
+
+        // =========================
+        // CONFIRM SUBMIT
+        // =========================
+        const confirm = await Swal.fire({
             title: 'Submit Application?',
             text: "You will not be able to edit this after submission.",
             icon: 'question',
@@ -31,20 +63,21 @@ document.addEventListener("DOMContentLoaded", function () {
             cancelButtonText: 'Cancel',
             confirmButtonColor: '#28a745',
             allowOutsideClick: false
-        }).then((result) => {
-
-            if (!result.isConfirmed) return;
-
-            isSubmitting = true;
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = "Submitting... ⏳";
-
-            showSubmitLoading(); // ✅ SHOW LOADER
-
-            $('#applicantForm').trigger('submit'); // ✅ REAL SUBMIT (NO DELAY)
-
         });
+
+        if (!confirm.isConfirmed) return;
+
+        // =========================
+        // FINAL SUBMIT
+        // =========================
+        isSubmitting = true;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "Submitting... ⏳";
+
+        showSubmitLoading();
+
+        $('#applicantForm').trigger('submit');
 
     });
 

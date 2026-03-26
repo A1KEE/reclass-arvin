@@ -11,6 +11,7 @@ class Application extends Model
 
    protected $fillable = [
     'name',
+    'email',
     'current_position',
     'position_applied',
     'item_number',

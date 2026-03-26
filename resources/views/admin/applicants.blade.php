@@ -39,13 +39,13 @@
 
     <!-- LEVELS (JSON) -->
     <td>
-        {{ is_string($a->levels) ? implode(', ', json_decode($a->levels, true) ?? []) : '' }}
-    </td>
+    {{ implode(', ', $a->levels ?? []) }}
+</td>
 
     <!-- STATUS BADGE -->
     <td>
-        @if($a->status == 'submitted')
-            <span class="badge badge-success">Submitted</span>
+        @if($a->status == 'pending')
+            <span class="badge badge-warning">Pending</span>
         @elseif($a->status == 'draft')
             <span class="badge badge-secondary">Draft</span>
         @else
