@@ -47,7 +47,15 @@
           <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <form id="applicantForm" action="{{ route('applicants.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="applicantForm" 
+      action="{{ isset($application) && $application->id ? route('admin.applications.update', $application->id) : route('applicants.store') }}" 
+      method="POST" 
+      enctype="multipart/form-data">
+    
+    @csrf
+    @if(isset($application) && $application->id)
+        @method('PUT')
+    @endif
 
             @csrf
             <div id="educationHiddenInputs"></div>
@@ -281,63 +289,132 @@ if(isset($application) && $application->levels){
 </div>
 <input type="hidden" id="isEditMode" value="{{ isset($application) ? 1 : 0 }}">
 
-    <!-- QS TABLE -->
-<hr class="mt-2">
-<h5 class="text-left fw-bold mt-3">I. QUALIFICATION STANDARDS</h5>
-<table class="table table-bordered mt-3 text-center align-middle">
-    <thead>
+        <!-- QS TABLE -->
+    <hr class="mt-2">
+    <h5 class="text-left fw-bold mt-3">I. QUALIFICATION STANDARDS</h5>
+    <table class="table table-bordered mt-3 text-center align-middle">
+        <thead>
+            <tr>
+                <th>Elements</th>
+                <th>QS of the Position</th>
+                <th>QS of the Applicant</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr id="education-row">
+        <td>Education</td>
+        <td id="qs_education">—</td>
+        <td><button type="button" class="btn btn-sm btn-primary add-education-btn">➕ Add Education</button>
+            <div id="education_summary" class="mt-2 small text-muted">
+        @if($application->educations && $application->educations->count())
+            @foreach($application->educations as $edu)
+                <div class="mb-1">
+                    <strong>{{ $edu->degree }}</strong><br>
+                    {{ $edu->school }}<br>
+                    <small>{{ $edu->date_graduated }} | Units: {{ $edu->units ?? '-' }}</small>
+                </div>
+            @endforeach
+        @else
+            No Education Added.
+        @endif
+    </div>
+        </td>
+        <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
+    </tr>
         <tr>
-            <th>Elements</th>
-            <th>QS of the Position</th>
-            <th>QS of the Applicant</th>
-            <th>Remarks</th>
-        </tr>
-    </thead>
-    <tbody>
-       <tr id="education-row">
-    <td>Education</td>
-    <td id="qs_education">—</td>
-    <td><button type="button" class="btn btn-sm btn-primary add-education-btn">➕ Add Education</button>
-        <div id="education_summary" class="mt-2 small text-muted">No Education Added.</div>
-    </td>
-    <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
-</tr>
-       <tr>
-           <td>Training</td>
-           <td id="qs_training">—</td>
-           <td><button type="button"class="btn btn-sm btn-primary add-training-btn">➕ Add Training</button>
-               <div id="training_summary" class="mt-2 small text-muted"></div></td>
-           <td id="training_remark"><span class="text-muted">Waiting for the QS</span></td>
-       </tr>
-     <tr>
-    <td>Experience</td>
-    <td id="qs_experience">—</td>
-    <td><button type="button"class="btn btn-sm btn-primary add-experience-btn">➕ Add Experience</button>
-        <div id="experience_summary" class="mt-2 small text-muted">No experience added.</div>
-    </td>
-    <td id="experience_remark">
-        <span class="text-muted">Waiting for the QS</span>
-    </td>
-</tr>
+        <td>Training</td>
+
+        <td id="qs_training">—</td>
+
+        <td>
+            <button type="button" class="btn btn-sm btn-primary add-training-btn">
+                ➕ Add Training
+            </button>
+
+            <div id="training_summary" class="mt-2 small text-muted">
+            @if($application->trainings && $application->trainings->count())
+        @foreach($application->trainings as $t)
+            <div class="mb-1">
+                <strong>{{ $t->title ?? 'Training' }}</strong><br>
+                {{ $t->type ?? '-' }}<br>
+                <small>
+                    {{ $t->hours ?? 0 }} hrs |
+                    {{ $t->start_date ?? '' }} - {{ $t->end_date ?? '' }}
+                </small>
+            </div>
+        @endforeach
+    @else
+        No Training Added.
+    @endif
+            </div>
+        </td>
+
+        <td id="training_remark">
+            <span class="text-muted">Waiting for the QS</span>
+        </td>
+    </tr>
+        <tr>
+        <td>Experience</td>
+        <td id="qs_experience">—</td>
+        <td><button type="button"class="btn btn-sm btn-primary add-experience-btn">➕ Add Experience</button>
+            <div id="experience_summary" class="mt-2 small text-muted">
+    @if($application->experiences && $application->experiences->count())
+        @foreach($application->experiences as $exp)
+            <div class="mb-1">
+                <strong>{{ $exp->position }}</strong><br>
+                {{ $exp->school }} ({{ $exp->school_type }})<br>
+                <small>
+                    {{ $exp->start_date }} - {{ $exp->end_date ?? 'Present' }}
+                </small>
+            </div>
+        @endforeach
+    @else
+        No experience added.
+    @endif
+</div>
+        </td>
+        <td id="experience_remark">
+            <span class="text-muted">Waiting for the QS</span>
+        </td>
+    </tr>
     <tr>
-    <td>Eligibility</td>
-    <td id="qs_eligibility">—</td>
-    <td><button type="button"class="btn btn-sm btn-primary add-eligibility-btn">➕ Add Eligibility</button>
-        <div id="eligibility_summary" class="mt-2 small text-muted">No eligibility added.</div>
-    </td>
-    <td id="eligibility_remark">
-        <span class="text-muted">Waiting for the QS</span></td>
-</tr>
-    </tbody>
-</table>
+        <td>Eligibility</td>
+
+        <td id="qs_eligibility">—</td>
+
+        <td>
+            <button type="button" class="btn btn-sm btn-primary add-eligibility-btn">
+                ➕ Add Eligibility
+            </button>
+
+           <div id="eligibility_summary" class="mt-2 small text-muted">
+    @if($application->eligibilities && $application->eligibilities->count())
+        @foreach($application->eligibilities as $el)
+            <div class="mb-1">
+                <strong>{{ $el->eligibility_name ?? 'Eligibility' }}</strong><br>
+                <small>
+                    Expiry: {{ $el->expiry_date ?? '-' }}
+                </small>
+            </div>
+        @endforeach
+    @else
+        No Eligibility Added.
+    @endif
+</div>
+        </td>
+
+        <td id="eligibility_remark">
+            <span class="text-muted">Waiting for the QS</span>
+        </td>
+    </tr>
+        </tbody>
+    </table>
 
    <div class="d-flex justify-content-between align-items-center mb-3">
   <p class="text-muted fst-italic mb-0">
     Note: Indicate the QS of the Position Applied for based on the CSC-Approved QS
   </p>
-  <!-- <button type="button" id="checkQSBtn" class="btn btn-primary">
-    Evaluate All Qualifications
-  </button> -->
 </div>
 
     <!-- PERFORMANCE REQUIREMENTS -->
@@ -436,6 +513,7 @@ if(isset($application) && $application->levels){
     @include('applicants.ppst-table')
 </div>
 
+
 {{-- ========================================================= --}}
 {{-- III. COMPARATIVE ASSESSMENT RESULT --}}
 {{-- ========================================================= --}}
@@ -459,10 +537,10 @@ if(isset($application) && $application->levels){
     </thead>
     <tbody>
       <tr>
-        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"></td>
-        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"></td>
-        <td><input type="number" name="comparative[experience]" class="form-control form-control-sm text-center"></td>
-        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center"><button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
+        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"value="{{ $application->scores->education_points ?? 0 }}"></td>
+        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"value="{{ $application->scores->training_points ?? 0 }}"></td>
+        <td><input type="number" name="comparative[experience_points]" class="form-control form-control-sm text-center"value="{{ $application->scores->experience_points ?? 0 }}"></td>
+        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center" value="{{ $application->scores->performance_points ?? 0 }}"><button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
         <td><input type="number" name="comparative[classroom]" class="form-control form-control-sm text-center" id="comparativeClassroom"value="0"></td>
         <td><input type="number" name="comparative[non_classroom]" class="form-control form-control-sm text-center"id="comparativeNonClassroom"value="0"></td>
         <td><input type="number" name="comparative[BEI]" class="form-control form-control-sm text-center"></td>
@@ -673,7 +751,7 @@ if(isset($application) && $application->levels){
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
-
+    
   <!-- GLOBAL VARIABLES -->
   <script>
       // ITO ANG IMPORTANTE: Check kung tama ang structure
@@ -696,6 +774,17 @@ if(isset($application) && $application->levels){
     window.savedLevels = @json($levels);
 </script>
 
+<script>
+    window.adminData = {
+        educations: @json($application->educations ?? collect()->values()),
+        trainings: @json($application->trainings ?? collect()->values()),
+        experiences: @json($application->experiences ?? collect()->values()),
+        eligibilities: @json($application->eligibilities ?? collect()->values()),
+        scores: @json($application->scores ?? null)
+    };
+</script>
+  <script src="{{ asset('js/admin-load.js') }}"></script>
+
   <!-- LOAD JS FILES -->
   <script src="{{ asset('js/ipcrf.js') }}"></script>
   <script src="{{ asset('js/auto-check-qs.js') }}"></script>
@@ -712,7 +801,7 @@ if(isset($application) && $application->levels){
   <script src="{{ asset('js/mapping-sg.js') }}"></script>
   <script src="{{ asset('js/position-ranking.js') }}"></script>
   <script src="{{ asset('js/position-change.js') }}"></script>
-
+  
   <script>
   function tryAutoEvaluate() {
       const remarks = [
@@ -1008,12 +1097,12 @@ function hideSubmitLoading() {
 
     let container = document.getElementById("educationHiddenInputs");
 
-    container.innerHTML = `
-        <input type="hidden" name="education[degree]" value="${degree}">
-        <input type="hidden" name="education[school]" value="${school}">
-        <input type="hidden" name="education[date_graduated]" value="${date}">
-        <input type="hidden" name="education[units]" value="${units}">
-    `;
+    container.insertAdjacentHTML('beforeend', `
+    <input type="hidden" name="educations[${index}][degree]" value="${degree}">
+    <input type="hidden" name="educations[${index}][school]" value="${school}">
+    <input type="hidden" name="educations[${index}][date_graduated]" value="${date}">
+    <input type="hidden" name="educations[${index}][units]" value="${units}">
+`);
 
     // clone file input para hindi mawala sa modal
     let clone = fileInput.cloneNode(true);

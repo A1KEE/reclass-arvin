@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+
 class Application extends Model
 {
     use HasFactory;
@@ -60,6 +61,6 @@ class Application extends Model
     }
     public function scores()
     {
-        return $this->hasOne(\App\Models\ApplicationScore::class, 'application_id');
+        return $this->hasOne(ApplicationScore::class, 'application_id', 'id');
     }
 }

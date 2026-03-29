@@ -674,6 +674,7 @@ $(document).ready(function () {
     console.log('Training script initializing...');
     console.log('window.qsConfig:', window.qsConfig ? 'Loaded' : 'Not loaded');
     
+     loadAdminTrainings();
     const initialRequiredLevel = getQualificationLevel(requiredTrainingHours);
     requiredTrainingLevel = initialRequiredLevel;
     

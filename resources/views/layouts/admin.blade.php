@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Administration Panel</title>
 
-    <!-- Bootstrap 4 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Icons -->
+    <link rel="icon" type="image/png" href="{{ asset('images/DO-LOGO.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/DO-LOGO.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/DO-LOGO.png') }}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+
     <style>
         body {
             background: #f4f6f9;
@@ -28,6 +30,8 @@
             background: #1e1e2d;
             color: #fff;
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar a {
@@ -43,11 +47,95 @@
             color: #fff;
         }
 
+        /* BRAND */
         .sidebar .brand {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             padding: 15px 20px;
             background: #111;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar .brand img {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* MENU */
+        .sidebar-menu {
+            flex: 1;
+        }
+
+        /* FOOTER */
+        .sidebar-footer {
+            padding: 15px;
+        }
+
+        .user-card {
+            background: #111;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        /* =========================
+           COLLAPSE MODE
+        ========================= */
+
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .content {
+            margin-left: 70px;
+        }
+
+        /* 🔥 HIDE ALL SIDEBAR TEXT ON COLLAPSE */
+        .sidebar-collapsed .sidebar a span {
+            display: none;
+        }
+
+        /* 🔥 RFTP HIDE ON COLLAPSE */
+        .sidebar-collapsed .brand span {
+            display: none;
+        }
+
+        .sidebar-collapsed .brand {
+            justify-content: center;
+        }
+
+        /* 🔥 ADMIN NAME SMALLER (REQUESTED) */
+        .user-info strong {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* 🔥 KEEP ADMIN INFO SMALL BUT VISIBLE WHEN COLLAPSED */
+        .sidebar-collapsed .user-info strong {
+            font-size: 10px;
+        }
+
+        .sidebar-collapsed .user-info small {
+            font-size: 9px;
+        }
+
+        /* KEEP FOOTER LAYOUT CLEAN */
+        .sidebar-footer .btn {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .sidebar-collapsed .sidebar-footer .btn {
+            font-size: 11px;
+            padding: 6px 8px;
+            width: 100%;
         }
 
         /* CONTENT */
@@ -57,26 +145,14 @@
             transition: all 0.3s;
         }
 
-        /* NAVBAR */
+        /* TOPBAR */
         .topbar {
             background: #fff;
             padding: 10px 20px;
             border-bottom: 1px solid #ddd;
         }
 
-        /* COLLAPSED */
-        .sidebar-collapsed .sidebar {
-            width: 70px;
-        }
-
-        .sidebar-collapsed .sidebar a span {
-            display: none;
-        }
-
-        .sidebar-collapsed .content {
-            margin-left: 70px;
-        }
-        /* DARK MODE */
+        /* DARK MODE SAFE */
         body.dark-mode {
             background: #121212;
             color: #eee;
@@ -99,46 +175,43 @@
         body.dark-mode a {
             color: #ccc;
         }
-        /* applicant datatable */
-        #applicantsTable {
-        font-size: 13px;
-        }
+/* smooth transition */
+.sidebar-user,
+.logout-btn,
+.admin-name,
+.admin-role,
+.logout-text {
+    transition: all 0.3s ease;
+}
 
-        #applicantsTable th,
-        #applicantsTable td {
-            padding: 6px 8px !important;
-            vertical-align: middle;
-        }
+/* COLLAPSED STATE */
+.sidebar-collapsed .admin-name,
+.sidebar-collapsed .admin-role,
+.sidebar-collapsed .logout-text {
+    display: none;
+}
 
-        .dataTables_wrapper .dataTables_filter input {
-            height: 30px;
-            font-size: 13px;
-        }
+/* center icons when collapsed */
+.sidebar-collapsed .sidebar-user {
+    text-align: center;
+}
 
-        .dataTables_wrapper .dataTables_length select {
-            height: 30px;
-            font-size: 13px;
-        }
+/* logout icon only when collapsed */
+.sidebar-collapsed .logout-btn {
+    justify-content: center;
+}
 
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            font-size: 12px;
-        }
-
-        .badge {
-            font-size: 11px;
-            padding: 4px 6px;
-        }
-        /* MOBILE */
+/* optional spacing fix */
+.sidebar-collapsed .user-icon {
+    font-size: 22px;
+}
         @media(max-width: 768px){
             .sidebar {
                 left: -240px;
             }
-
             .sidebar.show {
                 left: 0;
             }
-
             .content {
                 margin-left: 0;
             }
@@ -150,53 +223,87 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
-    <div class="brand">⚙️ RFTP</div>
 
-    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-        <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
-    </a>
+    <div class="brand">
+        <img src="{{ asset('images/DO-LOGO.png') }}" alt="DO LOGO">
+        <span>Reclassification</span>
+    </div>
 
-    <a href="{{ route('admin.applicants') }}" class="{{ request()->routeIs('admin.applicants') ? 'active' : '' }}">
-        <i class="bi bi-people"></i> <span>Applicants</span>
-    </a>
+    <!-- MENU -->
+    <div class="sidebar-menu">
+        <a href="{{ route('admin.dashboard') }}">
+            <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+        </a>
 
-    <hr style="border-color:#444;">
+        <a href="{{ route('admin.applicants') }}">
+            <i class="bi bi-people"></i> <span>Applicants</span>
+        </a>
 
-<a href="{{ route('admin.settings') }}" class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
-    <i class="bi bi-gear"></i> <span>Settings</span>
-</a>
+        <!-- DO NOT CHANGE THIS LINE (AS REQUESTED) -->
+        <hr style="border-color:#444;">
+
+        <a href="{{ route('admin.settings') }}">
+            <i class="bi bi-gear"></i> <span>Settings</span>
+        </a>
+    </div>
+
+    <!-- FOOTER -->
+<div class="sidebar-footer">
+
+    <div class="user-card text-white sidebar-user text-center">
+
+        <div class="user-info mb-2">
+
+            <div class="user-icon mb-1">
+                👤
+            </div>
+
+            <div class="user-text">
+                <strong class="admin-name">
+                    {{ auth()->user()->name ?? 'Admin' }}
+                </strong><br>
+
+                <small class="admin-role">Administrator</small>
+            </div>
+
+        </div>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+
+            <button class="btn btn-sm btn-danger btn-block logout-btn">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="logout-text">Logout</span>
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
 </div>
 
 <!-- CONTENT -->
 <div class="content" id="content">
 
-    <!-- TOPBAR -->
     <div class="topbar d-flex justify-content-between align-items-center">
 
-        <!-- TOGGLE -->
         <button class="btn btn-sm btn-dark" id="toggleSidebar">
             <i class="bi bi-list"></i>
         </button>
 
-        <!-- USER -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle text-dark" data-toggle="dropdown">
-                👤 {{ auth()->user()->name ?? 'Admin' }}
-            </a>
-
-            <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" href="#">Profile</a>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="dropdown-item text-danger">Logout</button>
-                </form>
-            </div>
+        <div class="text-end small">
+           <div>
+            <strong>Date:</strong> <span id="liveDate"></span>
+        </div>
+        <div>
+            <strong>Time:</strong> <span id="liveTime"></span>
+        </div>
         </div>
 
     </div>
 
-    <!-- PAGE CONTENT -->
     <div class="mt-3">
         @yield('content')
     </div>
@@ -211,33 +318,59 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    const toggleBtn = document.getElementById('toggleSidebar');
-    const body = document.body;
-    const sidebar = document.getElementById('sidebar');
+const toggleBtn = document.getElementById('toggleSidebar');
+const body = document.body;
+const sidebar = document.getElementById('sidebar');
 
-   toggleBtn.addEventListener('click', function () {
-
+toggleBtn.addEventListener('click', function () {
     body.classList.toggle('sidebar-collapsed');
     sidebar.classList.toggle('show');
 
-    // 🔥 FIX ALIGNMENT (ITO LANG IMPORTANTE)
     setTimeout(() => {
-        if (table) {
+        if (typeof table !== "undefined") {
             table.columns.adjust();
         }
+        window.dispatchEvent(new Event('resize'));
     }, 300);
+});
+</script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let theme = localStorage.getItem('theme') || 'light';
+    if(theme === 'dark'){
+        document.body.classList.add('dark-mode');
+    }
 });
 </script>
 <script>
-    // AUTO APPLY THEME ON LOAD
-    document.addEventListener("DOMContentLoaded", function () {
-        let theme = localStorage.getItem('theme') || 'light';
+    // =========================
+// LIVE DATE & TIME
+// =========================
+function updateDateTime() {
+    const now = new Date();
 
-        if(theme === 'dark'){
-            document.body.classList.add('dark-mode');
-        }
-    });
+    // DATE FORMAT: March 29 2026
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = now.toLocaleDateString('en-US', options);
+
+    // TIME FORMAT: 9:19 PM
+    let hours = now.getHours();
+    let minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    const timeStr = `${hours}:${minutes} ${ampm}`;
+
+    document.getElementById('liveDate').textContent = dateStr;
+    document.getElementById('liveTime').textContent = timeStr;
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
 </script>
 
 @stack('scripts')

@@ -16,6 +16,7 @@ use App\Models\Eligibility;
 use App\Models\Ipcrf;
 use App\Models\ApplicationPpstRating;
 use App\Models\PpstIndicator;
+use App\Mail\ApplicationStatusMail;
 
 class ApplicationController extends Controller
 {
@@ -267,9 +268,17 @@ if ($request->has('ppst')) {
             'created_at' => now(),
         ]
     );
-    // =========================
-    // ✅ SUCCESS
-    // =========================
+
+    try {
+
+        Mail::to($application->email)
+            ->send(new ApplicationStatusMail($application));
+
+    } catch (\Exception $e) {
+
+        \Log::error('Mail Error: ' . $e->getMessage());
+
+    }
     return redirect()->back()->with('success', 'Application submitted successfully.');
 }
     /* =====================================================

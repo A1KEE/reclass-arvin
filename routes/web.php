@@ -68,6 +68,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/settings', [AdminController::class, 'settings'])
         ->name('admin.settings')
         ->middleware('auth');
+
+        Route::put('/admin/applications/{id}', [AdminController::class, 'updateApplication'])->name('admin.applications.update');
     });
 
 });
