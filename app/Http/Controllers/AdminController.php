@@ -176,5 +176,21 @@ public function update(Request $request, $id)
     {
         return view('admin.settings');
     }
+
+    public function ranking()
+{
+    $applications = Application::with('scores')
+        ->join('application_scores', 'applications.id', '=', 'application_scores.application_id')
+        ->orderByDesc('application_scores.total_score')
+        ->select('applications.*', 'application_scores.total_score', 'application_scores.final_result')
+        ->get();
+
+    $applications = $applications->map(function ($app, $index) {
+        $app->rank = $index + 1;
+        return $app;
+    });
+
+    return view('admin.ranking', compact('applications'));
+}
 }
 

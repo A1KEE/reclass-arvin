@@ -30,13 +30,24 @@ public function store(Request $request)
     // =========================
     // 1️⃣ VALIDATION
     // =========================
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email',
-        'position_applied' => 'required|string',
-        'levels' => 'required|array',
-        'school_name' => 'required|string',
-    ]);
+   $request->validate([
+    'name' => 'required|string|max:255',
+    'email' => [
+        'required',
+        'email',
+        function ($attribute, $value, $fail) {
+
+            $count = \App\Models\Application::where('email', $value)->count();
+
+            if ($count >= 2) {
+                $fail('Maximum of 2 applications per email only. Please use another email.');
+            }
+        }
+    ],
+    'position_applied' => 'required|string',
+    'levels' => 'required|array',
+    'school_name' => 'required|string',
+]);
 
     // =========================
     // 2️⃣ DETERMINE STATUS (🔥 DYNAMIC)
@@ -66,10 +77,21 @@ public function store(Request $request)
     ]);
 
    $applicantId = $application->id;
+   // 👉 GET SURNAME
+    $nameParts = explode(' ', strtoupper($request->name));
+    $surname = end($nameParts);
+
+    // 👉 DATE
+    $date = now()->format('Ymd');
+
+    // 👉 FINAL FOLDER NAME
+    $folderName = $surname . '-' . $date . '-' . $applicantId;
 
 // =========================
 // 🔥 CREATE USER ACCOUNT IF QUALIFIED
 // =========================
+$passwordToSend = null;
+
 if (strtolower($request->ppst_result ?? '') === 'qualified') {
 
     $existingUser = User::where('email', $request->email)->first();
@@ -87,16 +109,18 @@ if (strtolower($request->ppst_result ?? '') === 'qualified') {
         ]);
 
         $user->assignRole('applicant');
+
+        $passwordToSend = $defaultPassword; // ✅ ONLY HERE
     }
 }
     // =========================
     // 3️⃣ CREATE BASE FOLDER
     // =========================
-    Storage::disk('public')->makeDirectory("applications/$applicantId");
+    Storage::disk('public')->makeDirectory("applications/$folderName");
 
-    $getPath = function($type) use ($applicantId) {
-        return "applications/{$applicantId}/{$type}";
-    };
+    $getPath = function($type) use ($folderName) {
+    return "applications/{$folderName}/{$type}";
+};
 
     // =========================
     // 4️⃣ TRAININGS
@@ -222,7 +246,7 @@ if (strtolower($request->ppst_result ?? '') === 'qualified') {
 
             $fileName = $safeName . '_' . time() . '.pdf';
 
-            $filePath = $file->storeAs("applications/{$application->id}/ipcrf", $fileName, 'public');
+            $filePath = $file->storeAs($getPath('ipcrf'), $fileName, 'public');
 
             \App\Models\IpcrfFile::create([
                 'application_id' => $application->id,
@@ -313,7 +337,7 @@ try {
         ->send(new ApplicationStatusMail(
             $application,
             $request->ppst_result,
-            $defaultPassword ?? null
+           $passwordToSend //
         ));
 
     \DB::commit();
@@ -522,5 +546,12 @@ public function loadPPST(Request $request)
 
         return $qs[$level][$position]['training_hours'] ?? 0;
     }
+   public function checkEmail(Request $request)
+    {
+        $count = Application::where('email', $request->email)->count();
 
+        return response()->json([
+            'count' => $count
+        ]);
+    }
 }

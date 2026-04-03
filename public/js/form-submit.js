@@ -37,13 +37,53 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmButtonColor: '#28a745',
             allowOutsideClick: false,
             focusConfirm: false,
-            preConfirm: () => {
-                const val = document.getElementById('swal_email')?.value.trim();
-                if (!val) {
-                    Swal.showValidationMessage('Email is required');
-                }
-                return val;
-            }
+           preConfirm: async () => {
+
+    const email = document.getElementById('swal_email')?.value.trim();
+
+    if (!email) {
+        Swal.showValidationMessage('Email is required');
+        return false;
+    }
+
+    const token = document.querySelector('meta[name="csrf-token"]');
+
+    if (!token) {
+        Swal.showValidationMessage('Security token missing. Please refresh.');
+        return false;
+    }
+
+    try {
+
+        const res = await fetch("/check-email", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": token.content
+            },
+            body: JSON.stringify({ email: email })
+        });
+
+        if (!res.ok) {
+            throw new Error("HTTP error " + res.status);
+        }
+
+        const data = await res.json();
+
+        if (data.count >= 2) {
+            Swal.showValidationMessage(
+                'Maximum of 2 applications reached. Use another email.'
+            );
+            return false;
+        }
+
+        return email;
+
+    } catch (error) {
+        Swal.showValidationMessage('Request failed. Refresh page.');
+        return false;
+    }
+}
         });
 
         if (!isConfirmed) return;

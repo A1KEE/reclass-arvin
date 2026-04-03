@@ -79,12 +79,12 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Name:</label>
-                    <input name="name" id="name" class="form-control" placeholder="Ex.Juan D. Cruz" value="{{ $application->name }}">
+                    <input name="name" id="name" class="form-control" placeholder="Ex.Juan D. Cruz" value="{{ $application->name }}" readonly>
                 </div>
 
              <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold">Current Position:</label>
-                <select id="current_position" name="current_position" class="form-select">
+                <select id="current_position" name="current_position" class="form-select" disabled>
                 <option value="">-- Select Current Position --</option>
 
                 @foreach($positions as $p)
@@ -129,7 +129,7 @@ if(isset($application) && $application->levels){
 <div class="row">
     <div class="col-md-6 mb-3">
         <label class="form-label fw-bold">Position Applied:</label>
-        <select id="position_applied" name="position_applied" class="form-select">
+        <select id="position_applied" name="position_applied" class="form-select" disabled>
             <option value="">-- Select Position Applied --</option>
 
             @foreach($positions as $p)
@@ -142,7 +142,7 @@ if(isset($application) && $application->levels){
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Item No. of Current Position:</label>
-                    <input type="text" name="item_number" class="form-control" value="{{ $application->item_number }}">
+                    <input type="text" name="item_number" class="form-control" value="{{ $application->item_number }}" readonly>
                 </div>
             </div>
 
@@ -152,7 +152,7 @@ if(isset($application) && $application->levels){
     {{-- ========================= --}}
     <div class="col-md-6 mb-3">
         <label class="form-label fw-bold">Station / School:</label>
-        <select id="school_id" name="school_name" class="form-select">
+        <select id="school_id" name="school_name" class="form-select" disabled>
             <option value="">-- Select School --</option>
 
             {{-- Kindergarten --}}
