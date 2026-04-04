@@ -296,7 +296,7 @@ if(isset($application) && $application->levels){
         <tr id="education-row">
         <td>Education</td>
         <td id="qs_education">—</td>
-        <td><button type="button" class="btn btn-sm btn-primary add-education-btn">➕ Add Education</button>
+        <td><button type="button" class="btn btn-sm btn-primary add-education-btn d-none">➕ Add Education</button>
             <div id="education_summary" class="mt-2 small text-muted">
         @if($application->educations && $application->educations->count())
             @foreach($application->educations as $edu)
@@ -319,7 +319,7 @@ if(isset($application) && $application->levels){
         <td id="qs_training">—</td>
 
         <td>
-            <button type="button" class="btn btn-sm btn-primary add-training-btn">
+            <button type="button" class="btn btn-sm btn-primary add-training-btn d-none">
                 ➕ Add Training
             </button>
 
@@ -348,7 +348,7 @@ if(isset($application) && $application->levels){
         <tr>
         <td>Experience</td>
         <td id="qs_experience">—</td>
-        <td><button type="button"class="btn btn-sm btn-primary add-experience-btn">➕ Add Experience</button>
+        <td><button type="button"class="btn btn-sm btn-primary add-experience-btn d-none">➕ Add Experience</button>
             <div id="experience_summary" class="mt-2 small text-muted">
     @if($application->experiences && $application->experiences->count())
         @foreach($application->experiences as $exp)
@@ -375,7 +375,7 @@ if(isset($application) && $application->levels){
         <td id="qs_eligibility">—</td>
 
         <td>
-            <button type="button" class="btn btn-sm btn-primary add-eligibility-btn">
+            <button type="button" class="btn btn-sm btn-primary add-eligibility-btn d-none">
                 ➕ Add Eligibility
             </button>
 

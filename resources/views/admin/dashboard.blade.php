@@ -8,10 +8,10 @@
 @endsection</h5>
 
     <!-- STATS CARDS -->
-    <div class="row stats-row">
+    <div class="row stats-row gx-0">
 
         <!-- TOTAL -->
-        <div class="col-md-3 mb-3">
+        <div class="col mb-2">
             <div class="card stat-card total-card">
                 <div class="card-body d-flex justify-content-between align-items-center">
 
@@ -30,14 +30,14 @@
         </div>
 
         <!-- PENDING -->
-        <div class="col-md-3 mb-3">
+        <div class="col mb-2">
             <div class="card stat-card pending-card">
                 <div class="card-body d-flex justify-content-between align-items-center">
 
                     <div>
                         <h6>Pending</h6>
-                        <h2 class="counter text-success" data-target="{{ $pending }}">0</h2>
-                        <span class="badge badge-success">
+                        <h2 class="counter text-warning" data-target="{{ $pending }}">0</h2>
+                        <span class="badge badge-warning">
                             {{ $total > 0 ? round(($pending / $total) * 100) : 0 }}%
                         </span>
                     </div>
@@ -51,7 +51,7 @@
         </div>
 
         <!-- DRAFT -->
-        <div class="col-md-3 mb-3">
+        <div class="col mb-2">
             <div class="card stat-card draft-card">
                 <div class="card-body d-flex justify-content-between align-items-center">
 
@@ -71,7 +71,7 @@
             </div>
         </div>
         <!-- EVALUATED -->
-<div class="col-md-3 mb-3">
+<div class="col mb-2">
     <div class="card stat-card evaluated-card">
         <div class="card-body d-flex justify-content-between align-items-center">
 
@@ -85,6 +85,27 @@
 
             <div class="icon-box">
                 <i class="bi bi-clipboard-check"></i>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- APPROVED -->
+<div class="col mb-2">
+    <div class="card stat-card approved-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+
+            <div>
+                <h6>Approved</h6>
+                <h2 class="counter text-success" data-target="{{ $approved }}">0</h2>
+                <span class="badge badge-success">
+                    {{ $total > 0 ? round(($approved / $total) * 100) : 0 }}%
+                </span>
+            </div>
+
+            <div class="icon-box">
+                <i class="bi bi-patch-check"></i>
             </div>
 
         </div>
@@ -166,10 +187,10 @@ counters.forEach(counter => {
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Total', 'Pending', 'Draft', 'Evaluated'],
+                labels: ['Total', 'Pending', 'Draft', 'Evaluated', 'Approved'],
                 datasets: [{
                     label: 'Applications',
-                    data: [{{ $total }}, {{ $pending }}, {{ $draft }}, {{ $evaluated }}],
+                    data: [{{ $total }}, {{ $pending }}, {{ $draft }}, {{ $evaluated }}, {{ $approved }}],
                     borderWidth: 1
                 }]
             },

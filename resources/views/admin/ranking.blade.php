@@ -63,19 +63,12 @@
                                 <span class="text-danger">● Not Qualified</span>
                             @endif
                         </td>
-
                     </tr>
-
                     @endforeach
-
                 </tbody>
-
             </table>
-
         </div>
-
     </div>
-
 </div>
 
 @endsection

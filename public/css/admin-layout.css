@@ -139,12 +139,12 @@
     .stats-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 1px; /* mas dikit */
+    gap: 0; /* mas dikit */
 }
 
-.stats-row .col-md-3 {
-    flex: 1;
-    min-width: 220px; /* para hindi sobrang sikip sa small screens */
+.stats-row .col {
+    padding-left: 3px;
+    padding-right: 3px;
 }
 
     /* LEFT BORDER COLORS */
@@ -157,10 +157,14 @@
     }
 
     .draft-card {
-        border-left: 5px solid #0dcaf0;
+        border-left: 5px solid #f0490d;
     }
 
     .evaluated-card {
+        border-left: 5px solid #4d41f4;
+    }
+
+    .approved-card {
         border-left: 5px solid #198754;
     }
 
@@ -175,10 +179,14 @@
     }
 
     .draft-card .icon-box i {
-        color: #0dcaf0;
+        color: #f01c0d;
     }
 
     .evaluated-card .icon-box i {
+        color: #4061e8;
+    }
+
+    .approved-card .icon-box i {
         color: #198754;
     }
 
@@ -268,6 +276,31 @@
 
 .sidebar-collapsed .sidebar-user {
     justify-content: center;
+}
+#notifBell:hover {
+    background-color: #f1f1f1;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+/* 🔔 Notification Button */
+.notif-btn {
+    background-color: #e9ecef; /* light gray */
+    border-radius: 10px;
+    border: none;
+    min-width: 40px;
+    height: 40px;
+}
+
+/* hover effect */
+.notif-btn:hover {
+    background-color: #d6d8db;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+/* icon size */
+.notif-btn i {
+    font-size: 18px;
 }
     /* =========================
        MOBILE FIX

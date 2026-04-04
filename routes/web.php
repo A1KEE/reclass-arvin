@@ -8,52 +8,47 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AdminFileController;
 use App\Http\Controllers\ApplicantDashboardController;
 use App\Models\Application;
-use Illuminate\Http\Request;
-use Smalot\PdfParser\Parser;
+
+/*
+|--------------------------------------------------------------------------
+| AUTH ROUTES
+|--------------------------------------------------------------------------
+*/
+require __DIR__.'/auth.php';
 
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (APPLICANT SIDE)
 |--------------------------------------------------------------------------
 */
-require __DIR__.'/auth.php';
 
-// Root → Applicant Form
 Route::get('/', function () {
     return redirect('/applicants/create');
 });
 
-// Applicant form page
 Route::get('/applicants/create', [ApplicationController::class, 'create'])
     ->name('applicants.create');
 
-// Submit application
 Route::post('/applicants', [ApplicationController::class, 'store'])
     ->name('applicants.store');
 
-// AJAX: Get QS / requirements
 Route::get('/get-qs', [ApplicationController::class, 'getQS'])
     ->name('get.qs');
 
-// AJAX: Experience requirement
 Route::post('/qs/experience-requirement', [ApplicationController::class, 'experienceRequirement']);
 
-// Notify unqualified applicants
 Route::post('/notify-unqualified', [ApplicationController::class, 'notifyUnqualified'])
     ->name('applicants.notifyUnqualified');
 
-// Load PPST data
 Route::get('/load-ppst', [ApplicationController::class, 'loadPPST']);
 
 Route::post('/check-email', [ApplicationController::class, 'checkEmail']);
 
 /*
 |--------------------------------------------------------------------------
-| AUTH ROUTES (ADMIN SIDE)
+| CHANGE PASSWORD (ALL USERS)
 |--------------------------------------------------------------------------
 */
-
-// 🔐 CHANGE PASSWORD (any logged user)
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/change-password', [ChangePasswordController::class, 'index'])
@@ -65,27 +60,24 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH ROUTES (APPLICANT SIDE)
+| APPLICANT DASHBOARD (USING CONTROLLER - FIXED)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:applicant'])->group(function () {
 
-    Route::get('/applicant/dashboard', function () {
-
-        $applications = Application::where('email', auth()->user()->email)
-            ->latest()
-            ->get();
-
-        return view('applicants.dashboard', compact('applications'));
-
-    })->name('applicant.dashboard');
+    Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])
+        ->name('applicant.dashboard');
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN ROUTES
+|--------------------------------------------------------------------------
+*/
 
-// 🔥 ADMIN ONLY
 Route::prefix('admin')
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'role:admin|super_admin'])
     ->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard'])
@@ -113,19 +105,46 @@ Route::prefix('admin')
             ->name('admin.files.show');
 
         Route::get('/files/{folder}/download', [AdminFileController::class, 'downloadZip'])
-             ->name('admin.files.download');
+            ->name('admin.files.download');
 
-         Route::get('/admin/ranking', [AdminController::class, 'ranking'])
+        Route::get('/admin/ranking', [AdminController::class, 'ranking'])
+            ->middleware('role:super_admin')
             ->name('admin.ranking');
 
-        // ========================
-        // USERS CRUD 🔥
-        // ========================
-        Route::get('/users', [UserController::class, 'index'])->name('admin.users');
+        Route::get('/users', [UserController::class, 'index'])
+            ->name('admin.users');
 
-        Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
+        Route::post('/users', [UserController::class, 'store'])
+            ->name('admin.users.store');
 
-        Route::put('/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
+        Route::put('/users/{id}', [UserController::class, 'update'])
+            ->name('admin.users.update');
 
-        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('admin.users.delete');
-});
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])
+            ->name('admin.users.delete');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| SUPER ADMIN ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('superadmin')
+    ->middleware(['auth', 'role:super_admin'])
+    ->group(function () {
+
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])
+            ->name('superadmin.dashboard');
+
+        Route::get('/applicants', [AdminController::class, 'applicants'])
+            ->name('superadmin.applicants');
+
+        Route::get('/applicants/{id}', [AdminController::class, 'show'])
+            ->name('superadmin.applicants.show');
+
+        Route::post('/applicants/{id}/approve', [AdminController::class, 'finalApprove'])
+            ->name('superadmin.applicants.approve');
+
+        Route::post('/applicants/{id}/reject', [AdminController::class, 'finalReject'])
+            ->name('superadmin.applicants.reject');
+    });

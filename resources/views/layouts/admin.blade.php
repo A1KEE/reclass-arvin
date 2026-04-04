@@ -41,13 +41,17 @@
              <i class="bi bi-folder"></i> <span>Application Files</span>
         </a>
 
+        @role('super_admin')
         <a href="{{ route('admin.ranking') }}">
             <i class="bi bi-trophy"></i> <span>Ranking</span>
         </a>
+        @endrole
 
+         @role('super_admin')
         <a href="{{ route('admin.users') }}">
             <i class="bi bi-person-badge"></i> <span>Users</span>
         </a>
+        @endrole
 
         <!-- DO NOT CHANGE THIS LINE (AS REQUESTED) -->
         <hr style="border-color:#444;">
@@ -97,29 +101,48 @@
 <!-- CONTENT -->
 <div class="content" id="content">
 
+    <!-- TOPBAR -->
     <div class="topbar d-flex justify-content-between align-items-center">
 
-    <!-- LEFT: TOGGLE + TITLE -->
-    <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-dark" id="toggleSidebar">
-            <i class="bi bi-list"></i>
+        <!-- LEFT -->
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-dark" id="toggleSidebar">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <h6 class="mb-0 fw-bold" id="pageTitle">
+                @yield('page-title', 'Dashboard')
+            </h6>
+        </div>
+
+       <!-- RIGHT -->
+<div class="d-flex align-items-center">
+
+    <!-- DATE -->
+    <div class="text-right small mr-3">
+        <div>Philippine Standard Time:</div>
+        <div><strong id="pstDateTime"></strong></div>
+    </div>
+
+    <!-- 🔔 BELL -->
+    <div class="position-relative">
+        <button class="btn p-2 notif-btn" id="notifBell">
+            <i class="bi bi-bell"></i>
+
+            @if(isset($newPendingCount) && $newPendingCount > 0)
+                <span class="badge badge-danger position-absolute"
+                      style="top:0; right:0;">
+                    {{ $newPendingCount }}
+                </span>
+            @endif
         </button>
-
-        <h6 class="mb-0 fw-bold" id="pageTitle">
-            @yield('page-title', 'Dashboard')
-        </h6>
     </div>
 
-    <!-- RIGHT: DATE & TIME -->
-    <div class="text-end small">
-    <div>Philippine Standard Time:</div>
-    <div>
-        <strong id="pstDateTime"></strong>
-    </div>
-</div>
 </div>
 
+    </div> <!-- ✅ CLOSED TOPBAR -->
 
+    <!-- PAGE CONTENT -->
     <div class="mt-3">
         @yield('content')
     </div>
@@ -132,6 +155,7 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 const toggleBtn = document.getElementById('toggleSidebar');
@@ -182,7 +206,40 @@ document.addEventListener("DOMContentLoaded", function () {
 updateDateTime();
 setInterval(updateDateTime, 1000);
 </script>
+<script>
+document.getElementById('notifBell').addEventListener('click', function () {
+    $('#notifModal').modal('show');
+});
+</script>
 
+<!-- 🔔 NOTIFICATION MODAL -->
+<div class="modal fade" id="notifModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-right">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h6 class="modal-title">🔔 New Applications</h6>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="max-height: 300px; overflow-y:auto;">
+
+        @forelse($newPending as $app)
+            <div class="border-bottom mb-2 pb-2">
+                <strong>{{ $app->name }}</strong><br>
+                <small class="text-muted">
+                    {{ $app->position_applied }}
+                </small>
+            </div>
+        @empty
+            <p class="text-muted text-center">No new applications</p>
+        @endforelse
+
+      </div>
+
+    </div>
+  </div>
+</div>
 @stack('scripts')
 
 </body>

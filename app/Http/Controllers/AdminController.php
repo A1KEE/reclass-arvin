@@ -61,6 +61,7 @@ class AdminController extends Controller
     $pending = Application::where('status', 'pending')->count();
     $draft = Application::where('status', 'draft')->count();
     $evaluated = Application::where('status', 'evaluated')->count();
+    $approved = Application::where('status', 'approved')->count();
 
     // =========================
     // RETURN VIEW
@@ -70,6 +71,7 @@ class AdminController extends Controller
         'pending' => $pending,
         'draft' => $draft,
         'evaluated' => $evaluated,
+        'approved' => $approved,
 
         // labels
         'teacherPositions' => $teacherPositions,
@@ -191,6 +193,40 @@ public function update(Request $request, $id)
     });
 
     return view('admin.ranking', compact('applications'));
+}
+public function finalApprove($id)
+{
+    if (!auth()->user()->hasRole('super_admin')) {
+        abort(403);
+    }
+
+    $app = Application::findOrFail($id);
+
+    if ($app->status !== 'evaluated') {
+        return back()->with('info', 'Only evaluated applications can be approved.');
+    }
+
+    $app->status = 'approved';
+    $app->save();
+
+    return back()->with('success', 'Applicant approved successfully.');
+}
+public function finalReject($id)
+{
+    if (!auth()->user()->hasRole('super_admin')) {
+        abort(403);
+    }
+
+    $app = Application::findOrFail($id);
+
+    if ($app->status !== 'evaluated') {
+        return back()->with('info', 'Only evaluated applications can be rejected.');
+    }
+
+    $app->status = 'rejected';
+    $app->save();
+
+    return back()->with('success', 'Applicant rejected.');
 }
 }
 

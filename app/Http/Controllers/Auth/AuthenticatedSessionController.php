@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
         // =========================
         // 🔥 ROLE-BASED (SPATIE)
         // =========================
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('super_admin|admin')) {
             return redirect()->intended(route('admin.dashboard'));
         }
 

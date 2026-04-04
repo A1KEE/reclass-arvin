@@ -1,25 +1,3 @@
-@php
-    $applications = $applications ?? collect();
-
-    // NEXT STEP LOGIC (GLOBAL)
-    $nextStep = 'Awaiting Submission';
-
-    if ($applications->count() > 0) {
-        $latest = $applications->sortByDesc('created_at')->first();
-        $status = strtolower($latest->status ?? 'pending');
-
-        if ($status == 'pending') {
-            $nextStep = 'Evaluate by HR Personnel';
-        } elseif ($status == 'evaluated') {
-            $nextStep = 'For Admin Approval';
-        } elseif ($status == 'approved') {
-            $nextStep = 'Final Processing';
-        } elseif ($status == 'completed') {
-            $nextStep = 'Completed';
-        }
-    }
-@endphp
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -193,12 +171,6 @@
             <!-- LEFT: NEXT STEP -->
             <div class="col-md-4">
 
-                <div class="next-step-title">📌 Next Step</div>
-
-                <div class="next-step-value text-warning">
-                    {{ $nextStep }}
-                </div>
-
                 <small class="text-muted">
                     Track your application progress in real-time
                 </small>
@@ -305,15 +277,81 @@
                 padding: 6px 10px;
                 border-radius: 50px;
             }
+            .lazada-tracker {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.tracker-line {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.tracker-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    flex: 1;
+}
+
+.tracker-step .circle {
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background: #fff;
+    margin: 0 auto;
+    font-size: 12px;
+}
+
+.tracker-step.active .circle {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(13,110,253,0.6);
+}
+
+.tracker-step .label {
+    font-size: 11px;
+    margin-top: 6px;
+    color: #6c757d;
+}
+
+.tracker-step.active .label {
+    color: #0d6efd;
+    font-weight: 600;
+}
         </style>
 
-        @foreach($applications as $app)
+      @foreach($applications->sortByDesc('created_at')->values() as $index => $app)
 
             @php
                 $steps = ['pending', 'evaluated', 'approved', 'completed'];
                 $status = strtolower($app->status);
+
                 $currentIndex = array_search($status, $steps);
                 if ($currentIndex === false) $currentIndex = 0;
+
+                $nextStep = 'Awaiting Submission';
+
+                if ($status == 'pending') {
+                    $nextStep = 'Evaluate by HR Personnel';
+                } elseif ($status == 'evaluated') {
+                    $nextStep = 'For Admin Approval';
+                } elseif ($status == 'approved') {
+                    $nextStep = 'Final Processing';
+                } elseif ($status == 'completed') {
+                    $nextStep = 'Completed';
+                }
             @endphp
 
             <div class="app-container">
@@ -324,23 +362,35 @@
                     <div class="d-flex justify-content-between align-items-start">
 
                         <div>
-                            <div class="fw-bold">{{ $app->name }}</div>
+                            <div class="fw-bold">
+    Application #{{ $index + 1 }} - {{ $app->name }}
+</div>
                             <div class="small-text">✉ {{ $app->email }}</div>
                             <div class="small-text mt-1">
                                 🕒 Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y - h:i A') }}
                             </div>
                         </div>
 
-                        <span class="badge badge-status
-                            @if($status == 'pending') bg-warning
-                            @elseif($status == 'evaluated') bg-info
-                            @elseif($status == 'approved') bg-success
-                            @elseif($status == 'completed') bg-primary
-                            @else bg-secondary
-                            @endif
-                        ">
-                            {{ ucfirst($app->status) }}
-                        </span>
+                      <div class="text-end">
+
+    <!-- STATUS -->
+    <span class="badge badge-status
+        @if($status == 'pending') bg-warning
+        @elseif($status == 'evaluated') bg-info
+        @elseif($status == 'approved') bg-success
+        @elseif($status == 'completed') bg-primary
+        @else bg-secondary
+        @endif
+    ">
+        {{ ucfirst($app->status) }}
+    </span>
+
+    <!-- NEXT STEP (UNDER STATUS) -->
+    <div class="mt-1" style="font-size:12px; color:#6c757d;">
+        📌 {{ $nextStep }}
+    </div>
+
+</div>
 
                     </div>
 
@@ -353,17 +403,33 @@
                     <div class="field">📊 <strong>Levels:</strong> {{ is_array($app->levels) ? implode(', ', $app->levels) : $app->levels }}</div>
 
                     <!-- TIMELINE -->
-                    <div class="timeline mt-3">
+                   <div class="lazada-tracker mt-4">
 
-                        @foreach(['Pending','Evaluated','Approved','Completed'] as $i => $step)
+    <div class="tracker-line"></div>
 
-                            <div class="step {{ $i <= $currentIndex ? 'active' : '' }}">
-                                ● {{ $step }}
-                            </div>
+    @foreach(['Pending','Evaluated','Approved','Completed'] as $i => $step)
 
-                        @endforeach
+        <div class="tracker-step {{ $i <= $currentIndex ? 'active' : '' }}">
 
-                    </div>
+            <div class="circle">
+                @if($i < $currentIndex)
+                    ✔
+                @elseif($i == $currentIndex)
+                    ●
+                @else
+                    ○
+                @endif
+            </div>
+
+            <div class="label">
+                {{ $step }}
+            </div>
+
+        </div>
+
+    @endforeach
+
+</div>
 
                 </div>
 
