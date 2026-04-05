@@ -1,19 +1,6 @@
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Qualification Standards Configuration
-    |--------------------------------------------------------------------------
-    | Complete list for Kindergarten, Elementary, Junior High School,
-    | and Senior High School positions.
-    |--------------------------------------------------------------------------
-    */
-
-    // ==========================================================
-    // KINDERGARTEN (same as Elementary)
-    // ==========================================================
     'kindergarten' => [
         'Teacher I' => [
             'education'   => 'Bachelor’s Degree in Education or Bachelor’s Degree in relevant subject or learning area with at least 18 professional units in Education',

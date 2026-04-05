@@ -68,6 +68,10 @@
         View
     </a>
 
+     <a href="{{ route('admin.applicants.export', $a->id) }}" class="btn btn-success btn-sm">
+    📥 Download Excel
+</a>
+
     <!-- SUPER ADMIN ONLY -->
     @role('super_admin')
 

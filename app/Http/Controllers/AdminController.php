@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\School;
 use App\Models\PpstIndicator;
 use App\Models\ApplicationScore;
+use App\Exports\ApplicantsExport;
 
 class AdminController extends Controller
 {
@@ -227,6 +228,10 @@ public function finalReject($id)
     $app->save();
 
     return back()->with('success', 'Applicant rejected.');
+}
+public function export($id)
+{
+    return (new ApplicantsExport())->download($id);
 }
 }
 

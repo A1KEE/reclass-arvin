@@ -122,6 +122,9 @@ Route::prefix('admin')
 
         Route::delete('/users/{id}', [UserController::class, 'destroy'])
             ->name('admin.users.delete');
+
+        Route::get('/admin/applicants/export/{id}', [AdminController::class, 'export'])
+    ->name('admin.applicants.export');
     });
 
 /*
@@ -147,4 +150,5 @@ Route::prefix('superadmin')
 
         Route::post('/applicants/{id}/reject', [AdminController::class, 'finalReject'])
             ->name('superadmin.applicants.reject');
+            
     });
