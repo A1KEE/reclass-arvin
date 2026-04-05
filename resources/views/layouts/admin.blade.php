@@ -13,6 +13,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('css/admin-layout.css') }}">
 </head>
@@ -70,7 +71,7 @@
     $initials = strtoupper(substr($words[0],0,1) . (isset($words[1]) ? substr($words[1],0,1) : ''));
 @endphp
 
-<div class="user-card sidebar-user d-flex align-items-center">
+<div class="user-card sidebar-user d-flex align-items-center gap-2">
 
     <!-- AVATAR -->
     <div class="avatar-circle">
@@ -78,11 +79,13 @@
     </div>
 
     <!-- USER INFO -->
-    <div class="user-text ms-2">
+    <div class="user-text">
         <div class="admin-name">
             {{ $name }}
         </div>
-        <small class="admin-role">Administrator</small>
+        <small class="admin-role">
+    {{ auth()->user()->hasRole('super_admin') ? 'Approver' : (auth()->user()->hasRole('admin') ? 'HRMO / Evaluator' : 'Administrator') }}
+</small>
     </div>
 
 </div>
@@ -155,7 +158,10 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
 
 <script>
 const toggleBtn = document.getElementById('toggleSidebar');
@@ -210,11 +216,54 @@ setInterval(updateDateTime, 1000);
 document.getElementById('notifBell').addEventListener('click', function () {
     $('#notifModal').modal('show');
 });
+
+// ✅ MARK AS READ (FIXED AJAX)
+function markAsRead(id) {
+    fetch('/superadmin/notifications/read/' + id, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+
+            // remove notif item
+            const el = document.getElementById('notif-' + id);
+            if (el) el.remove();
+
+            // optional: reload to update badge count
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error marking as read:', error);
+    });
+}
+function markAllAsRead() {
+    fetch('/superadmin/notifications/read-all', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(err => console.error(err));
+}
 </script>
 
-<!-- 🔔 NOTIFICATION MODAL -->
 <div class="modal fade" id="notifModal" tabindex="-1">
-  <div class="modal-dialog modal-sm modal-dialog-right">
+  <div class="modal-dialog modal-md modal-dialog-right">
     <div class="modal-content">
 
       <div class="modal-header">
@@ -222,21 +271,60 @@ document.getElementById('notifBell').addEventListener('click', function () {
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <div class="modal-body" style="max-height: 300px; overflow-y:auto;">
+     {{-- BODY --}}
+<div class="modal-body notif-body">
 
-        @forelse($newPending as $app)
-            <div class="border-bottom mb-2 pb-2">
-                <strong>{{ $app->name }}</strong><br>
-                <small class="text-muted">
-                    {{ $app->position_applied }}
-                </small>
+    @forelse($newPending as $app)
+        <div id="notif-{{ $app->id }}" class="border-bottom mb-2 pb-2">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <!-- LEFT -->
+                <div>
+                    <strong>
+                        {{ $app->name }} ({{ $app->position_applied }})
+                    </strong><br>
+
+                    <small class="text-muted">
+                        Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y h:i A') }}
+                    </small>
+                </div>
+
+                <!-- RIGHT -->
+                <div>
+                    <button onclick="markAsRead({{ $app->id }})"
+                            class="btn btn-sm btn-light">
+                        ✔
+                    </button>
+                </div>
+
             </div>
-        @empty
-            <p class="text-muted text-center">No new applications</p>
-        @endforelse
 
-      </div>
+        </div>
+    @empty
+        <p class="text-muted text-center">No new applications</p>
+    @endforelse
 
+</div>
+
+{{-- ✅ FOOTER --}}
+@if($newPendingCount > 0)
+<div class="notif-footer d-flex">
+
+    <!-- VIEW ALL -->
+    <a href="{{ route('admin.applicants') }}"
+       class="btn btn-sm btn-outline-secondary w-50 mr-1">
+        View All
+    </a>
+
+    <!-- MARK ALL -->
+    <button onclick="markAllAsRead()"
+            class="btn btn-sm btn-primary w-50 ml-1">
+        Mark all
+    </button>
+
+</div>
+@endif
     </div>
   </div>
 </div>

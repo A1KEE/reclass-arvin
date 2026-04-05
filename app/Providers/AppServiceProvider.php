@@ -23,16 +23,19 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+   public function boot()
 {
     View::composer('layouts.admin', function ($view) {
 
         $newPending = Application::where('status', 'pending')
+            ->where('is_read', 0) // ✅ IMPORTANT
             ->latest()
             ->take(5)
             ->get();
 
-        $newPendingCount = Application::where('status', 'pending')->count();
+        $newPendingCount = Application::where('status', 'pending')
+            ->where('is_read', 0) // ✅ IMPORTANT
+            ->count();
 
         $view->with([
             'newPending' => $newPending,

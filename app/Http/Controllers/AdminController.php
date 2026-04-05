@@ -233,5 +233,26 @@ public function export($id)
 {
     return (new ApplicantsExport())->download($id);
 }
+public function markAsRead($id)
+{
+    $app = Application::find($id);
+
+    if ($app) {
+        $app->is_read = 1;
+        $app->save();
+    }
+
+    return response()->json([
+        'success' => true
+    ]);
+}
+public function markAllAsRead()
+{
+    Application::where('status', 'pending')
+        ->where('is_read', 0)
+        ->update(['is_read' => 1]);
+
+    return response()->json(['success' => true]);
+}
 }
 

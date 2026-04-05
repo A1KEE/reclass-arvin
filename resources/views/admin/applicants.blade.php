@@ -61,60 +61,75 @@
 
     <td>{{ $a->created_at }}</td>
 
-  <td>
-    <!-- VIEW (ALL) -->
-    <a href="{{ route('admin.applicants.show', $a->id) }}"
-       class="btn btn-sm btn-primary mb-1">
-        View
-    </a>
+  <td class="text-nowrap">
+    <div class="d-flex align-items-center gap-4">
 
-     <a href="{{ route('admin.applicants.export', $a->id) }}" class="btn btn-success btn-sm">
-    📥 Download Excel
-</a>
+        <!-- VIEW -->
+        <a href="{{ route('admin.applicants.show', $a->id) }}"
+           class="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
+           style="width:32px; height:32px;"
+           title="View Applicant">
+            <i class="fas fa-eye"></i>
+        </a>
 
-    <!-- SUPER ADMIN ONLY -->
-    @role('super_admin')
+        <!-- DOWNLOAD EXCEL -->
+        <a href="{{ route('admin.applicants.export', $a->id) }}"
+           class="btn btn-sm btn-success d-flex align-items-center justify-content-center"
+           style="width:32px; height:32px;"
+           title="Download Excel">
+            <i class="fas fa-file-excel"></i>
+        </a>
 
-        @if($a->status == 'evaluated')
+        <!-- SUPER ADMIN ONLY -->
+        @role('super_admin')
 
-            <form method="POST" action="{{ route('superadmin.applicants.approve', $a->id) }}" style="display:inline;">
-                @csrf
-                <button type="button" class="btn btn-sm btn-success btnApprove mb-1">
-                    Approve
-                </button>
-            </form>
+            @if($a->status == 'evaluated')
 
-            <form method="POST" action="{{ route('superadmin.applicants.reject', $a->id) }}" style="display:inline;">
-                @csrf
-                <button type="button" class="btn btn-sm btn-danger btnReject mb-1">
-                    Reject
-                </button>
-            </form>
+                <!-- APPROVE -->
+                <form method="POST" action="{{ route('superadmin.applicants.approve', $a->id) }}">
+                    @csrf
+                    <button type="button"
+                            class="btn btn-sm btn-success d-flex align-items-center justify-content-center btnApprove"
+                            style="width:32px; height:32px;"
+                            title="Approve">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
 
-        @else
+                <!-- REJECT -->
+                <form method="POST" action="{{ route('superadmin.applicants.reject', $a->id) }}">
+                    @csrf
+                    <button type="button"
+                            class="btn btn-sm btn-danger d-flex align-items-center justify-content-center btnReject"
+                            style="width:32px; height:32px;"
+                            title="Reject">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </form>
 
-            <!-- DYNAMIC STATUS BUTTON -->
-            @php
-                $label = 'Not Ready';
+            @else
 
-                if($a->status == 'pending'){
-                    $label = 'Need Evaluation';
-                } elseif($a->status == 'approved'){
-                    $label = 'Completed';
-                } elseif($a->status == 'rejected'){
-                    $label = 'Completed';
-                } elseif($a->status == 'draft'){
-                    $label = 'Incomplete';
-                }
-            @endphp
+                @php
+                    $label = 'Not Ready';
 
-            <button class="btn btn-xs btn-secondary mb-1 px-2 py-1" disabled style="font-size:11px;">
-                {{ $label }}
-            </button>
+                    if($a->status == 'pending'){
+                        $label = 'Need Evaluation';
+                    } elseif($a->status == 'approved' || $a->status == 'rejected'){
+                        $label = 'Completed';
+                    } elseif($a->status == 'draft'){
+                        $label = 'Incomplete';
+                    }
+                @endphp
 
-        @endif
+                <span class="badge bg-secondary" style="font-size:11px;">
+                    {{ $label }}
+                </span>
 
-    @endrole
+            @endif
+
+        @endrole
+
+    </div>
 </td>
 </tr>
 @endforeach
@@ -218,5 +233,16 @@ Swal.fire({
     });
 
 });
+</script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const highlightId = urlParams.get('highlight');
+
+if (highlightId) {
+    const row = document.getElementById('app-' + highlightId);
+    if (row) {
+        row.style.backgroundColor = '#fff3cd';
+    }
+}
 </script>
 @endpush

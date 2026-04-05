@@ -73,6 +73,7 @@ public function store(Request $request)
         'sg_annual_salary' => $request->sg_annual_salary,
         'levels' => $request->levels,
         'status' => $status, 
+        'is_read' => 0,
         'last_activity_at' => now(),
     ]);
 

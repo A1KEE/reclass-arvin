@@ -114,15 +114,40 @@
 
     </div>
 
-    <!-- POSITION CHART -->
-    <div class="card shadow-sm border-0 p-4 mt-4">
-        <h5 class="mb-1">👨‍🏫 Applicants per Position</h5>
-        <small class="text-muted">Teacher vs Master Teacher distribution</small>
+   <!-- POSITION CHART -->
+<div class="card shadow-sm border-0 p-4 mt-4">
 
-        <div style="position: relative; height: 350px;">
-            <canvas id="positionChart"></canvas>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <div>
+            <h5 class="mb-0">👨‍🏫 Applicants per Position</h5>
+            <small class="text-muted">Teacher vs Master Teacher distribution</small>
         </div>
+
+        <div class="d-flex gap-2">
+            <!-- FILTER -->
+            <select id="yearFilter" class="form-select form-select-sm">
+                <option value="all">All</option>
+                @foreach($years ?? [] as $year)
+                    <option value="{{ $year }}">{{ $year }}</option>
+                @endforeach
+            </select>
+
+            <!-- EXPORT -->
+            <button id="exportPDF" class="btn btn-sm btn-dark">
+                Export PDF
+            </button>
+        </div>
+
     </div>
+
+    <!-- CHART -->
+    <div style="position: relative; height: 350px;">
+        <canvas id="positionChart"></canvas>
+    </div>
+
+</div>
 
     <!-- MAIN CHART -->
     <div class="card shadow-sm border-0 p-4 mt-4">
@@ -204,94 +229,124 @@ counters.forEach(counter => {
             }
         });
     }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-    // =========================
-    // POSITION LINE CHART
-    // =========================
     const positionCtx = document.getElementById('positionChart');
+    let positionChart;
 
-    if (positionCtx) {
+    function loadChart(year = 'all') {
 
-        setTimeout(() => {
+        const teacherTotal = {{ $teacherTotal }};
+        const masterTotal = {{ $masterTotal }};
 
-            const teacherTotal = {{ $teacherTotal }};
-            const masterTotal = {{ $masterTotal }};
+        const teacherData = {!! json_encode($teacherCounts) !!};
+        const masterData = {!! json_encode($masterCounts) !!};
 
-            const teacherData = {!! json_encode($teacherCounts) !!};
-            const masterData = {!! json_encode($masterCounts) !!};
+        const teacherLabels = {!! json_encode($teacherPositions) !!};
+        const masterLabels = {!! json_encode($masterPositions) !!};
 
-            const teacherLabels = {!! json_encode($teacherPositions) !!};
-            const masterLabels = {!! json_encode($masterPositions) !!};
+        if (positionChart) {
+            positionChart.destroy();
+        }
 
-            new Chart(positionCtx, {
-                type: 'line',
-                data: {
-                    labels: [...teacherLabels, ...masterLabels],
+        positionChart = new Chart(positionCtx, {
+            type: 'bar',
+            data: {
+                labels: [...teacherLabels, ...masterLabels],
+                datasets: [
+                    {
+                        label: 'Teacher',
+                        data: [
+                            ...teacherData,
+                            ...Array(masterData.length).fill(null)
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Master Teacher',
+                        data: [
+                            ...Array(teacherData.length).fill(null),
+                            ...masterData
+                        ],
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderRadius: 6
+                    }
+                ]
+            },
 
-                    datasets: [
-                        {
-                            label: 'Teacher',
-                            data: [
-                                ...teacherData,
-                                ...Array(masterData.length).fill(null)
-                            ],
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.3,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        },
-                        {
-                            label: 'Master Teacher',
-                            data: [
-                                ...Array(teacherData.length).fill(null),
-                                ...masterData
-                            ],
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            tension: 0.3,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        }
-                    ]
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { autoSkip: false } }
                 },
 
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
 
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 }
-                        },
-                        x: {
-                            ticks: {
-                                autoSkip: false
+                    tooltip: {
+                        backgroundColor: '#1e1e2d',
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw || 0;
+                                const total = context.dataset.label === 'Teacher'
+                                    ? teacherTotal
+                                    : masterTotal;
+                                const percent = total
+                                    ? ((value / total) * 100).toFixed(1)
+                                    : 0;
+                                return `${context.dataset.label}: ${value} (${percent}%)`;
                             }
                         }
                     },
 
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.label === 'Teacher'
-                                        ? teacherTotal
-                                        : masterTotal;
-
-                                    const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-
-                                    return `${context.dataset.label}: ${value} (${percent}%)`;
-                                }
-                            }
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#000',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: function(value, context) {
+                            return value ? value : '';
                         }
                     }
                 }
-            });
+            },
 
-        }, 300);
+            plugins: [ChartDataLabels]
+        });
+    }
+
+    // INITIAL LOAD
+    if (positionCtx) loadChart();
+
+    // FILTER
+    const filter = document.getElementById('yearFilter');
+    if (filter) {
+        filter.addEventListener('change', function () {
+            const year = this.value;
+            loadChart(year);
+        });
+    }
+
+    // EXPORT PDF
+    const exportBtn = document.getElementById('exportPDF');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+            html2canvas(positionCtx.parentElement).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF();
+                pdf.addImage(imgData, 'PNG', 10, 10, 180, 100);
+                pdf.save('Applicants_Report.pdf');
+            });
+        });
     }
 
 });

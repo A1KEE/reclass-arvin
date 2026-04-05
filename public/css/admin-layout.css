@@ -65,6 +65,9 @@
     /* =========================
        COLLAPSED SIDEBAR
     ========================= */
+    .sidebar-collapsed .sidebar .logout-text {
+        display: none !important;
+    }
     .sidebar-collapsed .sidebar {
         width: 70px;
     }
@@ -256,26 +259,48 @@
     align-items: center;
     justify-content: center;
     font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+/* COLLAPSED AVATAR */
+.sidebar-collapsed .avatar-circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
 }
 
 /* USER TEXT */
+.user-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* ikaw bahala mag adjust (2–4px best) */
+}
+
 .admin-name {
     font-size: 13px;
     font-weight: 600;
+    margin-bottom: 2px; /* dikit sa role */
 }
 
 .admin-role {
     font-size: 11px;
     color: #aaa;
+    margin: 0;
 }
 
 /* COLLAPSED STATE */
+.sidebar-user {
+    transition: all 0.3s ease;
+    align-items: center;
+    gap: 6px; /* adjust mo 6–10px */
+}
 .sidebar-collapsed .user-text {
     display: none;
 }
 
 .sidebar-collapsed .sidebar-user {
     justify-content: center;
+    padding: 8px;
 }
 #notifBell:hover {
     background-color: #f1f1f1;
@@ -301,6 +326,47 @@
 /* icon size */
 .notif-btn i {
     font-size: 18px;
+}
+.position-chart-card {
+    border-radius: 16px;
+    transition: 0.25s;
+}
+
+.position-chart-card:hover {
+    transform: translateY(-3px);
+}
+
+/* chart container */
+.chart-container {
+    position: relative;
+    height: 320px;
+}
+.modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+}
+/* Scrollable body */
+.notif-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Footer layout */
+.notif-footer {
+    border-top: 1px solid #eee;
+    padding: 10px;
+    background: #fff;
+}
+
+/* Hover effect (optional 🔥) */
+#notifModal .border-bottom:hover {
+    background: #f8f9fa;
+    cursor: pointer;
 }
     /* =========================
        MOBILE FIX
