@@ -45,6 +45,9 @@ Route::get('/ppst/load-applicant', [ApplicationController::class, 'loadPPSTAppli
 
 Route::post('/check-email', [ApplicationController::class, 'checkEmail']);
 
+Route::get('/applicant/application/{id}', [ApplicantDashboardController::class, 'view'])
+    ->name('applicant.view');
+
 /*
 |--------------------------------------------------------------------------
 | CHANGE PASSWORD (ALL USERS)
@@ -68,6 +71,9 @@ Route::middleware(['auth', 'role:applicant'])->group(function () {
 
     Route::get('/applicant/dashboard', [ApplicantDashboardController::class, 'index'])
         ->name('applicant.dashboard');
+
+    Route::get('/applicant/export/{id}', [AdminController::class, 'export'])
+    ->name('applicant.export');
 
 });
 

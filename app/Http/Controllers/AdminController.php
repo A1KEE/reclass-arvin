@@ -259,6 +259,15 @@ public function finalReject($id)
 }
 public function export($id)
 {
+    $application = Application::findOrFail($id);
+
+    // 🔥 ONLY restrict if APPLICANT
+    if (auth()->user()->hasRole('applicant')) {
+        if ($application->email !== auth()->user()->email) {
+            abort(403);
+        }
+    }
+
     return (new ApplicantsExport())->download($id);
 }
 public function markAsRead($id)

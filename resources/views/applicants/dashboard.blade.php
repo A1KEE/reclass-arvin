@@ -4,449 +4,221 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Applicant Dashboard</title>
-<link rel="icon" type="image/png" href="{{ asset('images/DO-LOGO.png') }}">
-<link rel="shortcut icon" type="image/png" href="{{ asset('images/DO-LOGO.png') }}">
 
-<!-- Alternative sizes -->
-<link rel="apple-touch-icon" href="{{ asset('images/DO-LOGO.png') }}">
+<link rel="icon" href="{{ asset('images/DO-LOGO.png') }}">
+<link rel="stylesheet" href="{{ asset('css/admin-applicants.css') }}?v={{ time() }}">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-<style>
-    body {
-        background-color: #f0f4ff;
-    }
-
-    .top-bar {
-        background: #0d1f5f;
-        color: white;
-        padding: 14px 20px;
-    }
-
-    .card-box {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    }
-
-    .btn-primary {
-        background-color: #0d1f5f;
-        border-color: #0d1f5f;
-    }
-
-    .btn-primary:hover {
-        background-color: #0a1845;
-    }
-
-    .top-info {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-    }
-
-    .pst-box {
-        text-align: right;
-        font-size: 12px;
-        opacity: 0.9;
-        line-height: 1.2;
-    }
-
-    /* GREEN DOT STATUS */
-    .status-line {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        margin-top: 3px;
-        opacity: 0.95;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        background: #28a745;
-        border-radius: 50%;
-        box-shadow: 0 0 6px #28a745;
-    }
-
-    @media (max-width: 768px) {
-        .top-bar {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .top-info {
-            justify-content: flex-start;
-        }
-
-        .pst-box {
-            text-align: left;
-        }
-    }
-</style>
+<body>
 
 <!-- HEADER -->
-<div class="top-bar d-flex justify-content-between align-items-center">
+<div class="top-bar d-flex justify-content-between align-items-center flex-wrap">
 
-    <!-- LEFT -->
     <div>
         <h5 class="mb-0">Applicant Dashboard</h5>
         <small>Welcome, {{ auth()->user()->name }}</small>
 
-        <!-- STATUS UNDER WELCOME -->
         <div class="status-line">
             <span class="status-dot"></span>
             <span>Account status: Active</span>
         </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="top-info">
 
-        <!-- DATE & TIME -->
         <div class="pst-box">
             <div>Philippine Standard Time</div>
             <div><strong id="pstDateTime"></strong></div>
         </div>
 
-        <!-- LOGOUT -->
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button class="btn btn-light btn-sm">
-                Logout
-            </button>
+            <button class="btn btn-light btn-sm">Logout</button>
         </form>
 
     </div>
+</div>
+
+<div class="mb-4">
+
+    <div class="p-3 rounded-4 shadow-sm bg-white d-flex justify-content-between align-items-center flex-wrap">
+
+        <!-- LEFT -->
+        <div>
+            <h5 class="fw-bold mb-1">📊 My Applications</h5>
+            <small class="text-muted" style="font-size:12px;">
+                Track your application progress in Real time, Automatic refresh in 5sec
+            </small>
+        </div>
+
+        <!-- RIGHT BUTTONS -->
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+
+            <a href="/applicants/create"
+               class="btn btn-primary btn-sm px-3 rounded-pill shadow-sm">
+               ➕ Create New Application
+            </a>
+
+            <a href="{{ route('change.password') }}"
+               class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+               🔒 Change Password
+            </a>
+
+        </div>
+
+    </div>
 
 </div>
 
-<div class="container py-4">
+<div class="row g-3">
+@foreach($applications->sortByDesc('created_at')->values() as $index => $app)
 
-    <style>
-        .main-dashboard-card {
-            border: none;
-            border-radius: 18px;
-            padding: 20px;
-            background: #fff;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            transition: 0.25s ease-in-out;
-        }
+@php
+    $steps = ['pending', 'evaluated', 'approved'];
+    $status = strtolower($app->status);
 
-        .main-dashboard-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 30px rgba(0,0,0,0.12);
-        }
+    $currentIndex = array_search($status, $steps);
+    if ($currentIndex === false) $currentIndex = 0;
 
-        .next-step-title {
-            font-size: 13px;
-            color: #6c757d;
-        }
+   $nextStep = 'Awaiting Submission';
 
-        .next-step-value {
-            font-size: 18px;
-            font-weight: 700;
-        }
+   if ($status == 'pending') {
+    $nextStep = 'Evaluate by HR Personnel';
+    } elseif ($status == 'evaluated') {
+        $nextStep = 'For Admin Approval';
+    } elseif ($status == 'approved') {
+        $nextStep = 'Approved';
+    }
+@endphp
 
-        .btn-soft {
-            border-radius: 10px;
-            padding: 8px 14px;
-        }
+<div class="col-md-6">
 
-        .divider {
-            width: 1px;
-            background: #e9ecef;
-            margin: 0 20px;
-        }
+    <div class="app-card">
 
-        @media (max-width: 768px) {
-            .divider {
-                display: none;
-            }
-        }
-    </style>
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-start">
 
-    <div class="main-dashboard-card">
+            <div>
+                <div class="fw-bold">
+                    Application #{{ $index + 1 }} - {{ $app->name }}
+                </div>
 
-        <div class="row align-items-center">
+                <div class="small-text">✉ {{ $app->email }}</div>
 
-            <!-- LEFT: NEXT STEP -->
-            <div class="col-md-4">
-
-                <small class="text-muted">
-                    Track your application progress in real-time
-                </small>
-
-            </div>
-
-            <!-- DIVIDER -->
-            <div class="col-md-1 d-none d-md-flex justify-content-center">
-                <div class="divider"></div>
-            </div>
-
-            <!-- RIGHT: ACTION BUTTONS -->
-            <div class="col-md-7">
-
-                <div class="d-flex flex-wrap gap-2 justify-content-md-end justify-content-start mt-3 mt-md-0">
-
-                    <a href="/applicants/create" class="btn btn-primary btn-soft">
-                        ➕ Fill Application
-                    </a>
-
-                    <a href="#" class="btn btn-outline-primary btn-soft">
-                        👁 View Application
-                    </a>
-
-                    <a href="{{ route('change.password') }}" class="btn btn-outline-secondary btn-soft">
-                        🔒 Change Password
-                    </a>
+                <div class="small-text mt-1">
+                    🕒 Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y - h:i A') }}
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-    <!-- APPLICATION LIST -->
-    <div class="container mt-4">
+            <div class="text-end">
 
-        <h4 class="mb-4 fw-bold">📊 My Applications</h4>
+                <span class="badge badge-status
+                    @if($status == 'pending') bg-warning
+                    @elseif($status == 'evaluated') bg-info
+                    @elseif($status == 'approved') bg-success
+                    @elseif($status == 'completed') bg-primary
+                    @else bg-secondary
+                    @endif
+                ">
+                    {{ ucfirst($app->status) }}
+                </span>
 
-        <style>
-            .app-container {
-                margin-bottom: 18px;
-            }
+                <div class="mt-1 small-text">
+                    📌 {{ $nextStep }}
+                </div>
 
-            .app-card {
-                border: none;
-                border-radius: 16px;
-                padding: 18px;
-                transition: all 0.25s ease-in-out;
-                background: #fff;
-            }
-
-            .app-card:hover {
-                transform: translateY(-6px);
-                box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-            }
-
-            .small-text {
-                font-size: 12px;
-                color: #6c757d;
-            }
-
-            .field {
-                margin-bottom: 6px;
-            }
-
-            .timeline {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 14px;
-                position: relative;
-                padding: 0 5px;
-            }
-
-            .timeline::before {
-                content: "";
-                position: absolute;
-                top: 50%;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: #e0e0e0;
-                z-index: 0;
-            }
-
-            .step {
-                background: #fff;
-                z-index: 1;
-                text-align: center;
-                font-size: 11px;
-                padding: 5px 8px;
-                border-radius: 50px;
-                border: 2px solid #ddd;
-            }
-
-            .step.active {
-                border-color: #0d6efd;
-                background: #0d6efd;
-                color: #fff;
-                font-weight: 600;
-            }
-
-            .badge-status {
-                font-size: 11px;
-                padding: 6px 10px;
-                border-radius: 50px;
-            }
-            .lazada-tracker {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-.tracker-line {
-    position: absolute;
-    top: 14px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: #e0e0e0;
-    z-index: 0;
-}
-
-.tracker-step {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    flex: 1;
-}
-
-.tracker-step .circle {
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    background: #fff;
-    margin: 0 auto;
-    font-size: 12px;
-}
-
-.tracker-step.active .circle {
-    background: #0d6efd;
-    border-color: #0d6efd;
-    color: #fff;
-    font-weight: bold;
-    box-shadow: 0 0 8px rgba(13,110,253,0.6);
-}
-
-.tracker-step .label {
-    font-size: 11px;
-    margin-top: 6px;
-    color: #6c757d;
-}
-
-.tracker-step.active .label {
-    color: #0d6efd;
-    font-weight: 600;
-}
-        </style>
-
-      @foreach($applications->sortByDesc('created_at')->values() as $index => $app)
-
-            @php
-                $steps = ['pending', 'evaluated', 'approved', 'completed'];
-                $status = strtolower($app->status);
-
-                $currentIndex = array_search($status, $steps);
-                if ($currentIndex === false) $currentIndex = 0;
-
-                $nextStep = 'Awaiting Submission';
-
-                if ($status == 'pending') {
-                    $nextStep = 'Evaluate by HR Personnel';
-                } elseif ($status == 'evaluated') {
-                    $nextStep = 'For Admin Approval';
-                } elseif ($status == 'approved') {
-                    $nextStep = 'Final Processing';
-                } elseif ($status == 'completed') {
-                    $nextStep = 'Completed';
-                }
-            @endphp
-
-            <div class="app-container">
-
-                <div class="app-card shadow-sm">
-
-                    <!-- HEADER -->
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-                            <div class="fw-bold">
-    Application #{{ $index + 1 }} - {{ $app->name }}
-</div>
-                            <div class="small-text">✉ {{ $app->email }}</div>
-                            <div class="small-text mt-1">
-                                🕒 Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y - h:i A') }}
-                            </div>
-                        </div>
-
-                      <div class="text-end">
-
-    <!-- STATUS -->
-    <span class="badge badge-status
-        @if($status == 'pending') bg-warning
-        @elseif($status == 'evaluated') bg-info
-        @elseif($status == 'approved') bg-success
-        @elseif($status == 'completed') bg-primary
-        @else bg-secondary
-        @endif
-    ">
-        {{ ucfirst($app->status) }}
-    </span>
-
-    <!-- NEXT STEP (UNDER STATUS) -->
-    <div class="mt-1" style="font-size:12px; color:#6c757d;">
-        📌 {{ $nextStep }}
-    </div>
-
-</div>
-
-                    </div>
-
-                    <hr>
-
-                    <!-- FIELDS -->
-                    <div class="field">👨‍🏫 <strong>Current Position:</strong> {{ $app->current_position }}</div>
-                    <div class="field">📌 <strong>Position Applied For:</strong> {{ $app->position_applied }}</div>
-                    <div class="field">📍 <strong>School Name:</strong> {{ $app->school_name }}</div>
-                    <div class="field">📊 <strong>Levels:</strong> {{ is_array($app->levels) ? implode(', ', $app->levels) : $app->levels }}</div>
-
-                    <!-- TIMELINE -->
-                   <div class="lazada-tracker mt-4">
-
-    <div class="tracker-line"></div>
-
-    @foreach(['Pending','Evaluated','Approved','Completed'] as $i => $step)
-
-        <div class="tracker-step {{ $i <= $currentIndex ? 'active' : '' }}">
-
-            <div class="circle">
-                @if($i < $currentIndex)
-                    ✔
-                @elseif($i == $currentIndex)
-                    ●
-                @else
-                    ○
-                @endif
-            </div>
-
-            <div class="label">
-                {{ $step }}
             </div>
 
         </div>
+
+        <hr>
+
+        <!-- DETAILS -->
+        <div class="field">👨‍🏫 <strong>Current Position:</strong> {{ $app->current_position }}</div>
+        <div class="field">📌 <strong>Position Applied:</strong> {{ $app->position_applied }}</div>
+        <div class="field">📍 <strong>School:</strong> {{ $app->school_name }}</div>
+        <div class="field">📊 <strong>Levels:</strong> {{ is_array($app->levels) ? implode(', ', $app->levels) : $app->levels }}</div>
+
+        <!-- TRACKER -->
+        <div class="lazada-tracker mt-4">
+
+    <div class="tracker-line">
+        <div class="tracker-progress"
+             style="width: {{ ($currentIndex / 2) * 100 }}%">
+        </div>
+    </div>
+
+    @foreach(['pending','evaluated','approved'] as $i => $step)
+
+    @php
+        $isDone = $i <= $currentIndex;
+        $isCurrent = $i == $currentIndex;
+    @endphp
+
+    <div class="tracker-step"
+        onclick="handleTrackerClick('{{ $step }}', '{{ $status }}', {{ $app->id }})"
+        style="cursor:pointer;">
+
+        <div class="circle
+            @if($isDone) done
+            @endif
+
+            @if($isCurrent && $step == 'pending') pending
+            @elseif($isCurrent && $step == 'evaluated') evaluated
+            @elseif($isCurrent && $step == 'approved') approved
+            @endif
+        ">
+
+            @if($isDone)
+                ✔
+            @endif
+
+        </div>
+
+        <div class="label text-capitalize">{{ $step }}</div>
+    </div>
 
     @endforeach
 
 </div>
 
-                </div>
-
-            </div>
-
-        @endforeach
-
     </div>
-
 </div>
+
+@endforeach
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-  function updateDateTime() {
+function handleTrackerClick(step, status, id) {
+
+    if (status === 'approved') {
+        window.location.href = '/applicant/application/' + id;
+        return;
+    }
+    if (status === 'pending') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Application Pending',
+            text: 'Your application is under evaluation by HRMO.',
+        });
+    }
+    if (status === 'evaluated') {
+        Swal.fire({
+            icon: 'info',
+            title: 'For Approval',
+            text: 'Your application is now for Admin approval.',
+        });
+    }
+}
+</script>
+<!-- SCRIPT -->
+<script>
+function updateDateTime() {
     const now = new Date();
 
     const options = {
@@ -460,9 +232,8 @@
         hour12: true
     };
 
-    const formatted = now.toLocaleString('en-US', options);
-
-    document.getElementById('pstDateTime').textContent = formatted;
+    document.getElementById('pstDateTime').textContent =
+        now.toLocaleString('en-US', options);
 }
 
 updateDateTime();
