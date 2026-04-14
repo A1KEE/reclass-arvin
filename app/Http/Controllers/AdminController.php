@@ -106,6 +106,8 @@ public function show($id)
         'scores'
     ])->findOrFail($id);
 
+    $finalResult = optional($application->scores)->final_result;
+
     $positions = [
         'Teacher I', 'Teacher II', 'Teacher III',
         'Teacher IV', 'Teacher V', 'Teacher VI', 'Teacher VII',
@@ -127,15 +129,41 @@ public function show($id)
         ->orderBy('domain')
         ->orderBy('order')
         ->get();
-    $ratings = $application->ppstRatings->keyBy('ppst_indicator_id');
+    $ratings = $application->ppstRatings
+    ->whereIn('ppst_indicator_id', $ppstIndicators->pluck('id'))
+    ->pluck('rating', 'ppst_indicator_id')
+    ->toArray();
 
+    $coi_O = 0;
+$coi_VS = 0;
+$ncoi_O = 0;
+$ncoi_VS = 0;
 
+foreach ($ppstIndicators as $indicator) {
+
+    $rating = $ratings[$indicator->id]->rating ?? null;
+
+    if ($indicator->indicator_type === 'COI') {
+        if ($rating === 'O') $coi_O++;
+        if ($rating === 'VS') $coi_VS++;
+    }
+
+    if ($indicator->indicator_type === 'NCOI') {
+        if ($rating === 'O') $ncoi_O++;
+        if ($rating === 'VS') $ncoi_VS++;
+    }
+}
     return view('admin.view', [
         'application' => $application,
         'positions' => $positions,
         'schools' => $schools,
         'ppstIndicators' => $ppstIndicators,
         'ratings' => $ratings,
+        'coi_O' => $coi_O,
+        'coi_VS' => $coi_VS,
+        'ncoi_O' => $ncoi_O,
+        'ncoi_VS' => $ncoi_VS,
+        'finalResult' => $finalResult,
 
         // 🔥 IMPORTANT: for JS adminData
         'adminData' => [

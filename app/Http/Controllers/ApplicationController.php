@@ -470,7 +470,28 @@ private function mapPositionToDbLevel($position)
     return $map[$position] ?? 'Teacher I – MT I';
 }
 
-public function loadPPST(Request $request)
+public function loadPPSTAdmin(Request $request)
+{
+    $position = $request->position;
+    $applicationId = $request->application_id;
+
+    $level = $this->mapPositionToDbLevel($position);
+
+    $ppstIndicators = PpstIndicator::where('position_level', $level)
+        ->orderBy('order')
+        ->get();
+
+    $application = Application::with('ppstRatings')->find($applicationId);
+
+    $ratings = collect();
+
+    if ($application) {
+        $ratings = $application->ppstRatings->keyBy('ppst_indicator_id');
+    }
+
+    return view('admin.ppst-table', compact('ppstIndicators', 'ratings'));
+}
+public function loadPPSTApplicant(Request $request)
 {
     $position = $request->position;
 

@@ -40,7 +40,8 @@ Route::post('/qs/experience-requirement', [ApplicationController::class, 'experi
 Route::post('/notify-unqualified', [ApplicationController::class, 'notifyUnqualified'])
     ->name('applicants.notifyUnqualified');
 
-Route::get('/load-ppst', [ApplicationController::class, 'loadPPST']);
+Route::get('/ppst/load-applicant', [ApplicationController::class, 'loadPPSTApplicant'])
+    ->name('applicant.ppst.load');
 
 Route::post('/check-email', [ApplicationController::class, 'checkEmail']);
 
@@ -124,7 +125,10 @@ Route::prefix('admin')
             ->name('admin.users.delete');
 
         Route::get('/admin/applicants/export/{id}', [AdminController::class, 'export'])
-    ->name('admin.applicants.export');
+            ->name('admin.applicants.export');
+
+        Route::get('/ppst/load', [ApplicationController::class, 'loadPPSTAdmin'])
+            ->name('admin.ppst.load');
     });
 
 /*

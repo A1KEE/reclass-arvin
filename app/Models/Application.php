@@ -57,7 +57,7 @@ class Application extends Model
     }
     public function ppstRatings()
     {
-        return $this->hasMany(ApplicationPpstRating::class);
+        return $this->hasMany(ApplicationPpstRating::class, 'application_id');
     }
     public function scores()
     {

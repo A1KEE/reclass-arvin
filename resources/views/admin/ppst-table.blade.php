@@ -44,7 +44,7 @@ $currentDomain = null;
 @foreach($ppstIndicators as $indicator)
 
 @php
-    $rating = $ratings[$indicator->id]->rating ?? null;
+    $rating = $ratings[$indicator->id] ?? null;
 @endphp
 
 @if($currentDomain != $indicator->domain)
@@ -68,8 +68,7 @@ Domain {{ $indicator->domain }}.
 name="ppst[{{ $indicator->id }}][O]"
 value="1"
 {{ $rating === 'O' ? 'checked' : '' }}
-disabled
-class="ppst-checkbox"
+class="ppst-checkbox readonly-checkbox"
 data-type="{{ $indicator->indicator_type }}"
 data-id="{{ $indicator->id }}"
 data-column="O">
@@ -81,8 +80,7 @@ data-column="O">
 name="ppst[{{ $indicator->id }}][VS]"
 value="1"
 {{ $rating === 'VS' ? 'checked' : '' }}
-disabled
-class="ppst-checkbox"
+class="ppst-checkbox readonly-checkbox"
 data-type="{{ $indicator->indicator_type }}"
 data-id="{{ $indicator->id }}"
 data-column="VS">
@@ -94,8 +92,7 @@ data-column="VS">
 name="ppst[{{ $indicator->id }}][S]"
 value="1"
 {{ $rating === 'S' ? 'checked' : '' }}
-disabled
-class="ppst-checkbox-s"
+class="ppst-checkbox-s readonly-checkbox"
 data-type="{{ $indicator->indicator_type }}"
 data-id="{{ $indicator->id }}"
 data-column="S">
@@ -172,7 +169,11 @@ data-column="S">
                 <!-- LEFT -->
                 <div>
                     Final Result: 
-                    <span id="finalRating" class="fw-bold">-</span>
+                    <span id="finalRating"
+                    class="fw-bold 
+                    {{ $finalResult === 'qualified' ? 'text-success' : 'text-danger' }}">
+                    {{ strtoupper($finalResult ?? '-') }}
+                </span>
                 </div>
 
                 <!-- RIGHT -->

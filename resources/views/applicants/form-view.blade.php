@@ -19,6 +19,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/template.css') }}">
     <link rel="stylesheet" href="{{ asset('css/print.css') }}" media="print">
+    <style>
+        .highlight-position {
+    background: #e9ecef;
+    border-left: 5px solid #198754;
+    font-weight: bold;
+}
+    </style>
 </head>
 <body>
   
@@ -419,10 +426,10 @@ if(isset($application) && $application->levels){
     </span>
   </p>
 
-  <button type="button" class="btn btn-sm btn-outline-primary"
+  <!-- <button type="button" class="btn btn-sm btn-outline-primary"
       data-bs-toggle="modal" data-bs-target="#ipcrfModal">
       View/Upload IPCRF
-  </button>
+  </button> -->
 </div>
     <p>2. The applicant must meet the following performance requirements depending on the position applied for.</p>
 
@@ -501,7 +508,10 @@ if(isset($application) && $application->levels){
     </table>
 
  <div id="ppst-container">
-    @include('admin.ppst-table')
+    @include('admin.ppst-table', [
+    'ppstIndicators' => $ppstIndicators,
+    'ratings' => $ratings
+])
 </div>
 
 
@@ -531,14 +541,14 @@ if(isset($application) && $application->levels){
     </thead>
     <tbody>
       <tr>
-        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"value="{{ $application->scores->education_points ?? 0 }}"></td>
-        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"value="{{ $application->scores->training_points ?? 0 }}"></td>
-        <td><input type="number" name="comparative[experience_points]" class="form-control form-control-sm text-center"value="{{ $application->scores->experience_points ?? 0 }}"></td>
+        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"value="{{ $application->scores->education_points ?? 0 }}" readonly></td>
+        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"value="{{ $application->scores->training_points ?? 0 }}" readonly></td>
+        <td><input type="number" name="comparative[experience_points]" class="form-control form-control-sm text-center"value="{{ $application->scores->experience_points ?? 0 }}" readonly></td>
         <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center" value="{{ $application->scores->performance_points ?? 0 }}">
         <button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
-        <td><input type="number" name="comparative[coi_score]" class="form-control form-control-sm text-center" value="0"></td>
-        <td><input type="number" name="comparative[ncoi_score]" class="form-control form-control-sm text-center" value="0"></td>
-        <td><input type="number" name="comparative[bei_score]" class="form-control form-control-sm text-center" value="0"></td>
+        <td><input type="number" name="comparative[coi_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->coi_score ?? 0 }}"></td>
+        <td><input type="number" name="comparative[ncoi_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->ncoi_score ?? 0 }}"></td>
+        <td><input type="number" name="comparative[bei_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->bei_score ?? 0 }}"></td>
         <td><input type="number" name="comparative[total]" class="form-control form-control-sm text-center"></td>
       </tr>
     </tbody>
@@ -550,14 +560,16 @@ if(isset($application) && $application->levels){
     <div class="col-md-6">
         <p class="fw-semibold mb-1">Conforme:</p>
         <br><br>
-        <p id="teacherApplicant" class="fw-bold text-decoration-underline mb-0">{{ old('name') }}</p>
+        <p id="teacherApplicant" class="fw-bold text-decoration-underline mb-0">
+    {{ $application->name ?? '' }}
+</p>
         <p class="small mb-0">Teacher Applicant</p>
     </div>
 
     <div class="col-md-6">
         <p class="fw-semibold mb-1">Attested by:</p>
         <br><br>
-        <p class="fw-bold text-decoration-underline">ERNEST JOSEPH C. CABRERA</p>
+        <p class="fw-bold text-decoration-underline mb-0">ERNEST JOSEPH C. CABRERA</p>
         <p class="small mb-0">HRMPSB Chair</p>
     </div>
 </div>
@@ -583,10 +595,34 @@ if(isset($application) && $application->levels){
     <tbody>
       <tr>
         <td>Reclassification of Position</td>
-        <td><input type="text" id="from_position" name="division[from_position]" class="form-control form-control-sm text-center"></td>
-        <td><input type="text" id="from_grade" name="division[from_grade]" class="form-control form-control-sm text-center"></td>
-        <td><input type="text" id="to_position" name="division[to_position]" class="form-control form-control-sm text-center"></td>
-        <td><input type="text" id="to_grade" name="division[to_grade]" class="form-control form-control-sm text-center"></td>
+       <td>
+    <textarea
+        id="from_position"
+        class="form-control form-control-sm text-center"
+        rows="2"
+        readonly>{{ $application->current_position ?? '' }}</textarea>
+</td>
+
+<td>
+    <input type="text"
+        id="from_grade"
+        class="form-control form-control-sm text-center"
+        readonly>
+</td>
+
+<td>
+    <textarea
+        id="to_position"
+        class="form-control form-control-sm text-center"
+        rows="2"
+        readonly>{{ $application->position_applied ?? '' }}</textarea>
+</td>
+
+<td>
+    <input type="text" id="to_grade"
+        class="form-control form-control-sm text-center"
+        readonly>
+</td>
         <td><input type="date" name="division[date_processed]" class="form-control form-control-sm text-center"></td>
         <td><input type="text" name="division[remarks]" class="form-control form-control-sm text-center"></td>
       </tr>
@@ -792,7 +828,7 @@ if(isset($application) && $application->levels){
   <script src="{{ asset('js/performancerating.js') }}"></script>
   <script src="{{ asset('js/form-submit.js') }}"></script>
 
-  <script src="{{ asset('js/mapping-sg.js') }}"></script>
+  <!-- <script src="{{ asset('js/mapping-sg.js') }}"></script> -->
   <script src="{{ asset('js/position-ranking.js') }}"></script>
   <script src="{{ asset('js/position-change.js') }}"></script>
   
@@ -1019,56 +1055,6 @@ function hideSubmitLoading() {
 }
 </script>
   <script>
-  $(document).ready(function(){
-
-      function loadPPST(position){
-
-          if(!position){
-              $('#ppst-container').html(
-                  '<div class="text-muted text-center p-4">Select Position to load PPST</div>'
-              );
-              return;
-          }
-
-          $.ajax({
-              url: "/load-ppst",
-              type: "GET",
-              data: { position: position },
-              success: function(response){
-
-                  $('#ppst-container').html(response);
-
-              },
-              error: function(){
-
-                  $('#ppst-container').html(
-                      '<div class="text-danger text-center p-4">Failed to load PPST</div>'
-                  );
-
-              }
-          });
-
-      }
-
-      // auto load kapag may selected position
-      let initialPosition = $('#position_applied').val();
-
-      if(initialPosition){
-          loadPPST(initialPosition);
-      }
-
-      // kapag nag change ang dropdown
-      $('#position_applied').on('change', function(){
-
-          let position = $(this).val();
-
-          loadPPST(position);
-
-      });
-
-  });
-  </script>
-  <script>
  document.getElementById("saveEducation").addEventListener("click", function () {
 
     let degree = document.getElementById("education_name").value;
@@ -1155,6 +1141,94 @@ function hideSubmitLoading() {
     $('#trainingModal, #experienceModal, #eligibilityModal')
         .find('input, select, textarea')
         .prop('disabled', true);
+
+});
+</script>
+<script>
+$(document).on('click', '.readonly-checkbox', function(e){
+    e.preventDefault(); // ❌ block change
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // galing sa backend (Laravel)
+    const appliedPosition = "{{ $application->position_applied ?? '' }}";
+
+    if (!appliedPosition) return;
+
+    document.querySelectorAll("#performanceTable tbody tr").forEach(row => {
+
+        const rowPosition = row.getAttribute("data-position");
+
+        if (rowPosition === appliedPosition) {
+            row.classList.add("highlight-position");
+        }
+
+    });
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const position = "{{ $application->position_applied ?? '' }}";
+    const level = @json($application->levels); // SAFE: array or string
+
+    const forPosition = document.getElementById("forPosition");
+
+    if (position && forPosition) {
+
+        let levelText = "";
+
+        if (Array.isArray(level)) {
+            levelText = level.join(", ");
+        } else {
+            levelText = level || "";
+        }
+
+        let text = "For — " + position;
+
+        if (levelText) {
+            text += " (" + levelText.charAt(0).toUpperCase() + levelText.slice(1) + ")";
+        }
+
+        forPosition.textContent = text;
+    }
+
+});
+</script>
+<script>
+const sgMap = {
+    "Teacher I": 11,
+    "Teacher II": 12,
+    "Teacher III": 13,
+    "Teacher IV": 14,
+    "Teacher V": 15,
+    "Teacher VI": 16,
+    "Teacher VII": 17,
+    "Master Teacher I": 18,
+    "Master Teacher II": 19,
+    "Master Teacher III": 20,
+    "Master Teacher IV": 21,
+    "Master Teacher V": 22
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const fromPos = "{{ $application->current_position ?? '' }}";
+    const toPos = "{{ $application->position_applied ?? '' }}";
+
+    const fromGrade = document.getElementById("from_grade");
+    const toGrade = document.getElementById("to_grade");
+
+    if (fromPos && sgMap[fromPos]) {
+        fromGrade.value = sgMap[fromPos];
+    }
+
+    if (toPos && sgMap[toPos]) {
+        toGrade.value = sgMap[toPos];
+    }
 
 });
 </script>

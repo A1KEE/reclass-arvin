@@ -944,8 +944,8 @@ function hideSubmitLoading() {
               return;
           }
 
-          $.ajax({
-              url: "/load-ppst",
+       $.ajax({
+              url: "{{ route('applicant.ppst.load') }}",
               type: "GET",
               data: { position: position },
               success: function(response){
