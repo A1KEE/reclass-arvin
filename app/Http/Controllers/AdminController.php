@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
 use App\Models\School;
 use App\Models\PpstIndicator;
@@ -64,10 +65,32 @@ class AdminController extends Controller
     $evaluated = Application::where('status', 'evaluated')->count();
     $approved = Application::where('status', 'approved')->count();
 
+    $user = auth()->user();
+
+    $notifications = collect();
+
+   if ($user->hasRole('admin')) {
+    $filteredNotifs = Application::where('status', 'pending')
+        ->where('admin_is_read', 0)
+        ->where('super_admin_is_read', 0) // 🔥 ADD
+        ->latest()
+        ->get();
+} elseif ($user->hasRole('super_admin')) {
+    $filteredNotifs = Application::where('status', 'evaluated')
+        ->where('super_admin_is_read', 0)
+        ->latest()
+        ->get();
+}
+
+$newPending = $filteredNotifs; // ✅ FIX
+$newPendingCount = $filteredNotifs->count();
     // =========================
     // RETURN VIEW
     // =========================
     return view('admin.dashboard', [
+        'newPending' => $newPending,
+        'newPendingCount' => $newPendingCount,
+        'filteredNotifs' => $filteredNotifs,
         'total' => $total,
         'pending' => $pending,
         'draft' => $draft,
@@ -91,7 +114,27 @@ class AdminController extends Controller
     public function applicants()
     {
         $applicants = Application::latest()->get();
-        return view('admin.applicants', compact('applicants'));
+
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            $notifications = Application::where('status', 'pending')
+                ->where('admin_is_read', 0)
+                ->latest()
+                ->get();
+        } elseif ($user->hasRole('super_admin')) {
+            $notifications = Application::where('status', 'evaluated')
+                ->where('super_admin_is_read', 0)
+                ->latest()
+                ->get();
+        } else {
+            $notifications = collect();
+        }
+
+       return view('admin.applicants', compact(
+            'applicants',
+            'notifications'
+        ))->with('filteredNotifs', $notifications);
     }
 
 public function show($id)
@@ -198,6 +241,11 @@ public function update(Request $request, $id)
     // 🔥 AUTO UPDATE STATUS
     $application = Application::findOrFail($id);
     $application->status = 'evaluated';
+
+    // reset both so correct ang notif flow
+    $application->admin_is_read = 1; 
+    $application->super_admin_is_read = 0;
+
     $application->last_activity_at = now();
     $application->save();
 
@@ -275,19 +323,35 @@ public function markAsRead($id)
     $app = Application::find($id);
 
     if ($app) {
-        $app->is_read = 1;
+
+        if (auth()->user()->hasRole('admin')) {
+            $app->admin_is_read = 1;
+        }
+
+        if (auth()->user()->hasRole('super_admin')) {
+            $app->super_admin_is_read = 1;
+        }
+
         $app->save();
     }
 
-    return response()->json([
-        'success' => true
-    ]);
+    return response()->json(['success' => true]);
 }
 public function markAllAsRead()
 {
-    Application::where('status', 'pending')
-        ->where('is_read', 0)
-        ->update(['is_read' => 1]);
+    $user = auth()->user();
+
+    if ($user->hasRole('admin')) {
+        Application::where('status', 'pending')
+            ->where('admin_is_read', 0)
+            ->update(['admin_is_read' => 1]);
+    }
+
+    if ($user->hasRole('super_admin')) {
+        Application::where('status', 'evaluated')
+            ->where('super_admin_is_read', 0)
+            ->update(['super_admin_is_read' => 1]);
+    }
 
     return response()->json(['success' => true]);
 }

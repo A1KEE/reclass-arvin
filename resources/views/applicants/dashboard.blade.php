@@ -48,9 +48,16 @@
         <!-- LEFT -->
         <div>
             <h5 class="fw-bold mb-1">📊 My Applications</h5>
-            <small class="text-muted" style="font-size:12px;">
-                Track your application progress in Real time, Automatic refresh in 5sec
-            </small>
+            <small class="text-muted d-flex align-items-center gap-2" style="font-size:12px;">
+    
+    <span>Track your application progress in real time</span>
+
+    <span class="refresh-box">
+        ⏳ Refreshing in 
+        <span id="refreshCounter" class="refresh-number">25</span>s
+    </span>
+
+</small>
         </div>
 
         <!-- RIGHT BUTTONS -->
@@ -238,6 +245,38 @@ function updateDateTime() {
 
 updateDateTime();
 setInterval(updateDateTime, 1000);
+</script>
+<script>
+let seconds = 25;
+
+function startCountdown() {
+    const counter = document.getElementById('refreshCounter');
+
+    const interval = setInterval(() => {
+        seconds--;
+
+        if (counter) {
+            counter.textContent = seconds;
+
+            // 🔥 pulse animation every tick
+            counter.classList.add('pulse');
+            setTimeout(() => counter.classList.remove('pulse'), 300);
+        }
+
+        // 🔥 change text when near refresh
+        if (seconds === 3) {
+            counter.parentElement.innerHTML = "⚡ Refreshing in <span id='refreshCounter' class='refresh-number'>3</span>s";
+        }
+
+        if (seconds <= 0) {
+            clearInterval(interval);
+            location.reload();
+        }
+
+    }, 1000);
+}
+
+startCountdown();
 </script>
 </body>
 </html>

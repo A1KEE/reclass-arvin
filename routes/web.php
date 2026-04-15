@@ -135,6 +135,9 @@ Route::prefix('admin')
 
         Route::get('/ppst/load', [ApplicationController::class, 'loadPPSTAdmin'])
             ->name('admin.ppst.load');
+
+        Route::post('/notifications/read/{id}', [AdminController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [AdminController::class, 'markAllAsRead']);
     });
 
 /*
@@ -160,6 +163,7 @@ Route::prefix('superadmin')
 
         Route::post('/applicants/{id}/reject', [AdminController::class, 'finalReject'])
             ->name('superadmin.applicants.reject');
+            
         Route::post('/notifications/read/{id}', [AdminController::class, 'markAsRead']);
         Route::post('/superadmin/notifications/read-all', [AdminController::class, 'markAllAsRead']);
     });

@@ -103,6 +103,9 @@
 
 <!-- CONTENT -->
 <div class="content" id="content">
+   @php
+$filteredNotifs = $filteredNotifs ?? collect();
+@endphp
 
     <!-- TOPBAR -->
     <div class="topbar d-flex justify-content-between align-items-center">
@@ -132,12 +135,12 @@
         <button class="btn p-2 notif-btn" id="notifBell">
             <i class="bi bi-bell"></i>
 
-            @if(isset($newPendingCount) && $newPendingCount > 0)
-                <span class="badge badge-danger position-absolute"
-                      style="top:0; right:0;">
-                    {{ $newPendingCount }}
-                </span>
-            @endif
+            @if(isset($filteredNotifs) && $filteredNotifs->count() > 0)
+            <span class="badge badge-danger position-absolute"
+                style="top:0; right:0;">
+                {{ $filteredNotifs->count() }}
+            </span>
+        @endif
         </button>
     </div>
 
@@ -217,9 +220,17 @@ document.getElementById('notifBell').addEventListener('click', function () {
     $('#notifModal').modal('show');
 });
 
-// ✅ MARK AS READ (FIXED AJAX)
+// ✅ MARK AS READ
 function markAsRead(id) {
-    fetch('/superadmin/notifications/read/' + id, {
+    let url = '';
+
+    @if(auth()->user()->hasRole('super_admin'))
+        url = '/superadmin/notifications/read/' + id;
+    @else
+        url = '/admin/notifications/read/' + id;
+    @endif
+
+    fetch(url, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -230,21 +241,26 @@ function markAsRead(id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-
-            // remove notif item
             const el = document.getElementById('notif-' + id);
             if (el) el.remove();
 
-            // optional: reload to update badge count
-            location.reload();
+            location.reload(); // update badge
         }
     })
-    .catch(error => {
-        console.error('Error marking as read:', error);
-    });
+    .catch(error => console.error(error));
 }
+
+// ✅ MARK ALL AS READ
 function markAllAsRead() {
-    fetch('/superadmin/notifications/read-all', {
+    let url = '';
+
+    @if(auth()->user()->hasRole('super_admin'))
+        url = '/superadmin/notifications/read-all';
+    @else
+        url = '/admin/notifications/read-all';
+    @endif
+
+    fetch(url, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -267,14 +283,21 @@ function markAllAsRead() {
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title">🔔 New Applications</h6>
+        <h6 class="modal-title">
+    🔔 
+    @role('admin')
+        Pending Applications
+    @elserole('super_admin')
+        Evaluated Applications
+    @endrole
+</h6>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
      {{-- BODY --}}
 <div class="modal-body notif-body">
 
-    @forelse($newPending as $app)
+    @forelse($filteredNotifs as $app)
         <div id="notif-{{ $app->id }}" class="border-bottom mb-2 pb-2">
 
             <div class="d-flex justify-content-between align-items-start">
@@ -283,7 +306,16 @@ function markAllAsRead() {
                 <div>
                     <strong>
                         {{ $app->name }} ({{ $app->position_applied }})
-                    </strong><br>
+                    </strong>
+
+                    <!-- STATUS BADGE -->
+                    @if($app->status == 'pending')
+                        <span class="badge bg-warning text-dark ml-1">Pending</span>
+                    @elseif($app->status == 'evaluated')
+                        <span class="badge bg-primary text-white ml-1">Evaluated</span>
+                    @endif
+
+                    <br>
 
                     <small class="text-muted">
                         Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y h:i A') }}
@@ -308,7 +340,7 @@ function markAllAsRead() {
 </div>
 
 {{-- ✅ FOOTER --}}
-@if($newPendingCount > 0)
+@if($filteredNotifs->count() > 0)
 <div class="notif-footer d-flex">
 
     <!-- VIEW ALL -->

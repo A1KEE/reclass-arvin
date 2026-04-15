@@ -6,26 +6,40 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
+use App\Models\Application;
 
 class AdminFileController extends Controller
 {
-    public function index()
-    {
-        $basePath = storage_path('app/public/applications');
+public function index()
+{
+    $basePath = storage_path('app/public/applications');
 
-        $folders = collect(glob($basePath.'/*'))
-            ->filter(fn($path) => is_dir($path))
-            ->map(function ($folder) {
-                return [
-                    'folder' => basename($folder),
-                    'files' => collect(glob($folder.'/*'))
-                        ->map(fn($file) => basename($file))
-                        ->toArray()
-                ];
-            });
+    $folders = collect(glob($basePath.'/*'))
+    ->filter(fn($path) => is_dir($path))
+    ->map(function ($folder) {
 
-        return view('admin.files.index', compact('folders'));
-    }
+        $folderName = basename($folder);
+
+        // ✅ GET ID FROM END OF FOLDER NAME
+        preg_match('/(\d+)$/', $folderName, $matches);
+        $appId = $matches[1] ?? null;
+
+        $application = Application::find($appId);
+
+        return [
+            'folder' => $folderName,
+
+            'files' => collect(glob($folder.'/*'))
+                ->map(fn($file) => basename($file))
+                ->toArray(),
+
+            // ✅ SAFE CHECK
+            'position' => $application ? $application->position_applied : 'Others'
+        ];
+    });
+
+    return view('admin.files.index', compact('folders'));
+}
 
    public function show($folder)
 {
@@ -69,4 +83,28 @@ class AdminFileController extends Controller
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
+
+    private function extractPosition($folderName)
+{
+    $positions = [
+        'Teacher I',
+        'Teacher II',
+        'Teacher III',
+        'Teacher IV',
+        'Teacher V',
+        'Teacher VI',
+        'Teacher VII',
+        'Master Teacher I',
+        'Master Teacher II',
+        'Master Teacher III',
+    ];
+
+    foreach ($positions as $pos) {
+        if (stripos($folderName, $pos) !== false) {
+            return $pos;
+        }
+    }
+
+    return 'Others'; // fallback
+}
 }

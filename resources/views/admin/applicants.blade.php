@@ -30,6 +30,11 @@
 
                 <tbody>
 @foreach($applicants as $a)
+
+    @role('super_admin')
+        @continue($a->status == 'pending')
+    @endrole
+
 <tr>
     <td>{{ $a->id }}</td>
     <td>{{ $a->name }}</td>
@@ -46,17 +51,24 @@
 
     <!-- STATUS BADGE -->
     <td>
-    @if($a->status == 'pending')
-        <span class="badge badge-warning">Pending</span>
-    @elseif($a->status == 'approved')
-        <span class="badge badge-success">Approved</span>
-    @elseif($a->status == 'rejected')
-        <span class="badge badge-danger">Rejected</span>
-    @elseif($a->status == 'draft')
-        <span class="badge badge-secondary">Draft</span>
-    @else
-        <span class="badge badge-dark">{{ $a->status }}</span>
-    @endif
+        @if($a->status == 'pending')
+            <span class="badge bg-warning text-dark">Pending</span>
+
+        @elseif($a->status == 'evaluated')
+            <span class="badge bg-primary text-white">Evaluated</span> {{-- BLUE --}}
+
+        @elseif($a->status == 'approved')
+            <span class="badge bg-success text-white">Approved</span>
+
+        @elseif($a->status == 'rejected')
+            <span class="badge bg-danger text-white">Rejected</span>
+
+        @elseif($a->status == 'draft')
+            <span class="badge bg-secondary text-white">Draft</span>
+
+        @else
+            <span class="badge bg-dark text-white">{{ $a->status }}</span>
+        @endif
 </td>
 
     <td>{{ $a->created_at }}</td>
@@ -109,21 +121,32 @@
 
             @else
 
-                @php
-                    $label = 'Not Ready';
+              @php
+    $label = 'Not Ready';
 
-                    if($a->status == 'pending'){
-                        $label = 'Need Evaluation';
-                    } elseif($a->status == 'approved' || $a->status == 'rejected'){
-                        $label = 'Completed';
-                    } elseif($a->status == 'draft'){
-                        $label = 'Incomplete';
-                    }
-                @endphp
+    if($a->status == 'pending'){
+        $label = 'Need Evaluation';
+    } elseif($a->status == 'approved' || $a->status == 'rejected'){
+        $label = 'Completed';
+    } elseif($a->status == 'draft'){
+        $label = 'Incomplete';
+    }
 
-                <span class="badge bg-secondary" style="font-size:11px;">
-                    {{ $label }}
-                </span>
+    // 🎨 COLOR LOGIC
+    $badgeClass = 'bg-secondary text-white';
+
+    if($label == 'Completed'){
+        $badgeClass = 'bg-info text-white'; // GREEN
+    } elseif($label == 'Need Evaluation'){
+        $badgeClass = 'bg-warning text-dark';
+    } elseif($label == 'Incomplete'){
+        $badgeClass = 'bg-secondary text-white';
+    }
+@endphp
+
+<span class="badge {{ $badgeClass }}" style="font-size:11px;">
+    {{ $label }}
+</span>
 
             @endif
 
