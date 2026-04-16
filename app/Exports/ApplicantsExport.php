@@ -151,25 +151,36 @@ class ApplicantsExport
 
         foreach ($indicators as $i => $indicator) {
 
-            $row = $startRow + $i;
+           $skipRows = [52, 59, 65, 71, 77, 82];
+           $row = $startRow;
 
-            $rating = $ratings[$indicator->id]->rating ?? null;
+            foreach ($indicators as $indicator) {
 
-            // clear
-            $sheet->setCellValue('H' . $row, '');
-            $sheet->setCellValue('I' . $row, '');
-            $sheet->setCellValue('J' . $row, '');
+                // SKIP DOMAIN ROWS
+                while (in_array($row, $skipRows)) {
+                    $row++;
+                }
 
-            if ($rating === 'O') {
-                $sheet->setCellValue('H' . $row, '✔');
-            }
+                $rating = $ratings[$indicator->id]->rating ?? null;
 
-            if ($rating === 'VS') {
-                $sheet->setCellValue('I' . $row, '✔');
-            }
+                // clear
+                $sheet->setCellValue('H' . $row, '');
+                $sheet->setCellValue('I' . $row, '');
+                $sheet->setCellValue('J' . $row, '');
 
-            if ($rating === 'S') {
-                $sheet->setCellValue('J' . $row, '✔');
+                if ($rating === 'O') {
+                    $sheet->setCellValue('H' . $row, '✔');
+                }
+
+                if ($rating === 'VS') {
+                    $sheet->setCellValue('I' . $row, '✔');
+                }
+
+                if ($rating === 'S') {
+                    $sheet->setCellValue('J' . $row, '✔');
+                }
+
+                $row++; // move to next row
             }
         }
 
@@ -195,8 +206,16 @@ class ApplicantsExport
 
         $sheet->getStyle('G22:G25')->getAlignment()->setWrapText(true);
 
-        foreach (range(22, 25) as $r) {
-            $sheet->getRowDimension($r)->setRowHeight(-1);
+        $data = [
+            22 => $this->formatEducation($a),
+            23 => $this->formatTraining($a),
+            24 => $this->formatExperience($a),
+            25 => $this->formatEligibility($a),
+        ];
+
+        foreach ($data as $row => $text) {
+            $height = $this->autoRowHeight($text);
+            $sheet->getRowDimension($row)->setRowHeight($height);
         }
 
         // =========================
@@ -296,4 +315,14 @@ class ApplicantsExport
         }
         return trim($text);
     }
+
+    private function autoRowHeight($text, $baseHeight = 15, $charPerLine = 50)
+{
+    $lines = substr_count($text, "\n") + 1;
+
+    // dagdag depende sa haba
+    $extraLines = ceil(strlen($text) / $charPerLine);
+
+    return ($lines + $extraLines) * $baseHeight;
+}
 }

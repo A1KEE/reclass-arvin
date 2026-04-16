@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,24 +24,36 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-   public function boot()
+  public function boot()
 {
-    View::composer('layouts.admin', function ($view) {
+    View::composer('*', function ($view) {
 
-        $newPending = Application::where('status', 'pending')
-            ->where('is_read', 0) // ✅ IMPORTANT
+    $user = Auth::user();
+
+    if (!$user) {
+        $view->with('filteredNotifs', collect());
+        return;
+    }
+
+    if ($user->hasRole('admin')) {
+        $filteredNotifs = Application::where('status', 'pending')
+            ->where('admin_is_read', 0)
             ->latest()
-            ->take(5)
             ->get();
+    }
 
-        $newPendingCount = Application::where('status', 'pending')
-            ->where('is_read', 0) // ✅ IMPORTANT
-            ->count();
+    elseif ($user->hasRole('super_admin')) {
+        $filteredNotifs = Application::where('status', 'evaluated')
+            ->where('super_admin_is_read', 0)
+            ->latest()
+            ->get();
+    }
 
-        $view->with([
-            'newPending' => $newPending,
-            'newPendingCount' => $newPendingCount
-        ]);
-    });
+    else {
+        $filteredNotifs = collect();
+    }
+
+    $view->with('filteredNotifs', $filteredNotifs);
+});
 }
 }
