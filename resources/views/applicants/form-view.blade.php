@@ -594,38 +594,60 @@ if(isset($application) && $application->levels){
     </thead>
     <tbody>
       <tr>
-        <td>Reclassification of Position</td>
-       <td>
-    <textarea
-        id="from_position"
-        class="form-control form-control-sm text-center"
-        rows="2"
-        readonly>{{ $application->current_position ?? '' }}</textarea>
-</td>
+    <td>Reclassification of Position</td>
 
-<td>
-    <input type="text"
-        id="from_grade"
-        class="form-control form-control-sm text-center"
-        readonly>
-</td>
+    <!-- FROM POSITION -->
+    <td>
+        <textarea
+            name="division[from_position]"
+            id="from_position"
+            class="form-control form-control-sm text-center"
+            rows="2"
+            readonly>{{ $application->current_position ?? '' }}</textarea>
+    </td>
 
-<td>
-    <textarea
-        id="to_position"
-        class="form-control form-control-sm text-center"
-        rows="2"
-        readonly>{{ $application->position_applied ?? '' }}</textarea>
-</td>
+    <!-- FROM GRADE -->
+    <td>
+        <input type="text"
+            name="division[from_grade]"
+            id="from_grade"
+            class="form-control form-control-sm text-center"
+            readonly>
+    </td>
 
-<td>
-    <input type="text" id="to_grade"
-        class="form-control form-control-sm text-center"
-        readonly>
-</td>
-        <td><input type="date" name="division[date_processed]" class="form-control form-control-sm text-center"></td>
-        <td><input type="text" name="division[remarks]" class="form-control form-control-sm text-center"></td>
-      </tr>
+    <!-- TO POSITION -->
+    <td>
+        <textarea
+            name="division[to_position]"
+            id="to_position"
+            class="form-control form-control-sm text-center"
+            rows="2"
+            readonly>{{ $application->position_applied ?? '' }}</textarea>
+    </td>
+
+    <!-- TO GRADE -->
+    <td>
+        <input type="text"
+            name="division[to_grade]"
+            id="to_grade"
+            class="form-control form-control-sm text-center"
+            readonly>
+    </td>
+
+    <!-- DATE -->
+    <td>
+        <input type="date"
+            name="division[date_processed]"
+            class="form-control form-control-sm text-center" value="{{ old('division.date_processed', optional($application->scores)->sdo_date_processed) }}">
+    </td>
+
+    <!-- REMARKS -->
+    <td>
+        <input type="text"
+            name="division[remarks]"
+            class="form-control form-control-sm text-center" value="{{ old('division.remarks', optional($application->scores)->sdo_remarks) }}">
+    </td>
+</tr>
     </tbody>
   </table>
 </div>

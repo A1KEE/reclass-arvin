@@ -222,10 +222,22 @@ foreach ($ppstIndicators as $indicator) {
 }
 public function update(Request $request, $id)
 {
+    // Kunin o likhain ang ApplicationScore record
     $score = ApplicationScore::firstOrCreate(
         ['application_id' => $id]
     );
 
+    // --- SDO fields (nasa application_scores table) ---
+    $division = $request->input('division', []);
+
+    $score->sdo_from_position = $division['from_position'] ?? null;
+    $score->sdo_from_grade    = $division['from_grade'] ?? null;
+    $score->sdo_to_position   = $division['to_position'] ?? null;
+    $score->sdo_to_grade      = $division['to_grade'] ?? null;
+    $score->sdo_date_processed = $division['date_processed'] ?? null;
+    $score->sdo_remarks       = $division['remarks'] ?? null;
+
+    // --- Comparative scores ---
     $score->education_points   = $request->comparative['education'] ?? 0;
     $score->training_points    = $request->comparative['training'] ?? 0;
     $score->experience_points  = $request->comparative['experience_points'] ?? 0;
@@ -236,16 +248,15 @@ public function update(Request $request, $id)
     $score->bei_score  = $request->comparative['bei_score'] ?? 0;
 
     $score->total_score = $request->comparative['total'] ?? 0;
+
+    // I-save lahat ng changes sa application_scores
     $score->save();
 
-    // 🔥 AUTO UPDATE STATUS
+    // --- Update sa applications table (status, read flags) ---
     $application = Application::findOrFail($id);
     $application->status = 'evaluated';
-
-    // reset both so correct ang notif flow
-    $application->admin_is_read = 1; 
+    $application->admin_is_read = 1;
     $application->super_admin_is_read = 0;
-
     $application->last_activity_at = now();
     $application->save();
 

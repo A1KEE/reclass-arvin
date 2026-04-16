@@ -94,16 +94,16 @@
                 <select id="current_position" name="current_position" class="form-select" disabled>
                 <option value="">-- Select Current Position --</option>
 
-                <option value="Teacher I" {{ $application->position_applied == 'Teacher I' ? 'selected' : '' }}>Teacher I</option>
-<option value="Teacher II" {{ $application->position_applied == 'Teacher II' ? 'selected' : '' }}>Teacher II</option>
-<option value="Teacher III" {{ $application->position_applied == 'Teacher III' ? 'selected' : '' }}>Teacher III</option>
-<option value="Teacher IV" {{ $application->position_applied == 'Teacher IV' ? 'selected' : '' }}>Teacher IV</option>
-<option value="Teacher V" {{ $application->position_applied == 'Teacher V' ? 'selected' : '' }}>Teacher V</option>
-<option value="Teacher VI" {{ $application->position_applied == 'Teacher VI' ? 'selected' : '' }}>Teacher VI</option>
-<option value="Teacher VII" {{ $application->position_applied == 'Teacher VII' ? 'selected' : '' }}>Teacher VII</option>
-<option value="Master Teacher I" {{ $application->position_applied == 'Master Teacher I' ? 'selected' : '' }}>Master Teacher I</option>
-<option value="Master Teacher II" {{ $application->position_applied == 'Master Teacher II' ? 'selected' : '' }}>Master Teacher II</option>
-<option value="Master Teacher III" {{ $application->position_applied == 'Master Teacher III' ? 'selected' : '' }}>Master Teacher III</option>
+                <option value="Teacher I" {{ $application->current_position == 'Teacher I' ? 'selected' : '' }}>Teacher I</option>
+                <option value="Teacher II" {{ $application->current_position == 'Teacher II' ? 'selected' : '' }}>Teacher II</option>
+                <option value="Teacher III" {{ $application->current_position == 'Teacher III' ? 'selected' : '' }}>Teacher III</option>
+                <option value="Teacher IV" {{ $application->current_position == 'Teacher IV' ? 'selected' : '' }}>Teacher IV</option>
+                <option value="Teacher V" {{ $application->current_position == 'Teacher V' ? 'selected' : '' }}>Teacher V</option>
+                <option value="Teacher VI" {{ $application->current_position == 'Teacher VI' ? 'selected' : '' }}>Teacher VI</option>
+                <option value="Teacher VII" {{ $application->current_position == 'Teacher VII' ? 'selected' : '' }}>Teacher VII</option>
+                <option value="Master Teacher I" {{ $application->current_position == 'Master Teacher I' ? 'selected' : '' }}>Master Teacher I</option>
+                <option value="Master Teacher II" {{ $application->current_position == 'Master Teacher II' ? 'selected' : '' }}>Master Teacher II</option>
+                <option value="Master Teacher III" {{ $application->current_position == 'Master Teacher III' ? 'selected' : '' }}>Master Teacher III</option>
 
                 </select>
                 </div>
@@ -630,8 +630,8 @@ if(isset($application) && $application->levels){
         class="form-control form-control-sm text-center"
         readonly>
 </td>
-        <td><input type="date" name="division[date_processed]" class="form-control form-control-sm text-center" readonly></td>
-        <td><input type="text" name="division[remarks]" class="form-control form-control-sm text-center" readonly></td>
+        <td><input type="date" name="division[date_processed]" class="form-control form-control-sm text-center" value="{{ old('division.date_processed', optional($application->scores)->sdo_date_processed) }}" readonly></td>
+        <td><input type="text" name="division[remarks]" class="form-control form-control-sm text-center" value="{{ old('division.remarks', optional($application->scores)->sdo_remarks) }}" readonly></td>
       </tr>
     </tbody>
   </table>

@@ -65,9 +65,21 @@
 @endsection</h3>
 
 @php
-    $rawGrouped = collect($folders)->groupBy('position');
+    // Normalization function na pumapalit ng non-breaking space at multiple spaces
+    function normalizePos($str) {
+        // Palitan ang non-breaking space (UTF-8) at iba pang whitespace
+        $str = preg_replace('/\xc2\xa0/', ' ', $str);
+        $str = preg_replace('/\s+/', ' ', $str);
+        return trim($str);
+    }
 
-    $order = [
+    $rawGrouped = collect($folders)->groupBy(function ($item) {
+        return normalizePos($item['position']);
+    });
+
+    $order = array_map(function ($pos) {
+        return normalizePos($pos);
+    }, [
         'Teacher II',
         'Teacher III',
         'Teacher IV',
@@ -76,12 +88,15 @@
         'Teacher VII',
         'Master Teacher I',
         'Master Teacher II',
-        'Master Teacher III',
-        'Teacher I'
-    ];
+        'Master Teacher III'
+    ]);
 
     $grouped = collect($order)
-        ->mapWithKeys(fn($pos) => $rawGrouped->has($pos) ? [$pos => $rawGrouped[$pos]] : []);
+        ->mapWithKeys(function ($pos) use ($rawGrouped) {
+            return $rawGrouped->has($pos)
+                ? [$pos => $rawGrouped->get($pos)]
+                : [];
+        });
 
     $defaultPosition = 'all';
 @endphp
@@ -89,7 +104,7 @@
 {{-- TOP CONTROLS --}}
 <div class="top-controls">
 
-    {{-- DROPDOWN ONLY (TINANGGAL NA LABEL) --}}
+    {{-- DROPDOWN ONLY --}}
     <div>
         <select id="positionDropdown" class="form-control form-control-sm">
             <option value="all" selected>All Positions</option>
@@ -103,23 +118,19 @@
 
     {{-- SEARCH + BUTTON --}}
     <div class="d-flex gap-2">
-
         <input type="text"
                id="searchInput"
                class="form-control form-control-sm search-box"
                placeholder="🔍 Search files...">
-
         <button id="toggleAllBtn" class="btn btn-secondary btn-sm">
             Show All
         </button>
-
     </div>
 
 </div>
 
 {{-- POSITION BLOCKS --}}
 @foreach($grouped as $position => $items)
-
 <div class="position-block"
      data-position="{{ $position }}"
      style="display:none;">
@@ -127,63 +138,51 @@
    <div class="p-2 rounded mb-2 border shadow-sm bg-white text-dark font-weight-bold position-header"
      style="cursor:pointer;">
     🎓 {{ $position }} ({{ count($items) }})
-</div>
+   </div>
 
     <div class="position-content">
-    <div class="row">
-
-        @foreach($items as $folder)
-
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-3 folder-item">
-
-            <div class="card folder-card h-100 shadow-sm">
-
-                <div class="card-header bg-dark text-white folder-header">
-                    📂 {{ $folder['folder'] }}
-                </div>
-
-                <div class="card-body folder-body">
-
-                    <div class="text-muted mb-2">
-                        {{ count($folder['files']) }} files
+        <div class="row">
+            @foreach($items as $folder)
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-3 folder-item">
+                <div class="card folder-card h-100 shadow-sm">
+                    <div class="card-header bg-dark text-white folder-header">
+                        📂 {{ $folder['folder'] }}
                     </div>
-
-                    @foreach(array_slice($folder['files'], 0, 4) as $file)
-                        <div class="file-line">📄 {{ $file }}</div>
-                    @endforeach
-
+                    <div class="card-body folder-body">
+                        <div class="text-muted mb-2">
+                            {{ count($folder['files']) }} files
+                        </div>
+                        @foreach(array_slice($folder['files'], 0, 4) as $file)
+                            <div class="file-line">📄 {{ $file }}</div>
+                        @endforeach
+                    </div>
+                    <div class="card-footer bg-white folder-footer d-flex justify-content-between">
+                        <a href="{{ route('admin.files.show', $folder['folder']) }}"
+                           class="btn btn-primary btn-sm">
+                            Open File
+                        </a>
+                        <a href="{{ route('admin.files.download', $folder['folder']) }}"
+                           class="btn btn-success btn-sm">
+                            Download ZIP
+                        </a>
+                    </div>
                 </div>
-
-                <div class="card-footer bg-white folder-footer d-flex justify-content-between">
-
-                    <a href="{{ route('admin.files.show', $folder['folder']) }}"
-                       class="btn btn-primary btn-sm">
-                        Open File
-                    </a>
-
-                    <a href="{{ route('admin.files.download', $folder['folder']) }}"
-                       class="btn btn-success btn-sm">
-                        Download ZIP
-                    </a>
-
-                </div>
-
             </div>
-
+            @endforeach
         </div>
-
-        @endforeach
-
     </div>
 </div>
-
 @endforeach
 
 </div>
 </div>
 
-{{-- SCRIPT --}}
 <script>
+// Normalization function sa JS (tinatanggal ang non-breaking space at multiple spaces)
+function normalizePosition(str) {
+    return str.trim().replace(/[\s\u00A0]+/g, ' ');
+}
+
 const dropdown = document.getElementById('positionDropdown');
 const searchInput = document.getElementById('searchInput');
 const showAllBtn = document.getElementById('toggleAllBtn');
@@ -193,21 +192,21 @@ const blocks = document.querySelectorAll('.position-block');
    DROPDOWN
 ========================= */
 dropdown.addEventListener('change', function () {
-
-    const selected = this.value;
+    const selected = normalizePosition(this.value);
 
     blocks.forEach(block => {
+        const content = block.querySelector('.position-content');
+        const blockPos = normalizePosition(block.dataset.position);
 
         if (selected === 'all') {
             block.style.display = 'block';
-            block.querySelector('.position-content').style.display = 'none';
-        } else if (block.dataset.position === selected) {
+            content.style.display = 'none';
+        } else if (blockPos === selected) {
             block.style.display = 'block';
-            block.querySelector('.position-content').style.display = 'block';
+            content.style.display = 'block';
         } else {
             block.style.display = 'none';
         }
-
     });
 
     searchInput.value = '';
@@ -217,10 +216,12 @@ dropdown.addEventListener('change', function () {
    SHOW ALL BUTTON
 ========================= */
 showAllBtn.addEventListener('click', function () {
-
     dropdown.value = 'all';
 
-    blocks.forEach(block => block.style.display = 'block');
+    blocks.forEach(block => {
+        block.style.display = 'block';
+        // Huwag baguhin ang display ng content para manatili ang dating state (collapsed/expanded)
+    });
 
     searchInput.value = '';
 });
@@ -229,19 +230,15 @@ showAllBtn.addEventListener('click', function () {
    SEARCH (SMART)
 ========================= */
 searchInput.addEventListener('keyup', function () {
-
     const keyword = this.value.toLowerCase();
 
     if (dropdown.value === 'all') {
-
         blocks.forEach(block => {
-
             let hasMatch = false;
             const items = block.querySelectorAll('.folder-item');
 
             items.forEach(item => {
                 const text = item.innerText.toLowerCase();
-
                 if (text.includes(keyword)) {
                     item.style.display = 'block';
                     hasMatch = true;
@@ -252,17 +249,16 @@ searchInput.addEventListener('keyup', function () {
 
             block.style.display = hasMatch ? 'block' : 'none';
         });
-
         return;
     }
 
-    const activeBlock = Array.from(blocks)
-        .find(b => b.dataset.position === dropdown.value);
+    const activeBlock = Array.from(blocks).find(b =>
+        normalizePosition(b.dataset.position) === normalizePosition(dropdown.value)
+    );
 
     if (!activeBlock) return;
 
     const items = activeBlock.querySelectorAll('.folder-item');
-
     items.forEach(item => {
         const text = item.innerText.toLowerCase();
         item.style.display = text.includes(keyword) ? 'block' : 'none';
@@ -272,14 +268,16 @@ searchInput.addEventListener('keyup', function () {
 window.addEventListener('DOMContentLoaded', () => {
     dropdown.value = 'all';
 
-    blocks.forEach(block => block.style.display = 'block');
+    blocks.forEach(block => {
+        block.style.display = 'block';
+        block.querySelector('.position-content').style.display = 'block';
+    });
 });
 
 const headers = document.querySelectorAll('.position-header');
 
 headers.forEach(header => {
     header.addEventListener('click', function () {
-
         const content = this.nextElementSibling;
 
         // CLOSE ALL
@@ -303,4 +301,4 @@ headers.forEach(header => {
 });
 </script>
 
-@endsection
+@endsection 
