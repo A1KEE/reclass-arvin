@@ -136,15 +136,9 @@ if(isset($application) && $application->levels){
 <div class="row">
     <div class="col-md-6 mb-3">
         <label class="form-label fw-bold">Position Applied:</label>
-        <select id="position_applied" name="position_applied" class="form-select" disabled>
-            <option value="">-- Select Position Applied --</option>
-
-            @foreach($positions as $p)
-                <option value="{{ $p }}" {{ $application->position_applied == $p ? 'selected' : '' }}>
-                    {{ $p }}
-                </option>
-            @endforeach
-        </select>
+        <select class="form-select" disabled>
+    <option selected>{{ $application->position_applied }}</option>
+</select>
     </div>
 
                 <div class="col-md-6 mb-3">
@@ -233,13 +227,13 @@ if(isset($application) && $application->levels){
   <div class="row ps-5">
 
     <div class="col-md-6">
+
       <div class="form-check">
         <input class="form-check-input"
                type="checkbox"
-               name="levels[]"
-               value="kindergarten"
                id="levelKindergarten"
-               {{ in_array('kindergarten', $levels) ? 'checked' : '' }}>
+               disabled
+               {{ in_array('kindergarten', $levels ?? []) ? 'checked' : '' }}>
         <label class="form-check-label" for="levelKindergarten">
           Kindergarten
         </label>
@@ -248,24 +242,24 @@ if(isset($application) && $application->levels){
       <div class="form-check">
         <input class="form-check-input"
                type="checkbox"
-               name="levels[]"
-               value="elementary"
                id="levelElementary"
-               {{ in_array('elementary', $levels) ? 'checked' : '' }}>
+               disabled
+               {{ in_array('elementary', $levels ?? []) ? 'checked' : '' }}>
         <label class="form-check-label" for="levelElementary">
           Elementary
         </label>
       </div>
+
     </div>
 
     <div class="col-md-6">
+
       <div class="form-check">
         <input class="form-check-input"
                type="checkbox"
-               name="levels[]"
-               value="junior_high"
                id="levelJuniorHigh"
-               {{ in_array('junior_high', $levels) ? 'checked' : '' }}>
+               disabled
+               {{ in_array('junior_high', $levels ?? []) ? 'checked' : '' }}>
         <label class="form-check-label" for="levelJuniorHigh">
           Junior High School
         </label>
@@ -274,18 +268,21 @@ if(isset($application) && $application->levels){
       <div class="form-check">
         <input class="form-check-input"
                type="checkbox"
-               name="levels[]"
-               value="senior_high"
                id="levelSeniorHigh"
-               {{ in_array('senior_high', $levels) ? 'checked' : '' }}>
+               disabled
+               {{ in_array('senior_high', $levels ?? []) ? 'checked' : '' }}>
         <label class="form-check-label" for="levelSeniorHigh">
           Senior High School
         </label>
       </div>
+
     </div>
+
   </div>
 </div>
-<input type="hidden" id="isEditMode" value="{{ isset($application) ? 1 : 0 }}">
+
+{{-- OPTIONAL: VIEW MODE FLAG --}}
+<input type="hidden" id="isViewMode" value="1">
 
         <!-- QS TABLE -->
     <hr class="mt-2">
@@ -302,7 +299,9 @@ if(isset($application) && $application->levels){
         <tbody>
         <tr id="education-row">
         <td>Education</td>
-        <td id="qs_education">—</td>
+       <td id="qs_education">
+    {{ $qs['education'] ?? 'No QS Found' }}
+</td>
         <td><button type="button" class="btn btn-sm btn-primary add-education-btn d-none">➕ Add Education</button>
             <div id="education_summary" class="mt-2 small text-muted">
         @if($application->educations && $application->educations->count())
@@ -322,9 +321,7 @@ if(isset($application) && $application->levels){
     </tr>
         <tr>
         <td>Training</td>
-
-        <td id="qs_training">—</td>
-
+   <td id="qs_training">{{ $qs['training'] ?? '—' }}</td>
         <td>
             <button type="button" class="btn btn-sm btn-primary add-training-btn d-none">
                 ➕ Add Training
@@ -354,7 +351,7 @@ if(isset($application) && $application->levels){
     </tr>
         <tr>
         <td>Experience</td>
-        <td id="qs_experience">—</td>
+        <td id="qs_experience">{{ $qs['experience'] ?? '—' }}</td>
         <td><button type="button"class="btn btn-sm btn-primary add-experience-btn d-none">➕ Add Experience</button>
             <div id="experience_summary" class="mt-2 small text-muted">
     @if($application->experiences && $application->experiences->count())
@@ -378,9 +375,7 @@ if(isset($application) && $application->levels){
     </tr>
     <tr>
         <td>Eligibility</td>
-
-        <td id="qs_eligibility">—</td>
-
+ <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</td>
         <td>
             <button type="button" class="btn btn-sm btn-primary add-eligibility-btn d-none">
                 ➕ Add Eligibility
@@ -804,24 +799,6 @@ if(isset($application) && $application->levels){
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
     
-  <!-- GLOBAL VARIABLES -->
-  <script>
-      // ITO ANG IMPORTANTE: Check kung tama ang structure
-      window.qsConfig = @json(config('qs') ?? []);
-      
-      // Debug logging
-      console.log('=== QS CONFIG DEBUG ===');
-      console.log('Full config:', window.qsConfig);
-      console.log('Selected Level:', '{{ $selectedLevel ?? "kindergarten" }}');
-      console.log('Selected Position:', '{{ $selectedPosition ?? "Teacher III" }}');
-      console.log('=== END DEBUG ===');
-      
-      window.requiredTrainingHours = {{ $requiredTrainingHours ?? 0 }};
-      window.requiredTrainingLevel = {{ $requiredTrainingLevel ?? 0 }};
-      // Other globals
-      window.requiredExperienceYears = {{ $requiredYears ?? 0 }};
-      window.qsEducationUnits = @json($qsUnits ?? []);
-  </script>
   <script>
     window.savedLevels = @json($levels);
 </script>
@@ -936,46 +913,6 @@ if(isset($application) && $application->levels){
           $('#forPosition').text('For —');
       }
   }
-  /* ================================
-    QS LOADER (MANUAL ONLY)
-  ================================ */
-  function loadQS(position) {
-      let level = getSelectedLevel();
-
-      if (!position) {
-          $('#qs_education, #qs_training, #qs_experience, #qs_eligibility').text('—');
-          return;
-      }
-
-      showQSLoading(); // show loader
-
-      $.ajax({
-          url: '{{ route("get.qs") }}',
-          type: 'GET',
-          data: { position: position, level: level },
-          success: function(response) {
-              if (response.success) {
-                  $('#qs_education').text(response.data.education);
-                  $('#qs_training').text(response.data.training);
-                  $('#qs_experience').text(response.data.experience);
-                  $('#qs_eligibility').text(response.data.eligibility);
-              } else {
-                  $('#qs_education, #qs_training, #qs_experience, #qs_eligibility').text('—');
-              }
-          },
-          error: function() {
-              $('#qs_education, #qs_training, #qs_experience, #qs_eligibility').text('—');
-          },
-          complete: function() {
-              hideQSLoading(5000); // 5000ms = 5 seconds delay
-             
-              if (window.savedLevels) {
-        restoreLevels(window.savedLevels);
-    }
-          }
-      });
-  }
-  </script>
 
   <script>
   document.addEventListener('DOMContentLoaded', function () {

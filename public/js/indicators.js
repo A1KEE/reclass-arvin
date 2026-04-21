@@ -7,14 +7,30 @@ function toggleSubmitButtonByResult() {
 
     if (!submitBtn) return;
 
-    // ❌ Disable ONLY if IN PROGRESS
-    if (finalText.includes("IN PROGRESS")) {
+    const status = finalText.trim();
+
+    // ❌ DISABLE kung walang result or in progress or waiting
+    if (
+        status === "" ||
+        status.includes("WAITING") ||
+        status.includes("IN PROGRESS") ||
+        status.includes("Loading")
+    ) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = "⏳ In Progress (Complete requirements)";
-    } else {
+        submitBtn.innerHTML = "⏳ Complete requirements first";
+        return;
+    }
+
+    // ✅ ENABLE kahit MET or NOT MET
+    if (status.includes("MET") || status.includes("NOT MET")) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = "💾 Submit Application";
+        return;
     }
+
+    // fallback
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "⏳ Complete requirements first";
 }
 function syncRow(id){
 
@@ -134,16 +150,16 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
     // =============================
     if(["Teacher IV","Teacher V","Teacher VI","Teacher VII"].includes(position)){
         if(totalS >= 3){
-            finalEl.textContent = "DISQUALIFIED ❌ - 3 S reached";
-            resultInput.value = "disqualified";
+            finalEl.textContent = "NOT MET ❌ - 3 Satisfactor reached";
+            resultInput.value = "not_met";
             return;
         }
     }
 
     if(["Master Teacher I","Master Teacher II","Master Teacher III"].includes(position)){
         if(totalVS >= 3){
-            finalEl.textContent = "DISQUALIFIED ❌ - 3 VS reached";
-            resultInput.value = "disqualified";
+            finalEl.textContent = "NOT MET ❌ - 3 Very Satisfactor reached";
+            resultInput.value = "not_met";
             return;
         }
     }
@@ -179,15 +195,15 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
         const totalNCOI = ncoiO + ncoiVS;
 
         if(coiO < 6){
-            finalEl.textContent = "DISQUALIFIED ❌ - Need 6 COI Outstanding";
-            resultInput.value = "disqualified";
+            finalEl.textContent = "NOT MET ❌ - Need 6 COI Outstanding";
+            resultInput.value = "not_met";
             toggleSubmitButtonByResult();
             return;
         }
 
         if(ncoiO < 4){
-            finalEl.textContent = "DISQUALIFIED ❌ - Need 4 NCOI Outstanding";
-            resultInput.value = "disqualified";
+            finalEl.textContent = "NOT MET ❌ - Need 4 NCOI Outstanding";
+            resultInput.value = "not_met";
 
             toggleSubmitButtonByResult();
             return;
@@ -201,8 +217,8 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
             return;
         }
 
-        finalEl.textContent = "QUALIFIED ✅";
-        resultInput.value = "qualified";
+        finalEl.textContent = "MET ✅";
+        resultInput.value = "met";
 
         toggleSubmitButtonByResult();
         return;
@@ -242,8 +258,8 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
     // 2. DISQUALIFIED RULES
     // =============================
     if (isHighPosition && ncoiVS > maxAllowedVS) {
-        finalEl.textContent = "DISQUALIFIED ❌ - VS > O";
-        resultInput.value = "disqualified";
+        finalEl.textContent = "NOT MET ❌ - VS > O";
+        resultInput.value = "not_met";
 
         toggleSubmitButtonByResult();
         return;
@@ -252,8 +268,8 @@ function calculateFinalRating(totalS = 0, totalVS = 0){
     // =============================
     // 3. QUALIFIED
     // =============================
-    finalEl.textContent = "QUALIFIED ✅";
-    resultInput.value = "qualified";
+    finalEl.textContent = "MET ✅";
+    resultInput.value = "met";
 
     toggleSubmitButtonByResult();
 }

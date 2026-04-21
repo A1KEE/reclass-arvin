@@ -52,11 +52,11 @@ public function store(Request $request)
     // =========================
     // 2️⃣ DETERMINE STATUS (🔥 DYNAMIC)
     // =========================
-    $status = 'draft'; // default
+    $status = 'draft';
 
-    if ($request->ppst_result === 'qualified') {
+    if ($request->ppst_result === 'met') {
         $status = 'pending';
-    } elseif ($request->ppst_result === 'disqualified') {
+    } elseif ($request->ppst_result === 'not_met') {
         $status = 'draft';
     }
 
@@ -93,7 +93,7 @@ public function store(Request $request)
 // =========================
 $passwordToSend = null;
 
-if (strtolower($request->ppst_result ?? '') === 'qualified') {
+if ($request->ppst_result === 'met') {
 
     $existingUser = User::where('email', $request->email)->first();
 
@@ -319,7 +319,7 @@ if ($request->has('ppst')) {
             'coi_very_satisfactory' => $request->coi_very_satisfactory,
             'ncoi_outstanding' => $request->ncoi_outstanding,
             'ncoi_very_satisfactory' => $request->ncoi_very_satisfactory,
-            'final_result' => $request->ppst_result,
+            'final_result' => $request->ppst_result === 'met' ? 'MET' : 'NOT MET',
 
             'updated_at' => now(),
             'created_at' => now(),

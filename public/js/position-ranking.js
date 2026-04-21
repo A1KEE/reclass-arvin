@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function(){
 
 const current = document.getElementById("current_position");
@@ -22,27 +21,31 @@ const promotionMap = {
 
 };
 
-current.addEventListener("change", function(){
+function populateApplied(selected){
 
-let selected = this.value;
+    applied.innerHTML = '<option value="">-- Select Position Applied --</option>';
 
-applied.innerHTML = '<option value="">-- Select Position Applied --</option>';
+    if(promotionMap[selected]){
+        promotionMap[selected].forEach(function(position){
 
-if(promotionMap[selected]){
+            let option = document.createElement("option");
+            option.value = position;
+            option.textContent = position;
 
-promotionMap[selected].forEach(function(position){
+            applied.appendChild(option);
 
-let option = document.createElement("option");
-
-option.value = position;
-option.textContent = position;
-
-applied.appendChild(option);
-
-});
-
+        });
+    }
 }
 
+// 🔥 ON CHANGE
+current.addEventListener("change", function(){
+    populateApplied(this.value);
 });
+
+// 🔥 AUTO LOAD (FIX FOR YOUR BUG)
+if(current.value){
+    populateApplied(current.value);
+}
 
 });

@@ -196,6 +196,26 @@ foreach ($ppstIndicators as $indicator) {
         if ($rating === 'VS') $ncoi_VS++;
     }
 }
+
+$qsConfig = config('qs');
+
+// kunin levels (array)
+$levels = is_array($application->levels)
+    ? $application->levels
+    : json_decode($application->levels, true);
+
+// kunin first level (important)
+$level = $levels[0] ?? null;
+
+// position applied
+$position = $application->position_applied;
+
+// hanapin QS
+$qs = null;
+
+if ($level && $position && isset($qsConfig[$level][$position])) {
+    $qs = $qsConfig[$level][$position];
+}
     return view('admin.view', [
         'application' => $application,
         'positions' => $positions,
@@ -207,6 +227,7 @@ foreach ($ppstIndicators as $indicator) {
         'ncoi_O' => $ncoi_O,
         'ncoi_VS' => $ncoi_VS,
         'finalResult' => $finalResult,
+        'qs' => $qs,
 
         // 🔥 IMPORTANT: for JS adminData
         'adminData' => [
