@@ -302,7 +302,7 @@ document.getElementById("position_applied")?.addEventListener("change", function
     const position = this.value;
     document.getElementById("finalRating").textContent = "Loading...";
 
-    fetch(`/load-ppst?position=${encodeURIComponent(position)}`)
+   fetch('/ppst/load-applicant?position=' + position)
         .then(res => res.text())
         .then(html => {
             document.getElementById("ppst-container").innerHTML = html;

@@ -248,6 +248,16 @@ class ApplicantsExport
         $sheet->setCellValue('I96', $score->bei_score ?? 0);
         $sheet->setCellValue('J96', $score->total_score ?? 0);
 
+        //V. DepEd Regional Office Action
+        $sheet->setCellValue('C106', $score->sdo_from_position ?? $currentPosition);
+        $sheet->setCellValue('E106', $score->sdo_from_grade ?? $currentSG);
+
+        $sheet->setCellValue('F106', $score->sdo_to_position ?? $appliedPosition);
+        $sheet->setCellValue('G106', $score->sdo_to_grade ?? $appliedSG);
+
+        $sheet->setCellValue('H106', $score->sdo_date_processed ?? '');
+        $sheet->setCellValue('I106', $score->sdo_remarks ?? '');
+
         // =========================
         // DOWNLOAD
         // =========================

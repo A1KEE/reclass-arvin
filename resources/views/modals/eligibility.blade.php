@@ -49,32 +49,53 @@
 
       <div class="row g-3">
 
-        <!-- Eligibility -->
+        <!-- COMBINED ROW -->
         <div class="col-12">
-          <div class="card p-3 shadow-sm border-0">
-            <label class="form-label fw-bold text-primary">Eligibility Name</label>
-            <select id="eligibilityInput" class="form-select">
-              <option value="">Select Eligibility</option>
-              <option value="LET">LET</option>
-              <option value="PBET">PBET</option>
-              <option value="MAGNA CARTA">MAGNA CARTA</option>
-            </select>
+          <div class="row g-3">
+
+            <!-- Eligibility -->
+            <div class="col-md-6">
+              <div class="card p-3 shadow-sm border-0 h-100">
+                <label class="form-label fw-bold text-primary">
+                  <i class="fas fa-id-badge me-2"></i>Eligibility Name
+                </label>
+                <select id="eligibilityInput" class="form-select">
+                  <option value="">Select Eligibility</option>
+                  <option value="LET">LET</option>
+                  <option value="PBET">PBET</option>
+                  <option value="MAGNA CARTA">MAGNA CARTA</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Expiry -->
+            <div class="col-md-6">
+              <div class="card p-3 shadow-sm border-0 h-100">
+                <label class="form-label fw-bold text-primary">
+                  <i class="fas fa-calendar-alt me-2"></i>ID Expiry Date
+                </label>
+                <input type="date" id="eligibilityExpiry" class="form-control">
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- Expiry -->
+        <!-- ATTACHMENT (styled like experience) -->
         <div class="col-12">
-          <div class="card p-3 shadow-sm border-0">
-            <label class="form-label fw-bold text-primary">ID Expiry Date</label>
-            <input type="date" id="eligibilityExpiry" class="form-control">
-          </div>
-        </div>
+          <div class="card border-0 shadow-sm">
 
-        <!-- Attachment -->
-        <div class="col-12">
-          <div class="card p-3 shadow-sm border-0">
-            <label class="form-label fw-bold text-primary">Attachment</label>
-            <input type="file" id="eligibilityAttachment" class="form-control">
+            <!-- header style same feel as experience -->
+            <div class="card-header bg-light-green">
+              <h6 class="mb-0 fw-semibold text-green">
+                <i class="fas fa-paperclip me-2"></i>Attachment
+              </h6>
+            </div>
+
+            <div class="card-body">
+              <input type="file" id="eligibilityAttachment" class="form-control">
+            </div>
+
           </div>
         </div>
 

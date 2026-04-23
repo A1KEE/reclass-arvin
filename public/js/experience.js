@@ -136,107 +136,131 @@ function loadExperienceQS() {
 
 
 $('#addExperience').on('click', function() {
-    const html = `
-    <div class="col-12">
-      <div class="experience-item card shadow-sm p-3 position-relative mb-3">
+  const html = `
+<div class="col-12">
+  <div class="experience-item card shadow-sm border-0 position-relative mb-3">
 
-        <button type="button"
-                class="btn btn-sm btn-outline-danger remove-experience
-                position-absolute top-0 end-0 m-2">✖</button>
+    <!-- REMOVE BUTTON -->
+    <button type="button"
+            class="btn btn-sm btn-outline-danger remove-experience
+            position-absolute top-0 end-0 m-2">
+      <i class="fas fa-times"></i>
+    </button>
 
-        <!-- SCHOOL TYPE + NAME (2 columns) -->
-        <div class="row g-2 mb-2">
-          <div class="col-md-6">
-            <label class="fw-bold">School Type</label>
-            <select name="experiences[${experienceIndex}][school_type]"
-                    class="form-select exp_school_type" required>
-              <option value="">Select School Type</option>
-              <option value="Public">Public School</option>
-              <option value="Private">Private School</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="fw-bold">School Name</label>
-            <input type="text"
-                   name="experiences[${experienceIndex}][school]"
-                   class="form-control exp_school"
-                   placeholder="Enter School Name"
-                   required>
-          </div>
-        </div>
+    <div class="card-body p-3">
 
-        <!-- POSITION -->
-        <div class="mb-2 position-wrapper">
-          <label class="fw-bold">Position</label>
-          <select name="experiences[${experienceIndex}][position]"
-                  class="form-select exp_position" required>
-            <option value="">Select Position</option>
-            <option>Teacher I</option>
-            <option>Teacher II</option>
-            <option>Teacher III</option>
-            <option>Teacher IV</option>
-            <option>Teacher V</option>
-            <option>Teacher VI</option>
-            <option>Teacher VII</option>
-            <option>Master Teacher I</option>
-            <option>Master Teacher II</option>
-            <option>Master Teacher III</option>
-            <option>Master Teacher IV</option>
-            <option>Master Teacher V</option>
+      <!-- SCHOOL TYPE + NAME -->
+      <div class="row g-2 mb-2">
+
+        <div class="col-md-6">
+          <label class="fw-bold">
+            <i class="fas fa-school me-1 text-primary"></i>School Type
+          </label>
+          <select name="experiences[${experienceIndex}][school_type]"
+                  class="form-select exp_school_type" required>
+            <option value="">Select School Type</option>
+            <option value="Public">Public School</option>
+            <option value="Private">Private School</option>
           </select>
         </div>
 
-        <!-- START + END DATES (2 columns) -->
-        <div class="row g-2 mb-2">
-          <div class="col-md-6">
-            <label class="fw-bold">Start Date</label>
-            <input type="date"
-                   name="experiences[${experienceIndex}][start]"
-                   class="form-control exp_start"
-                   required>
-          </div>
-          <div class="col-md-6">
-            <label class="fw-bold">End Date</label>
-            <input type="date"
-                   name="experiences[${experienceIndex}][end]"
-                   class="form-control exp_end"
-                   required>
-          </div>
+        <div class="col-md-6">
+          <label class="fw-bold">
+            <i class="fas fa-building me-1 text-primary"></i>School Name
+          </label>
+          <input type="text"
+                 name="experiences[${experienceIndex}][school]"
+                 class="form-control exp_school"
+                 placeholder="Enter School Name"
+                 required>
         </div>
 
-        <!-- FILE UPLOAD -->
-       <div class="col-md-12">
-  <div class="form-group">
-    <label class="form-label fw-semibold mb-2">
-      <i class="fas fa-file-pdf me-2 text-danger"></i>Certificate (PDF)
-    </label>
-
-    <div class="file-upload-area border-dashed rounded-3 p-4 text-center bg-light">
-      
-      <div class="mb-3">
-        <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
       </div>
 
-      <input type="file"
-             name="experiences[${experienceIndex}][file]"
-             class="form-control exp_file d-none"
-             accept="application/pdf"
-             required>
-
-      <button type="button" class="btn btn-outline-primary btn-sm choose-exp-file-btn">
-        <i class="fas fa-upload me-2"></i>Choose PDF File
-      </button>
-
-      <div class="form-text mt-2">
-        Maximum file size: 5MB. Only PDF files are accepted.
+      <!-- POSITION -->
+      <div class="mb-2 position-wrapper">
+        <label class="fw-bold">
+          <i class="fas fa-user-tie me-1 text-primary"></i>Position
+        </label>
+        <select name="experiences[${experienceIndex}][position]"
+                class="form-select exp_position" required>
+          <option value="">Select Position</option>
+          <option>Teacher I</option>
+          <option>Teacher II</option>
+          <option>Teacher III</option>
+          <option>Teacher IV</option>
+          <option>Teacher V</option>
+          <option>Teacher VI</option>
+          <option>Teacher VII</option>
+          <option>Master Teacher I</option>
+          <option>Master Teacher II</option>
+          <option>Master Teacher III</option>
+          <option>Master Teacher IV</option>
+          <option>Master Teacher V</option>
+        </select>
       </div>
 
-      <div class="file-name mt-2 fw-semibold text-success"></div>
+      <!-- DATES -->
+      <div class="row g-2 mb-2">
+
+        <div class="col-md-6">
+          <label class="fw-bold">
+            <i class="fas fa-calendar-alt me-1 text-primary"></i>Start Date
+          </label>
+          <input type="date"
+                 name="experiences[${experienceIndex}][start]"
+                 class="form-control exp_start"
+                 required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="fw-bold">
+            <i class="fas fa-calendar-check me-1 text-primary"></i>End Date
+          </label>
+          <input type="date"
+                 name="experiences[${experienceIndex}][end]"
+                 class="form-control exp_end"
+                 required>
+        </div>
+
+      </div>
+
+      <!-- FILE UPLOAD -->
+      <div class="mt-2">
+        <label class="fw-bold mb-2">
+          <i class="fas fa-file-pdf me-1 text-danger"></i>Certificate (PDF)
+        </label>
+
+        <div class="file-upload-area border rounded-3 p-3 text-center bg-light">
+
+          <div class="mb-2">
+            <i class="fas fa-cloud-upload-alt fa-lg text-muted"></i>
+          </div>
+
+          <input type="file"
+                 name="experiences[${experienceIndex}][file]"
+                 class="form-control exp_file d-none"
+                 accept="application/pdf"
+                 required>
+
+          <button type="button"
+                  class="btn btn-outline-primary btn-sm choose-exp-file-btn">
+            <i class="fas fa-upload me-1"></i>Choose PDF
+          </button>
+
+          <div class="form-text mt-1">
+            Max 5MB • PDF only
+          </div>
+
+          <div class="file-name mt-1 small fw-semibold text-success"></div>
+
+        </div>
+      </div>
 
     </div>
   </div>
 </div>
-    `;
+`;
 
     $('#experienceContainer').append(html);
     experienceIndex++;

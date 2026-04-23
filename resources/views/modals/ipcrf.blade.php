@@ -26,9 +26,8 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="saveIpcrfBtn">Save</button>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
 
     </div>

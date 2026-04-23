@@ -663,7 +663,7 @@ if(isset($application) && $application->levels){
   <div class="col-md-6 text-center">
     <p class="fw-semibold mb-1">Certified Correct:</p>
     <br>
-    <p class="fw-bold text-decoration-underline mb-1">MARK ANGELO S. ENRIQUEZ, JD</p>
+    <p class="fw-bold text-decoration-underline mb-1">ATTY.III MARK ANGELO S. ENRIQUEZ</p>
     <p class="small mb-0">Administrative Officer V (Admin Services)</p>
   </div>
   <div class="col-md-6"></div>

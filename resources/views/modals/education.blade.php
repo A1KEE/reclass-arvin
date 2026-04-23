@@ -74,26 +74,27 @@
   </div>
 </div>
 
-      <!-- ================= RIGHT SIDE ================= -->
-      <!-- EDUCATION FORM -->
-      <div class="col-md-8">
+     <!-- ================= RIGHT SIDE ================= -->
+<div class="col-md-8">
 
+  <!-- EDUCATION INFO CARD -->
   <div class="card shadow-sm border-0 mb-3">
+
     <div class="card-header bg-light py-2">
       <h6 class="mb-0 fw-semibold text-primary">
-        Education Information
+        <i class="fas fa-user-graduate me-2"></i>Education Information
       </h6>
     </div>
 
     <div class="card-body p-3">
 
-      <!-- 🔥 BASIC INFO -->
+      <!-- BASIC INFO -->
       <div class="row g-3 mb-2">
 
         <!-- DEGREE -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">
-            Degree/Title
+            <i class="fas fa-graduation-cap me-1 text-primary"></i>Degree/Title
           </label>
           <input type="text"
                  id="education_name"
@@ -106,7 +107,7 @@
         <!-- SCHOOL -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">
-            School Graduated
+            <i class="fas fa-school me-1 text-primary"></i>School Graduated
           </label>
           <input type="text"
                  id="education_school"
@@ -118,13 +119,13 @@
 
       </div>
 
-      <!-- 🔥 EDUCATION DETAILS (BETTER PROPORTION) -->
+      <!-- EDUCATION DETAILS -->
       <div class="row g-3 align-items-end">
 
         <!-- DATE -->
         <div class="col-md-3">
           <label class="form-label fw-semibold">
-            Date Graduated
+            <i class="fas fa-calendar-alt me-1 text-primary"></i>Date Graduated
           </label>
           <input type="date"
                  id="education_date"
@@ -136,7 +137,7 @@
         <!-- EDUC LEVEL -->
         <div class="col-md-5">
           <label class="form-label fw-semibold">
-            Highest Educational Attainment
+            <i class="fas fa-layer-group me-1 text-primary"></i>Highest Educational Attainment
           </label>
           <select id="education_units_select"
                   name="education[level]"
@@ -148,7 +149,7 @@
         <!-- CTP -->
         <div class="col-md-4 d-none" id="ctp_container">
           <label class="form-label fw-semibold text-warning">
-            Non-Education (CTP)
+            <i class="fas fa-exclamation-triangle me-1"></i>Non-Education (CTP)
           </label>
           <select id="ctp_units_select"
                   class="form-select education-modal-border border-warning">
@@ -161,12 +162,19 @@
     </div>
   </div>
 
-  <!-- 🔥 FILE UPLOAD (SEPARATE CARD = MAS MALINIS) -->
+  <!-- FILE UPLOAD CARD -->
   <div class="card shadow-sm border-0">
+
+    <div class="card-header bg-light py-2">
+      <h6 class="mb-0 fw-semibold text-primary">
+        <i class="fas fa-file-upload me-2"></i>Upload Certificate
+      </h6>
+    </div>
+
     <div class="card-body p-3">
 
       <label class="form-label fw-semibold">
-        Certificate (PDF)
+        <i class="fas fa-file-pdf me-1 text-danger"></i>Certificate (PDF)
       </label>
 
       <div class="education-modal-border-dashed rounded-3 p-3 text-center bg-light"
@@ -184,7 +192,7 @@
 
         <div>
           <span class="btn btn-outline-primary btn-sm">
-            Choose File
+            <i class="fas fa-upload me-1"></i>Choose File
           </span>
         </div>
 
@@ -200,8 +208,9 @@
       </div>
 
     </div>
-  
-        </div>
+
+  </div>
+
 
       </div>
     </div>

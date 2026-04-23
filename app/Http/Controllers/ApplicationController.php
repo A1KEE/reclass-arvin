@@ -14,7 +14,7 @@ use App\Models\Education;
 use App\Models\Training;
 use App\Models\Experience;
 use App\Models\Eligibility;
-use App\Models\Ipcrf;
+use App\Models\IpcrfFile;
 use App\Models\ApplicationPpstRating;
 use App\Models\PpstIndicator;
 use App\Models\User;
@@ -27,334 +27,331 @@ class ApplicationController extends Controller
      ===================================================== */
 public function store(Request $request)
 {
-    // =========================
-    // 1️⃣ VALIDATION
-    // =========================
-   $request->validate([
-    'name' => 'required|string|max:255',
-    'email' => [
-        'required',
-        'email',
-        function ($attribute, $value, $fail) {
+    \DB::beginTransaction();
 
-            $count = \App\Models\Application::where('email', $value)->count();
+    try {
 
-            if ($count >= 2) {
-                $fail('Maximum of 2 applications per email only. Please use another email.');
-            }
-        }
-    ],
-    'position_applied' => 'required|string',
-    'levels' => 'required|array',
-    'school_name' => 'required|string',
-]);
+        // =========================
+        // 1️⃣ VALIDATION
+        // =========================
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) {
 
-    // =========================
-    // 2️⃣ DETERMINE STATUS (🔥 DYNAMIC)
-    // =========================
-    $status = 'draft';
+                    $exists = \App\Models\Application::where('email', $value)->exists();
 
-    if ($request->ppst_result === 'met') {
-        $status = 'pending';
-    } elseif ($request->ppst_result === 'not_met') {
+                    if ($exists) {
+                        $fail('You already have an existing application. Only one application per email is allowed.');
+                    }
+                }
+            ],
+            'position_applied' => 'required|string',
+            'levels' => 'required|array',
+            'school_name' => 'required|string',
+        ]);
+
+        // =========================
+        // 2️⃣ STATUS
+        // =========================
         $status = 'draft';
-    }
 
-    // =========================
-    // 3️⃣ CREATE APPLICATION
-    // =========================
-    $application = Application::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'current_position' => $request->current_position,
-        'position_applied' => $request->position_applied,
-        'item_number' => $request->item_number,
-        'school_name' => $request->school_name,
-        'sg_annual_salary' => $request->sg_annual_salary,
-        'levels' => $request->levels,
-        'status' => $status, 
-        'is_read' => 0,
-        'last_activity_at' => now(),
-    ]);
+        if ($request->ppst_result === 'met') {
+            $status = 'pending';
+        }
 
-   $applicantId = $application->id;
-   // 👉 GET SURNAME
-    $nameParts = explode(' ', strtoupper($request->name));
-    $surname = end($nameParts);
-
-    // 👉 DATE
-    $date = now()->format('Ymd');
-
-    // 👉 FINAL FOLDER NAME
-    $folderName = $surname . '-' . $date . '-' . $applicantId;
-
-// =========================
-// 🔥 CREATE USER ACCOUNT IF QUALIFIED
-// =========================
-$passwordToSend = null;
-
-if ($request->ppst_result === 'met') {
-
-    $existingUser = User::where('email', $request->email)->first();
-
-    if (!$existingUser) {
-
-        $defaultPassword = Str::random(8);
-
-        $user = User::create([
+        // =========================
+        // 3️⃣ CREATE APPLICATION
+        // =========================
+        $application = Application::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($defaultPassword),
-            'application_id' => $application->id,
-            'must_change_password' => 1
+            'current_position' => $request->current_position,
+            'position_applied' => $request->position_applied,
+            'item_number' => $request->item_number,
+            'school_name' => $request->school_name,
+            'sg_annual_salary' => $request->sg_annual_salary,
+            'levels' => $request->levels,
+            'status' => $status,
+            'is_read' => 0,
+            'last_activity_at' => now(),
         ]);
 
-        $user->assignRole('applicant');
+        $applicantId = $application->id;
 
-        $passwordToSend = $defaultPassword; // ✅ ONLY HERE
-    }
-}
-    // =========================
-    // 3️⃣ CREATE BASE FOLDER
-    // =========================
-    Storage::disk('public')->makeDirectory("applications/$folderName");
+        // =========================
+        // 4️⃣ FOLDER NAME
+        // =========================
+        $nameParts = explode(' ', strtoupper($request->name));
+        $surname = end($nameParts);
+        $date = now()->format('Ymd');
 
-    $getPath = function($type) use ($folderName) {
-    return "applications/{$folderName}/{$type}";
-};
+        $folderName = $surname . '-' . $date . '-' . $applicantId;
 
-    // =========================
-    // 4️⃣ TRAININGS
-    // =========================
-    if ($request->trainings) {
-        foreach ($request->trainings as $index => $training) {
+        Storage::disk('public')->makeDirectory("applications/$folderName");
 
-           if ($request->hasFile("trainings.$index.file")) {
+        $getPath = function($type) use ($folderName) {
+            return "applications/{$folderName}/{$type}";
+        };
 
-                $file = $request->file("trainings.$index.file");
+        // =========================
+        // 5️⃣ USER CREATION
+        // =========================
+        $passwordToSend = null;
 
-                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $training['title'] ?? 'training');
+        if ($request->ppst_result === 'met') {
 
-                $fileName = $safeName . '_' . time() . '.pdf';
+            $existingUser = User::where('email', $request->email)->first();
 
-                $filePath = $file->storeAs($getPath('trainings'), $fileName, 'public');
+            if (!$existingUser) {
 
-                Training::create([
-                    'application_id' => $applicantId,
-                    'title' => $training['title'] ?? null,
-                    'type' => $training['type'] ?? null,
-                    'start_date' => $training['start_date'] ?? null,
-                    'end_date' => $training['end_date'] ?? null,
-                    'hours' => $training['hours'] ?? 0,
-                    'file_path' => $filePath
+                $defaultPassword = Str::random(8);
+
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($defaultPassword),
+                    'application_id' => $application->id,
+                    'must_change_password' => 1
                 ]);
+
+                $user->assignRole('applicant');
+
+                $passwordToSend = $defaultPassword;
             }
         }
-    }
 
-    // =========================
-    // 5️⃣ EDUCATION
-    // =========================
-    if ($request->hasFile('education.file')) {
+        // =========================
+        // 6️⃣ TRAININGS
+        // =========================
+        if ($request->trainings) {
+            foreach ($request->trainings as $index => $training) {
 
-        $file = $request->file('education.file');
+                if ($request->hasFile("trainings.$index.file")) {
 
-        $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $request->education['degree'] ?? 'education');
+                    $file = $request->file("trainings.$index.file");
 
-        $fileName = $safeName . '_' . time() . '.pdf';
+                    $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $training['title'] ?? 'training');
 
-        $filePath = $file->storeAs($getPath('educations'), $fileName, 'public');
+                    $fileName = $safeName . '_' . time() . '.pdf';
 
-        Education::create([
-            'application_id' => $applicantId,
-            'degree' => $request->education['degree'] ?? null,
-            'school' => $request->education['school'] ?? null,
-            'date_graduated' => $request->education['date_graduated'] ?? null,
-            'units'            => $request->education['units'] ?? null,
-            'file_path' => $filePath,
-        ]);
-    }
+                    $filePath = $file->storeAs($getPath('trainings'), $fileName, 'public');
 
-    // =========================
-    // 6️⃣ EXPERIENCE
-    // =========================
-    if ($request->has('experiences')) {
-        foreach ($request->experiences as $index => $exp) {
-
-            if (empty($exp['position']) || empty($exp['start']) || empty($exp['end'])) {
-                continue;
-            }
-
-            $filePath = null;
-
-            if ($request->hasFile("experiences.$index.file")) {
-                $file = $request->file("experiences.$index.file");
-                $fileName = time().'_'.$index.'.'.$file->getClientOriginalExtension();
-                $filePath = $file->storeAs($getPath('experience'), $fileName, 'public');
-            }
-
-            Experience::create([
-                'application_id' => $applicantId,
-                'school_type' => $exp['school_type'],
-                'school' => $exp['school'],
-                'position' => $exp['position'],
-                'start_date' => $exp['start'],
-                'end_date' => $exp['end'],
-                'file_path' => $filePath,
-            ]);
-        }
-    }
-
-    // =========================
-    // 7️⃣ ELIGIBILITY
-    // =========================
-    if ($request->eligibility_files) {
-
-        foreach ($request->eligibility_files as $index => $eligFile) {
-
-            if ($request->hasFile("eligibility_files.$index.file")) {
-
-                $file = $request->file("eligibility_files.$index.file");
-
-                $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $eligFile['eligibility'] ?? 'eligibility');
-
-                $fileName = $safeName . '_' . time() . '.pdf';
-
-                $filePath = $file->storeAs($getPath('eligibility'), $fileName, 'public');
-
-                Eligibility::create([
-                    'application_id' => $applicantId,
-                    'eligibility_name' => $eligFile['eligibility'] ?? null,
-                    'expiry_date' => $eligFile['expiry_date'] ?? null, // ✅ ADD THIS
-                    'file_path' => $filePath
-                ]);
+                    Training::create([
+                        'application_id' => $applicantId,
+                        'title' => $training['title'] ?? null,
+                        'type' => $training['type'] ?? null,
+                        'start_date' => $training['start_date'] ?? null,
+                        'end_date' => $training['end_date'] ?? null,
+                        'hours' => $training['hours'] ?? 0,
+                        'file_path' => $filePath
+                    ]);
+                }
             }
         }
-    }
 
-    // =========================
-    // 8️⃣ IPCRF
-    // =========================
-   if($request->has('ipcrf_files')){
-    
-    foreach ($request->ipcrf_files as $index => $ipcrf) {
+        // =========================
+        // 7️⃣ EDUCATION
+        // =========================
+        if ($request->hasFile('education.file')) {
 
-        if ($request->hasFile("ipcrf_files.$index.file")) {
+            $file = $request->file('education.file');
 
-            $file = $request->file("ipcrf_files.$index.file");
-
-            $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ipcrf['title'] ?? 'ipcrf');
+            $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $request->education['degree'] ?? 'education');
 
             $fileName = $safeName . '_' . time() . '.pdf';
 
-            $filePath = $file->storeAs($getPath('ipcrf'), $fileName, 'public');
+            $filePath = $file->storeAs($getPath('educations'), $fileName, 'public');
 
-            \App\Models\IpcrfFile::create([
-                'application_id' => $application->id,
-                'file_name' => $ipcrf['title'] ?? null,
-                'file_path' => $filePath
+            Education::create([
+                'application_id' => $applicantId,
+                'degree' => $request->education['degree'] ?? null,
+                'school' => $request->education['school'] ?? null,
+                'date_graduated' => $request->education['date_graduated'] ?? null,
+                'units' => $request->education['units'] ?? null,
+                'file_path' => $filePath,
             ]);
         }
-    }
-}
-// =========================
-    // 8️⃣ PPST_RATINGS_APPLICATION
-    // =========================
-if ($request->has('ppst')) {
 
-    foreach ($request->ppst as $indicatorId => $values) {
+        // =========================
+        // 8️⃣ EXPERIENCE
+        // =========================
+        if ($request->has('experiences')) {
+            foreach ($request->experiences as $index => $exp) {
 
-        if (!is_array($values)) continue;
+                if (empty($exp['position']) || empty($exp['start']) || empty($exp['end'])) {
+                    continue;
+                }
 
-        $selectedRating = null;
+                $filePath = null;
 
-        // 🔍 hanapin kung alin ang naka-check (O / VS / S)
-        foreach (['O', 'VS', 'S'] as $rating) {
+                if ($request->hasFile("experiences.$index.file")) {
 
-            if (!empty($values[$rating])) {
-                $selectedRating = $rating;
-                break; // 👉 isa lang dapat per indicator
+                    $file = $request->file("experiences.$index.file");
+
+                    $fileName = time().'_'.$index.'.'.$file->getClientOriginalExtension();
+
+                    $filePath = $file->storeAs($getPath('experience'), $fileName, 'public');
+                }
+
+                Experience::create([
+                    'application_id' => $applicantId,
+                    'school_type' => $exp['school_type'],
+                    'school' => $exp['school'],
+                    'position' => $exp['position'],
+                    'start_date' => $exp['start'],
+                    'end_date' => $exp['end'],
+                    'file_path' => $filePath,
+                ]);
             }
-
         }
 
-        // ✅ SAVE ONLY IF MAY NAKA-CHECK
-        if ($selectedRating) {
+        // =========================
+        // 9️⃣ ELIGIBILITY
+        // =========================
+        if ($request->eligibility_files) {
 
-            \DB::table('application_ppst_ratings')->updateOrInsert(
-                [
-                    'application_id' => $application->id,
-                    'ppst_indicator_id' => $indicatorId,
-                ],
-                [
-                    'rating' => $selectedRating,
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
+            foreach ($request->eligibility_files as $index => $eligFile) {
 
+                if ($request->hasFile("eligibility_files.$index.file")) {
+
+                    $file = $request->file("eligibility_files.$index.file");
+
+                    $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $eligFile['eligibility'] ?? 'eligibility');
+
+                    $fileName = $safeName . '_' . time() . '.pdf';
+
+                    $filePath = $file->storeAs($getPath('eligibility'), $fileName, 'public');
+
+                    Eligibility::create([
+                        'application_id' => $applicantId,
+                        'eligibility_name' => $eligFile['eligibility'] ?? null,
+                        'expiry_date' => $eligFile['expiry_date'] ?? null,
+                        'file_path' => $filePath
+                    ]);
+                }
+            }
         }
+       
+  // =========================
+// 🔟 IPCRF
+// =========================
+if ($request->file('ipcrf_files')) {
 
-        // ❗ WALANG CHECK → WALANG SAVE → TREAT AS NULL
+    foreach ($request->file('ipcrf_files') as $index => $data) {
 
+        if (!isset($data['file'])) continue;
+
+        $file = $data['file'];
+
+        if (!$file->isValid()) continue;
+
+        $title = $request->ipcrf_files[$index]['title'] ?? 'IPCRF';
+
+        $fileName = time().'_'.$index.'.'.$file->getClientOriginalExtension();
+
+        $filePath = $file->storeAs(
+            $getPath('ipcrf'),
+            $fileName,
+            'public'
+        );
+
+        IpcrfFile::create([
+            'application_id' => $application->id,
+            'file_name' => $title,
+            'file_path' => $filePath
+        ]);
     }
-
 }
-    // =========================
-    // 9️⃣ SAVE SCORES + REMARKS
-    // =========================
-    \DB::table('application_scores')->updateOrInsert(
-        ['application_id' => $applicantId],
-        [
-            'education_points'   => $request->education_points,
-            'education_remarks'  => $request->education_remarks,
-            'training_points'    => $request->training_points,
-            'training_remarks'   => $request->training_remarks,
-            'experience_points'  => $request->experience_points,
-            'experience_remarks' => $request->experience_remarks,
-            'eligibility_remarks' => $request->eligibility_remarks,
-            'performance_points' => $request->performance_points,
+        // =========================
+        // PPST
+        // =========================
+        if ($request->has('ppst')) {
 
-            'coi_outstanding' => $request->coi_outstanding,
-            'coi_very_satisfactory' => $request->coi_very_satisfactory,
-            'ncoi_outstanding' => $request->ncoi_outstanding,
-            'ncoi_very_satisfactory' => $request->ncoi_very_satisfactory,
-            'final_result' => $request->ppst_result === 'met' ? 'MET' : 'NOT MET',
+            foreach ($request->ppst as $indicatorId => $values) {
 
-            'updated_at' => now(),
-            'created_at' => now(),
-        ]
-    );
+                if (!is_array($values)) continue;
 
-    \DB::beginTransaction();
+                $selectedRating = null;
 
-try {
+                foreach (['O', 'VS', 'S'] as $rating) {
+                    if (!empty($values[$rating])) {
+                        $selectedRating = $rating;
+                        break;
+                    }
+                }
 
-    // =========================
-    // 👉 LAHAT NG CODE MO (buong store)
-    // =========================
+                if ($selectedRating) {
+                    \DB::table('application_ppst_ratings')->updateOrInsert(
+                        [
+                            'application_id' => $application->id,
+                            'ppst_indicator_id' => $indicatorId,
+                        ],
+                        [
+                            'rating' => $selectedRating,
+                            'updated_at' => now(),
+                            'created_at' => now(),
+                        ]
+                    );
+                }
+            }
+        }
 
-    Mail::to($application->email)
-        ->send(new ApplicationStatusMail(
-            $application,
-            $request->ppst_result,
-           $passwordToSend //
-        ));
+        // =========================
+        // SCORES
+        // =========================
+        \DB::table('application_scores')->updateOrInsert(
+            ['application_id' => $applicantId],
+            [
+                'education_points' => $request->education_points,
+                'education_remarks' => $request->education_remarks,
+                'training_points' => $request->training_points,
+                'training_remarks' => $request->training_remarks,
+                'experience_points' => $request->experience_points,
+                'experience_remarks' => $request->experience_remarks,
+                'eligibility_remarks' => $request->eligibility_remarks,
+                'performance_points' => $request->performance_points,
 
-    \DB::commit();
+                'coi_outstanding' => $request->coi_outstanding ?? 0,
+                'coi_very_satisfactory' => $request->coi_very_satisfactory ?? 0,
+                'ncoi_outstanding' => $request->ncoi_outstanding ?? 0,
+                'ncoi_very_satisfactory' => $request->ncoi_very_satisfactory ?? 0,
+                
+                'final_result' => $request->ppst_result === 'met' ? 'MET' : 'NOT MET',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
 
-} catch (\Throwable $e) {
+        // =========================
+        // MAIL (QUEUE SAFE)
+        // =========================
+        Mail::to($application->email)
+            ->queue(new ApplicationStatusMail(
+                $application,
+                $request->ppst_result,
+                $passwordToSend
+            ));
+
+        \DB::commit();
+
+       return response()->json([
+        'success' => true,
+        'message' => 'Application submitted successfully.'
+    ]);
+
+    } catch (\Throwable $e) {
 
     \DB::rollback();
 
-    dd(
-        'ERROR FOUND:',
-        $e->getMessage(),
-        'FILE:', $e->getFile(),
-        'LINE:', $e->getLine()
-    );
+    \Log::error('APPLICATION STORE ERROR: '.$e->getMessage());
+
+    return response()->json([
+        'error' => $e->getMessage()
+    ], 500);
 }
-    return redirect()->back()->with('success', 'Application submitted successfully.');
 }
     /* =====================================================
      | EMAIL: UNQUALIFIED
