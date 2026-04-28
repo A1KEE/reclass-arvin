@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +20,9 @@
 </head>
 
 <body>
+    @php
+    $notifs = $filteredNotifs ?? collect();
+@endphp
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
@@ -30,6 +34,9 @@
 
     <!-- MENU -->
     <div class="sidebar-menu">
+
+    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('qs_editor') || auth()->user()->hasRole('super_admin'))
+
         <a href="{{ route('admin.dashboard') }}">
             <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
         </a>
@@ -39,28 +46,29 @@
         </a>
 
         <a href="{{ route('admin.files.index') }}">
-             <i class="bi bi-folder"></i> <span>Application Files</span>
+            <i class="bi bi-folder"></i> <span>Application Files</span>
         </a>
 
-        @role('super_admin')
+    @endif
+
+
+    @role('super_admin')
         <a href="{{ route('admin.ranking') }}">
             <i class="bi bi-trophy"></i> <span>Ranking</span>
         </a>
-        @endrole
 
-         @role('super_admin')
         <a href="{{ route('admin.users') }}">
             <i class="bi bi-person-badge"></i> <span>Users</span>
         </a>
-        @endrole
+    @endrole
 
-        <!-- DO NOT CHANGE THIS LINE (AS REQUESTED) -->
-        <hr style="border-color:#444;">
+    <hr style="border-color:#444;">
 
-        <a href="{{ route('admin.settings') }}">
-            <i class="bi bi-gear"></i> <span>Settings</span>
-        </a>
-    </div>
+    <a href="{{ route('admin.settings') }}">
+        <i class="bi bi-gear"></i> <span>Settings</span>
+    </a>
+
+</div>
 
     <!-- FOOTER -->
 <div class="sidebar-footer">
@@ -84,7 +92,15 @@
             {{ $name }}
         </div>
         <small class="admin-role">
-    {{ auth()->user()->hasRole('super_admin') ? 'Approver' : (auth()->user()->hasRole('admin') ? 'HRMO / Evaluator' : 'Administrator') }}
+    @if(auth()->user()->hasRole('super_admin'))
+        Approver
+    @elseif(auth()->user()->hasRole('admin'))
+        HRMO / Evaluator
+    @elseif(auth()->user()->hasRole('qs_editor'))
+        QS Editor
+    @else
+        Administrator
+    @endif
 </small>
     </div>
 
@@ -103,9 +119,6 @@
 
 <!-- CONTENT -->
 <div class="content" id="content">
-   @php
-$filteredNotifs = $filteredNotifs ?? collect();
-@endphp
 
     <!-- TOPBAR -->
     <div class="topbar d-flex justify-content-between align-items-center">
@@ -121,32 +134,34 @@ $filteredNotifs = $filteredNotifs ?? collect();
             </h6>
         </div>
 
-       <!-- RIGHT -->
-<div class="d-flex align-items-center">
+        <!-- RIGHT -->
+        <div class="d-flex align-items-center">
 
-    <!-- DATE -->
-    <div class="text-right small mr-3">
-        <div>Philippine Standard Time:</div>
-        <div><strong id="pstDateTime"></strong></div>
-    </div>
+            <!-- DATE -->
+            <div class="text-right small mr-3">
+                <div>Philippine Standard Time:</div>
+                <div><strong id="pstDateTime"></strong></div>
+            </div>
 
-    <!-- 🔔 BELL -->
-    <div class="position-relative">
-        <button class="btn p-2 notif-btn" id="notifBell">
-            <i class="bi bi-bell"></i>
+            <!-- 🔔 BELL - ONLY FOR ADMIN AND SUPER_ADMIN (HINDI PARA SA QS) -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('super_admin'))
+            <div class="position-relative">
+                <button class="btn p-2 notif-btn" id="notifBell">
+                    <i class="bi bi-bell"></i>
 
-            @if(isset($filteredNotifs) && $filteredNotifs->count() > 0)
-            <span class="badge badge-danger position-absolute"
-                style="top:0; right:0;">
-                {{ $filteredNotifs->count() }}
-            </span>
-        @endif
-        </button>
-    </div>
+                    @if($notifs->count() > 0)
+                    <span class="badge badge-danger position-absolute"
+                        style="top:0; right:0;">
+                        {{ $notifs->count() }}
+                    </span>
+                    @endif
+                </button>
+            </div>
+            @endif
 
-</div>
+        </div>
 
-    </div> <!-- ✅ CLOSED TOPBAR -->
+    </div> <!-- CLOSED TOPBAR -->
 
     <!-- PAGE CONTENT -->
     <div class="mt-3">
@@ -215,6 +230,8 @@ document.addEventListener("DOMContentLoaded", function () {
 updateDateTime();
 setInterval(updateDateTime, 1000);
 </script>
+
+@if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('super_admin'))
 <script>
 document.getElementById('notifBell').addEventListener('click', function () {
     $('#notifModal').modal('show');
@@ -284,82 +301,69 @@ function markAllAsRead() {
 
       <div class="modal-header">
         <h6 class="modal-title">
-    🔔 
-    @role('admin')
-        Pending Applications
-    @elserole('super_admin')
-        Evaluated Applications
-    @endrole
-</h6>
+            🔔 
+            @role('admin')
+                Pending Applications
+            @elserole('super_admin')
+                Evaluated Applications
+            @endrole
+        </h6>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-     {{-- BODY --}}
-<div class="modal-body notif-body">
+      {{-- BODY --}}
+      <div class="modal-body notif-body">
 
-    @forelse($filteredNotifs as $app)
-        <div id="notif-{{ $app->id }}" class="border-bottom mb-2 pb-2">
 
-            <div class="d-flex justify-content-between align-items-start">
-
-                <!-- LEFT -->
-                <div>
-                    <strong>
-                        {{ $app->name }} ({{ $app->position_applied }})
-                    </strong>
-
-                    <!-- STATUS BADGE -->
-                    @if($app->status == 'pending')
-                        <span class="badge bg-warning text-dark ml-1">Pending</span>
-                    @elseif($app->status == 'evaluated')
-                        <span class="badge bg-primary text-white ml-1">Evaluated</span>
-                    @endif
-
-                    <br>
-
-                    <small class="text-muted">
-                        Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y h:i A') }}
-                    </small>
+        @forelse($notifs as $app)
+            <div id="notif-{{ $app->id }}" class="border-bottom mb-2 pb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>
+                            {{ $app->name }} ({{ $app->position_applied }})
+                        </strong>
+                        @if($app->status == 'pending')
+                            <span class="badge bg-warning text-dark ml-1">Pending</span>
+                        @elseif($app->status == 'evaluated')
+                            <span class="badge bg-primary text-white ml-1">Evaluated</span>
+                        @endif
+                        <br>
+                        <small class="text-muted">
+                            Applied: {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y h:i A') }}
+                        </small>
+                    </div>
+                    <div>
+                        <button onclick="markAsRead({{ $app->id }})"
+                                class="btn btn-sm btn-light">
+                            ✔
+                        </button>
+                    </div>
                 </div>
-
-                <!-- RIGHT -->
-                <div>
-                    <button onclick="markAsRead({{ $app->id }})"
-                            class="btn btn-sm btn-light">
-                        ✔
-                    </button>
-                </div>
-
             </div>
+        @empty
+            <p class="text-muted text-center">No new applications</p>
+        @endforelse
 
-        </div>
-    @empty
-        <p class="text-muted text-center">No new applications</p>
-    @endforelse
+      </div>
 
-</div>
-
-{{-- ✅ FOOTER --}}
-@if($filteredNotifs->count() > 0)
-<div class="notif-footer d-flex">
-
-    <!-- VIEW ALL -->
-    <a href="{{ route('admin.applicants') }}"
-       class="btn btn-sm btn-outline-secondary w-50 mr-1">
-        View All
-    </a>
-
-    <!-- MARK ALL -->
-    <button onclick="markAllAsRead()"
-            class="btn btn-sm btn-primary w-50 ml-1">
-        Mark all
-    </button>
-
-</div>
-@endif
+      {{-- ✅ FOOTER --}}
+     @if($notifs->count() > 0)
+      <div class="notif-footer d-flex">
+          <a href="{{ route('admin.applicants') }}"
+             class="btn btn-sm btn-outline-secondary w-50 mr-1">
+              View All
+          </a>
+          <button onclick="markAllAsRead()"
+                  class="btn btn-sm btn-primary w-50 ml-1">
+              Mark all
+          </button>
+      </div>
+      @endif
     </div>
   </div>
 </div>
+@endif
+
 @stack('scripts')
 
 </body>

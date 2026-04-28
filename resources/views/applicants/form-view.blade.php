@@ -1,3 +1,6 @@
+@php
+    $isQSEditor = auth()->user()->hasRole('qs_editor');
+@endphp
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -77,8 +80,9 @@
             <input type="hidden" name="education[units]" id="input_education_units">
             
             @include('modals.education')
-            @include('modals.training')
-            @include('modals.experience')
+            @include('modals.edit-education')
+            @include('modals.edit-training-modal')
+            @include('modals.edit-experience')
             @include('modals.eligibility')
             @include('modals.ipcrf')
             @include('modals.performance')
@@ -296,111 +300,180 @@ if(isset($application) && $application->levels){
                 <th>Remarks</th>
             </tr>
         </thead>
-        <tbody>
-        <tr id="education-row">
-        <td>Education</td>
-       <td id="qs_education">
-    {{ $qs['education'] ?? 'No QS Found' }}
-</td>
-        <td><button type="button" class="btn btn-sm btn-primary add-education-btn d-none">➕ Add Education</button>
-            <div id="education_summary" class="mt-2 small text-muted">
+       <tbody>
+  <tr id="education-row">
+    <td>Education</td>
+    <td id="qs_education">
+        {{ $qs['education'] ?? 'No QS Found' }}
+    </td>
+    <td>
+        {{-- WALA NG ADD BUTTON --}}
+        {{-- ITO LANG ANG DISPLAY NG EDUCATION DATA --}}
         @if($application->educations && $application->educations->count())
             @foreach($application->educations as $edu)
-                <div class="mb-1">
+                <div class="mb-2 border rounded p-2">
                     <strong>{{ $edu->degree }}</strong><br>
                     {{ $edu->school }}<br>
-                    <small>{{ $edu->date_graduated }} | Units: {{ $edu->units ?? '-' }}</small>
+                    <small>
+                        {{ $edu->date_graduated }}
+                        | Units: {{ $edu->units ?? '-' }}
+                        @if(isset($edu->ctp_units) && $edu->ctp_units)
+                            | CTP: {{ $edu->ctp_units ?? '-' }}
+                        @endif
+                    </small>
+                    
+                    {{-- EDIT BUTTON LANG (para sa QS Editor) --}}
+                    @if($isQSEditor)
+                        <div class="mt-2">
+                         <button
+    type="button"
+    class="btn btn-sm btn-warning edit-education-btn"
+    data-id="{{ $edu->id }}"
+    data-degree="{{ $edu->degree }}"
+    data-school="{{ $edu->school }}"
+    data-date="{{ $edu->date_graduated }}"
+    data-units="{{ $edu->units }}"
+    data-ctp="{{ $edu->ctp_units ?? '' }}"
+    data-file="{{ $edu->file_path ?? '' }}"
+>
+    ✏ Edit Education
+</button>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         @else
-            No Education Added.
+            <div class="text-muted">
+                No Education Record Found
+            </div>
+        @endif
+    </td>
+    <td id="education_remark">
+        <span class="text-muted">
+            Waiting for the QS
+        </span>
+    </td>
+</tr>
+      <tr id="training-row">
+    <td>Training</th>
+    <td id="qs_training">{{ $qs['training'] ?? '—' }}</th>
+    <td>
+        @if($application->trainings && $application->trainings->count())
+            @foreach($application->trainings as $t)
+                <div class="mb-2 border rounded p-2">
+                    <strong>{{ $t->title ?? 'Training' }}</strong><br>
+                    {{ $t->type ?? '-' }}<br>
+                    <small>
+                        {{ $t->hours ?? 0 }} hrs |
+                        {{ $t->start_date ?? '' }} - {{ $t->end_date ?? '' }}
+                    </small>
+                    
+                    {{-- EDIT BUTTON LANG (WALANG VIEW CERTIFICATE DITO) --}}
+                    @if($isQSEditor)
+                        <div class="mt-2">
+                            <button type="button"
+                                class="btn btn-sm btn-warning edit-training-btn"
+                                data-id="{{ $t->id }}"
+                                data-title="{{ $t->title }}"
+                                data-type="{{ $t->type }}"
+                                data-hours="{{ $t->hours }}"
+                                data-start_date="{{ $t->start_date }}"
+                                data-end_date="{{ $t->end_date }}"
+                                data-file="{{ $t->file_path ?? '' }}"
+                                data-remarks="{{ $t->application->scores->training_remarks ?? 'Waiting for the QS' }}">
+                                ✏ Edit
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        @else
+            <div class="text-muted">No Training Record Found</div>
+        @endif
+      </td>
+    <td id="training_remark">
+        @if($application->scores && $application->scores->training_remarks)
+            <span class="{{ $application->scores->training_remarks == 'MET' ? 'text-success fw-bold' : 'text-danger fw-bold' }}">
+                {{ $application->scores->training_remarks }}
+            </span>
+        @else
+            <span class="text-muted">Waiting for the QS</span>
+        @endif
+      </td>
+    </tr>
+      <tr id="experience-row">
+    <td>Experience</th>
+    <td id="qs_experience">{{ $qs['experience'] ?? '—' }}</th>
+    <td>
+        {{-- DISPLAY LANG NG MGA EXPERIENCES (WALANG EDIT BUTTON DITO) --}}
+        @if($application->experiences && $application->experiences->count())
+          @foreach($application->experiences as $exp)
+    <div class="mb-2 border rounded p-2">
+        <strong>{{ $exp->position }}</strong><br>
+        {{ $exp->school }} ({{ $exp->school_type }})<br>
+        <small>{{ $exp->start_date }} - {{ $exp->end_date ?? 'Present' }}</small>
+        
+        @if($isQSEditor)
+            <div class="mt-2">
+                <button type="button"
+                    class="btn btn-sm btn-warning edit-single-experience-btn"
+                    data-id="{{ $exp->id }}"
+                    data-position="{{ $exp->position }}"
+                    data-school="{{ $exp->school }}"
+                    data-school_type="{{ $exp->school_type }}"
+                    data-start_date="{{ $exp->start_date }}"
+                    data-end_date="{{ $exp->end_date }}"
+                    data-file="{{ $exp->file_path ?? '' }}">
+                    ✏ Edit
+                </button>
+            </div>
         @endif
     </div>
-        </td>
-        <td id="education_remark"><span class="text-muted">Waiting for the QS</span></td>
-    </tr>
-        <tr>
-        <td>Training</td>
-   <td id="qs_training">{{ $qs['training'] ?? '—' }}</td>
-        <td>
-            <button type="button" class="btn btn-sm btn-primary add-training-btn d-none">
-                ➕ Add Training
-            </button>
-
-            <div id="training_summary" class="mt-2 small text-muted">
-            @if($application->trainings && $application->trainings->count())
-        @foreach($application->trainings as $t)
-            <div class="mb-1">
-                <strong>{{ $t->title ?? 'Training' }}</strong><br>
-                {{ $t->type ?? '-' }}<br>
-                <small>
-                    {{ $t->hours ?? 0 }} hrs |
-                    {{ $t->start_date ?? '' }} - {{ $t->end_date ?? '' }}
-                </small>
-            </div>
-        @endforeach
-    @else
-        No Training Added.
-    @endif
-            </div>
-        </td>
-
-        <td id="training_remark">
+@endforeach
+        @else
+            <div class="text-muted">No Experience Record Found</div>
+        @endif
+      </th>
+    <td id="experience_remark">
+        @if($application->scores && $application->scores->experience_remarks)
+            <span class="{{ $application->scores->experience_remarks == 'MET' ? 'text-success fw-bold' : 'text-danger fw-bold' }}">
+                {{ $application->scores->experience_remarks }}
+            </span>
+        @else
             <span class="text-muted">Waiting for the QS</span>
-        </td>
+        @endif
+      </th>
     </tr>
-        <tr>
-        <td>Experience</td>
-        <td id="qs_experience">{{ $qs['experience'] ?? '—' }}</td>
-        <td><button type="button"class="btn btn-sm btn-primary add-experience-btn d-none">➕ Add Experience</button>
-            <div id="experience_summary" class="mt-2 small text-muted">
-    @if($application->experiences && $application->experiences->count())
-        @foreach($application->experiences as $exp)
-            <div class="mb-1">
-                <strong>{{ $exp->position }}</strong><br>
-                {{ $exp->school }} ({{ $exp->school_type }})<br>
-                <small>
-                    {{ $exp->start_date }} - {{ $exp->end_date ?? 'Present' }}
-                </small>
-            </div>
-        @endforeach
-    @else
-        No experience added.
-    @endif
-</div>
-        </td>
-        <td id="experience_remark">
-            <span class="text-muted">Waiting for the QS</span>
-        </td>
-    </tr>
-    <tr>
-        <td>Eligibility</td>
- <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</td>
-        <td>
-            <button type="button" class="btn btn-sm btn-primary add-eligibility-btn d-none">
-                ➕ Add Eligibility
-            </button>
-
-           <div id="eligibility_summary" class="mt-2 small text-muted">
-    @if($application->eligibilities && $application->eligibilities->count())
-        @foreach($application->eligibilities as $el)
-            <div class="mb-1">
-                <strong>{{ $el->eligibility_name ?? 'Eligibility' }}</strong><br>
-                <small>
-                    Expiry: {{ $el->expiry_date ?? '-' }}
-                </small>
-            </div>
-        @endforeach
-    @else
-        No Eligibility Added.
-    @endif
-</div>
-        </td>
-
-        <td id="eligibility_remark">
-            <span class="text-muted">Waiting for the QS</span>
-        </td>
-    </tr>
+   <tr id="eligibility-row">
+    <td>Eligibility</td>
+    <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</td>
+    <td>
+        @if($application->eligibilities && $application->eligibilities->count())
+            @foreach($application->eligibilities as $el)
+                <div class="mb-2 border rounded p-2">
+                    <strong>{{ $el->eligibility_name ?? 'Eligibility' }}</strong><br>
+                    <small>Expiry: {{ $el->expiry_date ?? '-' }}</small>
+                    
+                    @if($isQSEditor)
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-warning edit-eligibility-btn"
+                                data-id="{{ $el->id }}"
+                                data-name="{{ $el->eligibility_name }}"
+                                data-expiry="{{ $el->expiry_date }}">
+                                ✏ Edit Eligibility
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        @else
+            <div class="text-muted">No Eligibility Record Found</div>
+        @endif
+    </td>
+    <td id="eligibility_remark">
+        <span class="text-muted">Waiting for the QS</span>
+    </td>
+</tr>
         </tbody>
     </table>
 
@@ -513,7 +586,11 @@ if(isset($application) && $application->levels){
 {{-- ========================================================= --}}
 {{-- III. COMPARATIVE ASSESSMENT RESULT --}}
 {{-- ========================================================= --}}
-<form action="{{ route('admin.scores.update', $application->id) }}" method="POST">
+<form action="{{ 
+    $isQSEditor 
+        ? route('qs.application.update', $application->id)
+        : route('admin.scores.update', $application->id)
+}}" method="POST">
     @csrf
     @method('PUT')
 <div id="hr-section">
@@ -747,8 +824,8 @@ if(isset($application) && $application->levels){
 </div>
 <div class="text-center my-4">
     <button type="submit" class="btn btn-warning btn-lg px-5">
-                    Update Applications
-                </button>
+    {{ $isQSEditor ? 'Update Qualification Standards' : 'Update Applications' }}
+</button>
 </div>
         </form>
     </div>
@@ -812,14 +889,20 @@ if(isset($application) && $application->levels){
         scores: @json($application->scores ?? null)
     };
 </script>
+<script>
+    window.applicationId = {{ $application->id ?? 0 }};
+    window.trainingsData = @json($application->trainings);
+    window.experiencesData = @json($application->experiences);
+    window.qsConfig = @json(config('qs'));
+</script>
   <script src="{{ asset('js/admin-load.js') }}"></script>
 
   <!-- LOAD JS FILES -->
   <script src="{{ asset('js/ipcrf.js') }}"></script>
   <script src="{{ asset('js/auto-check-qs.js') }}"></script>
-  <script src="{{ asset('js/experience.js') }}"></script>
-  <script src="{{ asset('js/education-points.js') }}"></script>
-  <script src="{{ asset('js/training.js') }}"></script>
+  <script src="{{ asset('js/edit-experience.js') }}"></script>
+  <script src="{{ asset('js/edit-education.js') }}"></script>
+  <script src="{{ asset('js/edit-training.js') }}"></script>
   <script src="{{ asset('js/eligibility.js') }}"></script>
   <script src="{{ asset('js/dataprivacy.js') }}"></script>
   <script src="{{ asset('js/indicators.js') }}"></script>
@@ -829,7 +912,67 @@ if(isset($application) && $application->levels){
 
   <!-- <script src="{{ asset('js/mapping-sg.js') }}"></script> -->
   <script src="{{ asset('js/position-ranking.js') }}"></script>
-  <script src="{{ asset('js/position-change.js') }}"></script>
+  <!-- <script src="{{ asset('js/position-change.js') }}"></script> -->
+
+  <!-- TEST CODE PARA I-CHECK ANG DATA -->
+<script>
+    $(document).ready(function() {
+        console.log('=== CHECKING ADMIN DATA ===');
+        console.log('Admin Data:', window.adminData);
+        console.log('Educations:', window.adminData?.educations);
+        
+        // I-check kung may laman ang educations
+        if (window.adminData?.educations && window.adminData.educations.length > 0) {
+            console.log('Number of educations:', window.adminData.educations.length);
+            console.log('First education:', window.adminData.educations[0]);
+        } else {
+            console.log('WALANG EDUCATION DATA NA NATANGGAP!');
+        }
+    });
+</script>
+
+<!-- ITO ANG IYONG EXISTING EDIT EDUCATION JAVASCRIPT -->
+<script>
+$(document).ready(function() {
+    
+    // Edit Education Button
+    $(document).on('click', '.edit-education-btn', function() {
+        
+        const id = $(this).data('id');
+        const degree = $(this).data('degree');
+        const school = $(this).data('school');
+        const date = $(this).data('date');
+        const units = $(this).data('units');
+        
+        console.log('=== EDIT BUTTON CLICKED ===');
+        console.log('ID:', id);
+        console.log('Degree:', degree);
+        console.log('School:', school);
+        console.log('Date:', date);
+        console.log('Units:', units);
+        
+        // I-fill ang modal fields
+        $('#edit_education_id').val(id || '');
+        $('#edit_education_name').val(degree || '');
+        $('#edit_education_school').val(school || '');
+        $('#edit_education_date').val(date || '');
+        
+        if (units) {
+            $('#edit_education_units_select').val(units);
+        } else {
+            $('#edit_education_units_select').val('');
+        }
+        
+        // Update summary display
+        $('#edit_edu_degree_display').text(degree || '—');
+        $('#edit_edu_level_display').text(units || '—');
+        
+        // Ipakita ang modal
+        $('#editEducationModal').modal('show');
+    });
+    
+});
+</script>
   
   <script>
   function tryAutoEvaluate() {

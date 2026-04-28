@@ -166,14 +166,19 @@ data-column="S">
 
             <div class="d-flex justify-content-between align-items-center flex-wrap">
 
+               @php
+                    $finalResult = strtoupper($finalResult ?? '-');
+                @endphp
+
                 <!-- LEFT -->
                 <div>
-                    Final Result: 
+                    <span class="fw-bold">Final Result:</span>
+
                     <span id="finalRating"
-                    class="fw-bold 
-                    {{ $finalResult === 'qualified' ? 'text-success' : 'text-danger' }}">
-                    {{ strtoupper($finalResult ?? '-') }}
-                </span>
+                        class="fw-bold
+                        {{ $finalResult === 'MET' ? 'text-success' : 'text-danger' }}">
+                        {{ $finalResult }}
+                    </span>
                 </div>
 
                 <!-- RIGHT -->

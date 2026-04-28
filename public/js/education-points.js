@@ -368,13 +368,23 @@ function getFinalUnits() {
 // SHOW QS UNITS (Filter dropdown based on requirement)
 // ================================
 function showQSUnits() {
+    // ✅ I-check muna kung may element na 'school_level'
     const level = $('#school_level').val();
-    const position = $('#position_applied').val().toLowerCase();
+    const positionInput = $('#position_applied').val();
+    
+    // ✅ Protektahan laban sa undefined/null
+    if (!positionInput) {
+        console.log('Position not yet selected');
+        return;
+    }
+    
+    const position = positionInput.toLowerCase();
     
     // Get required level from qsEducationUnits or default
     let requiredLevel = BASE_LEVEL;
     
-    if (qsEducationUnits && qsEducationUnits[level]) {
+    // ✅ I-check kung may level na napili
+    if (level && qsEducationUnits && qsEducationUnits[level]) {
         // Try exact match first
         if (qsEducationUnits[level][position] !== undefined) {
             requiredLevel = qsEducationUnits[level][position];
@@ -396,7 +406,6 @@ function showQSUnits() {
 
     buildUnitsDropdown(requiredLevel);
 }
-
 // ================================
 // EVALUATE EDUCATION (MET/NOT MET) - WITH EXPANDED PATTERNS
 // ================================

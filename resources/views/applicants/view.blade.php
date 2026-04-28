@@ -732,10 +732,12 @@ if(isset($application) && $application->levels){
 </div>
 <div class="d-flex justify-content-center gap-2 my-3 flex-wrap">
 
+   @if(in_array(auth()->user()->role, ['admin', 'super_admin']))
     <a href="{{ route('applicant.export', $application->id) }}" 
        class="btn btn-success btn-sm d-flex align-items-center gap-1 px-3">
         ⬇ <span>Download Excel</span>
     </a>
+@endif
 
     <a href="{{ route('applicant.dashboard') }}" 
        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 px-3">

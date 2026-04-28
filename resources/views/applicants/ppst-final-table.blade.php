@@ -168,14 +168,22 @@ data-column="S">
 
                 <!-- LEFT -->
                 <div>
-                   @php
+                 @php
                         $finalResult = strtoupper($finalResult ?? 'N/A');
                     @endphp
 
+                    <span class="fw-bold">
+                        Final Result:
+                    </span>
+
                     <span id="finalRating"
-                    class="fw-bold 
-                    {{ $finalResult === 'QUALIFIED' ? 'text-success' : 'text-danger' }}">
-                        Final Result: {{ $finalResult }}
+                    class="fw-bold
+                    {{
+                        $finalResult === 'MET'
+                        ? 'text-success'
+                        : 'text-danger'
+                    }}">
+                        {{ $finalResult }}
                     </span>
                 </div>
 

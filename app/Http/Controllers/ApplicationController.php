@@ -299,37 +299,45 @@ if ($request->file('ipcrf_files')) {
             }
         }
 
-        // =========================
-        // SCORES
-        // =========================
-        \DB::table('application_scores')->updateOrInsert(
-            ['application_id' => $applicantId],
-            [
-                'education_points' => $request->education_points,
-                'education_remarks' => $request->education_remarks,
-                'training_points' => $request->training_points,
-                'training_remarks' => $request->training_remarks,
-                'experience_points' => $request->experience_points,
-                'experience_remarks' => $request->experience_remarks,
-                'eligibility_remarks' => $request->eligibility_remarks,
-                'performance_points' => $request->performance_points,
+       // =========================
+// SCORES
+// =========================
+$educationPoints = $request->education_points ?? 0;
+$trainingPoints = $request->training_points ?? 0;
+$experiencePoints = $request->experience_points ?? 0;
+$performancePoints = $request->performance_points ?? 0;
 
-                'coi_outstanding' => $request->coi_outstanding ?? 0,
-                'coi_very_satisfactory' => $request->coi_very_satisfactory ?? 0,
-                'ncoi_outstanding' => $request->ncoi_outstanding ?? 0,
-                'ncoi_very_satisfactory' => $request->ncoi_very_satisfactory ?? 0,
-                
-                'final_result' => $request->ppst_result === 'met' ? 'MET' : 'NOT MET',
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
+$totalScore = $educationPoints + $trainingPoints + $experiencePoints + $performancePoints;
+
+\DB::table('application_scores')->updateOrInsert(
+    ['application_id' => $applicantId],
+    [
+        'education_points' => $educationPoints,
+        'education_remarks' => $request->education_remarks,
+        'training_points' => $trainingPoints,
+        'training_remarks' => $request->training_remarks,
+        'experience_points' => $experiencePoints,
+        'experience_remarks' => $request->experience_remarks,
+        'eligibility_remarks' => $request->eligibility_remarks,
+        'performance_points' => $performancePoints,
+        'total_score' => $totalScore,  // ← ITO ANG IDAGDAG MO
+
+        'coi_outstanding' => $request->coi_outstanding ?? 0,
+        'coi_very_satisfactory' => $request->coi_very_satisfactory ?? 0,
+        'ncoi_outstanding' => $request->ncoi_outstanding ?? 0,
+        'ncoi_very_satisfactory' => $request->ncoi_very_satisfactory ?? 0,
+        
+        'final_result' => $request->ppst_result === 'met' ? 'MET' : 'NOT MET',
+        'updated_at' => now(),
+        'created_at' => now(),
+    ]
+);
 
         // =========================
         // MAIL (QUEUE SAFE)
         // =========================
         Mail::to($application->email)
-            ->queue(new ApplicationStatusMail(
+            ->send(new ApplicationStatusMail(
                 $application,
                 $request->ppst_result,
                 $passwordToSend

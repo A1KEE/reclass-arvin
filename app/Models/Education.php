@@ -15,4 +15,9 @@ class Education extends Model
         'units',
         'file_path',
     ];
+
+     public function application()
+    {
+        return $this->belongsTo(Application::class, 'application_id');
+    }
 }

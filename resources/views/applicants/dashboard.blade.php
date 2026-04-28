@@ -61,11 +61,6 @@
                 🔒 Change Password
             </a>
 
-            <div class="status-line">
-                <span class="status-dot"></span>
-                <span>Account status: Active</span>
-            </div>
-
         </div>
 
     </div>
@@ -93,7 +88,7 @@
     } elseif ($status == 'evaluated') {
         $nextStep = 'For Admin Approval';
     } elseif ($status == 'approved') {
-        $nextStep = 'Approved';
+        $nextStep = 'Approved by admin';
     } else {
         $nextStep = 'Awaiting Submission';
     }
@@ -119,13 +114,6 @@
                 <div class="text-muted small">
                     🕒 {{ \Carbon\Carbon::parse($app->created_at)->format('M d, Y - h:i A') }}
                 </div>
-
-                <!-- APPROVED BADGE -->
-                @if($status === 'approved')
-                    <span class="badge bg-success mt-2">
-                        🎉 Ready to View
-                    </span>
-                @endif
             </div>
 
             <div class="text-end">
@@ -165,92 +153,96 @@
         <!-- ALERT -->
         @if($status === 'approved')
         <div class="alert alert-success mt-3 mb-0 py-2">
-            ✅ Your application is approved. You can now view full details.
+            ✅ Your application passed the initial screening and is now approved for the next application process or classroom observation.
         </div>
         @endif
 
         <hr>
 
-        <!-- DETAILS -->
-        <div class="row small text-muted">
+     <!-- APPLICATION DETAILS -->
+<div class="application-details mt-3">
 
-            <div class="col-md-3">👨‍🏫 <strong>Current:</strong> {{ $app->current_position }}</div>
-            <div class="col-md-3">📌 <strong>Applied:</strong> {{ $app->position_applied }}</div>
-            <div class="col-md-3">📍 <strong>School:</strong> {{ $app->school_name }}</div>
-            <div class="col-md-3">
-                📊 <strong>Levels:</strong>
-                {{ is_array($app->levels) ? implode(', ', $app->levels) : $app->levels }}
-            </div>
+    <div class="detail-box">
+        <div class="detail-label">👨‍🏫 Current Position</div>
+        <div class="detail-value">{{ $app->current_position }}</div>
+    </div>
 
+    <div class="detail-box">
+        <div class="detail-label">📌 Position Applied</div>
+        <div class="detail-value">{{ $app->position_applied }}</div>
+    </div>
+
+    <div class="detail-box">
+        <div class="detail-label">📍 School Assignment</div>
+        <div class="detail-value">{{ $app->school_name }}</div>
+    </div>
+
+    <div class="detail-box">
+        <div class="detail-label">📚 Teaching Level</div>
+        <div class="detail-value">
+            {{ is_array($app->levels) ? implode(', ', $app->levels) : ucfirst($app->levels) }}
+        </div>
+    </div>
+
+</div>
+
+    
+    <!-- LAZADA STYLE TRACKER -->
+<div class="mt-4">
+
+    <div class="tracker-wrapper">
+
+        <!-- BLUE LINE BACKGROUND -->
+        <div class="tracker-line-bg"></div>
+
+        <!-- ACTIVE BLUE LINE -->
+        <div class="tracker-line-active"
+             style="width: {{ $progress }}%;">
         </div>
 
-        <!-- LAZADA TRACKER -->
-        <div class="mt-4">
+        <!-- STEPS -->
+        <div class="tracker-steps">
 
-            <!-- PROGRESS BAR -->
-            <div style="height:6px; background:#e9ecef; border-radius:20px;">
-                <div style="
-                    height:6px;
-                    width: {{ $progress }}%;
-                    background:#28a745;
-                    border-radius:20px;
-                    transition:0.3s ease;
-                "></div>
-            </div>
+            @foreach($steps as $i => $step)
 
-            <!-- STEPS -->
-            <div class="d-flex justify-content-between text-center mt-3">
+            @php
+                $done = $i < $currentIndex;
+                $active = $i == $currentIndex;
+            @endphp
 
-                @foreach($steps as $i => $step)
+            <div class="tracker-step"
+                 onclick="handleTrackerClick('{{ $step }}', '{{ $status }}', {{ $app->id }})">
 
-                @php
-                    $done = $i < $currentIndex;
-                    $active = $i == $currentIndex;
-                @endphp
+                <!-- CIRCLE -->
+                <div class="
+                    tracker-circle
+                    @if($done) done
+                    @elseif($active) active
+                    @endif
+                ">
 
-                <div class="flex-fill"
-                     onclick="handleTrackerClick('{{ $step }}', '{{ $status }}', {{ $app->id }})"
-                     style="cursor:pointer;">
-
-                    <!-- CIRCLE -->
-                    <div style="
-                        width:34px;
-                        height:34px;
-                        margin:auto;
-                        border-radius:50%;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        font-size:13px;
-                        font-weight:bold;
-
-                        @if($done)
-                            background:#28a745;
-                            color:white;
-                        @elseif($active)
-                            background:#ffc107;
-                            color:black;
-                        @else
-                            background:#ddd;
-                            color:#666;
-                        @endif
-                    ">
-                        @if($done) ✔ @else {{ $i + 1 }} @endif
-                    </div>
-
-                    <div class="mt-1 small fw-semibold">
-                        {{ ucfirst($step) }}
-                    </div>
+                    @if($done)
+                        ✓
+                    @else
+                        {{ $i + 1 }}
+                    @endif
 
                 </div>
 
-                @endforeach
+                <!-- LABEL -->
+                <div class="tracker-label">
+                    {{ ucfirst($step) }}
+                </div>
 
             </div>
+
+            @endforeach
 
         </div>
 
     </div>
+
+</div>
 
 </div>
 

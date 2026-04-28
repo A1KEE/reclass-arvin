@@ -118,180 +118,146 @@
                 margin-bottom: 6px;
             }
 
-            .timeline {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 14px;
-                position: relative;
-                padding: 0 5px;
-            }
-
-            .timeline::before {
-                content: "";
-                position: absolute;
-                top: 50%;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: #e0e0e0;
-                z-index: 0;
-            }
-
-            .step {
-                background: #fff;
-                z-index: 1;
-                text-align: center;
-                font-size: 11px;
-                padding: 5px 8px;
-                border-radius: 50px;
-                border: 2px solid #ddd;
-            }
-
-            .step.active {
-                border-color: #0d6efd;
-                background: #0d6efd;
-                color: #fff;
-                font-weight: 600;
-            }
-
             .badge-status {
                 font-size: 11px;
                 padding: 6px 10px;
                 border-radius: 50px;
             }
-          /* TRACKER BASE */
-            .lazada-tracker {
-                position: relative;
-                display: flex;
-                justify-content: space-between;
-                margin-top: 25px;
-            }
+        
+            /* =========================
+LAZADA STYLE TRACKER
+========================= */
 
-           /* LINE */
-.tracker-line {
-    position: absolute;
-    top: 15px;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* PROGRESS LINE */
-.tracker-progress {
-    height: 100%;
-    background: linear-gradient(90deg, #0d6efd, #4dabf7);
-    border-radius: 10px;
-    transition: width 0.4s ease;
-}
-
-/* STEP */
-.tracker-step {
+.tracker-wrapper {
     position: relative;
-    text-align: center;
-    z-index: 1;
-    width: 33%;
+    margin-top: 25px;
+    padding: 10px 0;
 }
 
-/* CIRCLE BASE */
-.circle {
-    width: 36px;
-    height: 36px;
+.tracker-line-bg {
+    position: absolute;
+    top: 18px;
+    left: 8%;
+    right: 8%;
+    height: 6px;
+    background: #dfe6ee;
+    border-radius: 50px;
+    z-index: 1;
+}
+
+.tracker-line-active {
+    position: absolute;
+    top: 18px;
+    left: 8%;
+    height: 6px;
+    background: linear-gradient(90deg, #0d6efd, #4dabf7);
+    border-radius: 50px;
+    z-index: 2;
+    transition: 0.4s ease;
+    max-width: 84%;
+}
+
+.tracker-steps {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.tracker-step {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+}
+
+.tracker-circle {
+    width: 38px;
+    height: 38px;
+    margin: auto;
     border-radius: 50%;
     background: #dee2e6;
-    margin: auto;
+    color: #6c757d;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-    color: transparent;
-    transition: 0.3s;
+    font-weight: 700;
+    font-size: 15px;
+    border: 3px solid #dee2e6;
+    transition: 0.3s ease;
 }
 
-/* DONE (ALL COMPLETED STEPS) */
-.circle.done {
-    background: #198754; /* green */
-    color: #fff; /* ✔ WHITE */
-    box-shadow: 0 0 8px rgba(25,135,84,0.5);
+.tracker-circle.done {
+    background: linear-gradient(135deg, #0d6efd, #4dabf7);
+    border-color: #0d6efd;
+    color: white;
+    font-size: 18px;
+    box-shadow: 0 6px 16px rgba(13,110,253,0.18);
 }
 
-/* CURRENT STATES */
-
-/* PENDING */
-.circle.pending {
-    background: #ffc107;
-    color: #fff;
-}
-
-/* EVALUATED */
-.circle.evaluated {
-    background: #0d6efd;
-    color: #fff;
-}
-
-/* APPROVED (FINAL) */
-.circle.approved {
-    background: #198754;
-    color: #fff;
-    box-shadow: 0 0 10px rgba(25,135,84,0.6);
-}
-
-/* LABEL */
-.label {
-    font-size: 12px;
-    margin-top: 6px;
-    font-weight: 500;
-}
-
-.refresh-box {
-    background: #f1f5ff;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border: 1px solid #dbe4ff;
-}
-
-.refresh-number {
-    font-weight: bold;
-    font-size: 16px;
+.tracker-circle.active {
+    background: white;
+    border-color: #0d6efd;
     color: #0d6efd;
-    transition: all 0.3s ease;
+    box-shadow: 0 0 0 5px rgba(13,110,253,0.08);
 }
 
-/* 🔥 pulse effect */
-.pulse {
-    animation: pulseAnim 0.6s ease;
+.tracker-label {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #495057;
+    padding: 0 5px;
+}
+/* =========================
+APPLICATION DETAILS CARD
+========================= */
+
+.application-details {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
 }
 
-@keyframes pulseAnim {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); color: #dc3545; }
-    100% { transform: scale(1); }
+.detail-box {
+    background: #f8fbff;
+    border: 1px solid #e3ecff;
+    border-radius: 14px;
+    padding: 16px;
+    transition: 0.25s ease;
 }
-        @media (max-width: 768px) {
-            .divider {
-                display: none;
-            }
-        }
 
-    @media (max-width: 768px) {
-        .top-bar {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
+.detail-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.08);
+}
 
-        .top-info {
-            justify-content: flex-start;
-        }
+.detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
-        .pst-box {
-            text-align: left;
-        }
+.detail-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.4;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 992px) {
+    .application-details {
+        grid-template-columns: repeat(2, 1fr);
     }
+}
+
+@media (max-width: 576px) {
+    .application-details {
+        grid-template-columns: 1fr;
+    }
+}

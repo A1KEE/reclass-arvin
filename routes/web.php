@@ -7,6 +7,7 @@ use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AdminFileController;
 use App\Http\Controllers\ApplicantDashboardController;
+use App\Http\Controllers\QSController;
 use App\Models\Application;
 
 /*
@@ -79,12 +80,51 @@ Route::middleware(['auth', 'role:applicant'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| QS EDITOR ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('qs')
+    ->middleware(['auth', 'role:qs_editor'])
+    ->name('qs.')
+    ->group(function () {
+
+        Route::get('/dashboard', [QSController::class, 'dashboard'])
+            ->name('dashboard');
+
+        Route::get('/applicants/{id}', [QSController::class, 'show'])
+            ->name('applicants.show');
+
+        Route::put('/applicants/{id}/update-details', [QSController::class, 'updateDetails'])
+            ->name('applicants.update-details');
+
+        // ✅ ADD THIS
+        Route::put('/application/{id}/update',
+            [QSController::class, 'updateApplication'])
+            ->name('application.update');
+
+        Route::post('/education/update/{id}', [QSController::class, 'updateEducation'])
+             ->name('education.update');
+
+        // Training update route (para sa QS Editor)
+         Route::put('/training/update/{id}', [QSController::class, 'updateTraining'])
+            ->name('training.update');
+           
+        Route::get('/experiences/{applicationId}', [QSController::class, 'getExperiences'])
+             ->name('experiences');
+       
+             Route::put('/experience/update/{id}', [QSController::class, 'updateExperience'])
+            ->name('experience.update');
+
+    });
+
+/*
+|--------------------------------------------------------------------------
 | ADMIN ROUTES
 |--------------------------------------------------------------------------
 */
 
 Route::prefix('admin')
-    ->middleware(['auth', 'role:admin|super_admin'])
+    ->middleware(['auth', 'role:admin|super_admin|qs_editor'])
     ->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'dashboard'])
@@ -138,6 +178,12 @@ Route::prefix('admin')
 
         Route::post('/notifications/read/{id}', [AdminController::class, 'markAsRead']);
         Route::post('/notifications/read-all', [AdminController::class, 'markAllAsRead']);
+
+        Route::post('/education/update', [AdminController::class, 'updateEducation'])
+        ->name('education.update');
+    
+        Route::post('/education/delete', [AdminController::class, 'deleteEducation'])
+            ->name('education.delete');
     });
 
 /*

@@ -32,12 +32,20 @@ class AuthenticatedSessionController extends Controller
         // =========================
         // 🔥 ROLE-BASED (SPATIE)
         // =========================
-        if ($user->hasRole('super_admin|admin')) {
-            return redirect()->intended(route('admin.dashboard'));
+        
+        // QS FIRST (IMPORTANT)
+        if ($user->hasRole('qs_editor')) {
+                return redirect()->route('admin.dashboard');
+            }
+
+        // ADMIN
+        if ($user->hasAnyRole(['super_admin', 'admin'])) {
+            return redirect()->route('admin.dashboard');
         }
 
+        // APPLICANT LAST
         if ($user->hasRole('applicant')) {
-            return redirect()->intended(route('applicant.dashboard'));
+            return redirect()->route('applicant.dashboard');
         }
 
        Auth::logout();

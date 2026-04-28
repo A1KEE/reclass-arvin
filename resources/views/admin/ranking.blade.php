@@ -65,13 +65,20 @@
                         <strong>{{ $app->total_score ?? 0 }}</strong>
                     </td>
 
-                    <td>
+                   <td>
                         @if(empty($app->total_score))
                             <span class="text-secondary">● NOT EVALUATED</span>
-                        @elseif($app->final_result == 'qualified')
-                            <span class="text-success">● Qualified</span>
+
+                        @elseif(strtoupper($app->final_result) == 'MET')
+                            <span class="text-success fw-bold">● MET</span>
+
+                        @elseif(strtoupper($app->final_result) == 'NOT MET')
+                            <span class="text-danger fw-bold">● NOT MET</span>
+
                         @else
-                            <span class="text-danger">● Not Qualified</span>
+                            <span class="text-warning fw-bold">
+                                ● {{ strtoupper($app->final_result ?? 'UNKNOWN') }}
+                            </span>
                         @endif
                     </td>
                 </tr>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Application;
+use App\Models\Education;
 use App\Models\School;
 use App\Models\PpstIndicator;
 use App\Models\ApplicationScore;
@@ -42,14 +43,12 @@ class AdminController extends Controller
     $teacherTotal = 0;
     $masterTotal = 0;
 
-    // Teacher loop
     foreach ($teacherPositions as $pos) {
         $count = Application::where('position_applied', $pos)->count();
         $teacherCounts[] = $count;
         $teacherTotal += $count;
     }
 
-    // Master Teacher loop
     foreach ($masterPositions as $pos) {
         $count = Application::where('position_applied', $pos)->count();
         $masterCounts[] = $count;
@@ -67,29 +66,27 @@ class AdminController extends Controller
 
     $user = auth()->user();
 
-    $notifications = collect();
+    // 🔥 FIXED NOTIF LOGIC (IMPORTANT)
+    $filteredNotifs = collect();
 
-   if ($user->hasRole('admin')) {
-    $filteredNotifs = Application::where('status', 'pending')
-        ->where('admin_is_read', 0)
-        ->where('super_admin_is_read', 0) // 🔥 ADD
-        ->latest()
-        ->get();
-} elseif ($user->hasRole('super_admin')) {
-    $filteredNotifs = Application::where('status', 'evaluated')
-        ->where('super_admin_is_read', 0)
-        ->latest()
-        ->get();
-}
+    if ($user && $user->hasRole('admin')) {
+        $filteredNotifs = Application::where('status', 'pending')
+            ->where('admin_is_read', 0)
+            ->latest()
+            ->get();
+    }
 
-$newPending = $filteredNotifs; // ✅ FIX
-$newPendingCount = $filteredNotifs->count();
+    if ($user && $user->hasRole('super_admin')) {
+        $filteredNotifs = Application::where('status', 'evaluated')
+            ->where('super_admin_is_read', 0)
+            ->latest()
+            ->get();
+    }
+
     // =========================
     // RETURN VIEW
     // =========================
     return view('admin.dashboard', [
-        'newPending' => $newPending,
-        'newPendingCount' => $newPendingCount,
         'filteredNotifs' => $filteredNotifs,
         'total' => $total,
         'pending' => $pending,
@@ -97,15 +94,12 @@ $newPendingCount = $filteredNotifs->count();
         'evaluated' => $evaluated,
         'approved' => $approved,
 
-        // labels
         'teacherPositions' => $teacherPositions,
         'masterPositions' => $masterPositions,
 
-        // data
         'teacherCounts' => $teacherCounts,
         'masterCounts' => $masterCounts,
 
-        // totals for percent
         'teacherTotal' => $teacherTotal,
         'masterTotal' => $masterTotal,
     ]);
@@ -386,6 +380,68 @@ public function markAllAsRead()
     }
 
     return response()->json(['success' => true]);
+}
+public function updateEducation(Request $request)
+{
+    try {
+        $request->validate([
+            'id'     => 'required|exists:educations,id',
+            'degree' => 'required|string|max:255',
+            'school' => 'nullable|string|max:255',
+            'date'   => 'nullable|date',
+            'units'  => 'required|string',
+        ]);
+
+        $education = Education::findOrFail($request->id);
+        
+        $education->degree = $request->degree;
+        $education->school = $request->school;
+        $education->date_graduated = $request->date;
+        $education->units = $request->units; // Save as text directly
+        
+        $education->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Education updated successfully.',
+            'data' => $education
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function deleteEducation(Request $request)
+{
+    try {
+        $request->validate([
+            'id' => 'required|exists:educations,id'
+        ]);
+        
+        $education = Education::findOrFail($request->id);
+        
+        // Delete file if exists
+        if ($education->file_path && Storage::disk('public')->exists($education->file_path)) {
+            Storage::disk('public')->delete($education->file_path);
+        }
+        
+        $education->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Education deleted successfully.'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server Error: ' . $e->getMessage()
+        ], 500);
+    }
 }
 }
 
