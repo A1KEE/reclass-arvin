@@ -112,8 +112,11 @@ Route::prefix('qs')
         Route::get('/experiences/{applicationId}', [QSController::class, 'getExperiences'])
              ->name('experiences');
        
-             Route::put('/experience/update/{id}', [QSController::class, 'updateExperience'])
+        Route::put('/experience/update/{id}', [QSController::class, 'updateExperience'])
             ->name('experience.update');
+
+        Route::put('/eligibility/update/{id}', [QSController::class, 'updateEligibility'])
+            ->name('eligibility.update');
 
     });
 
@@ -213,3 +216,17 @@ Route::prefix('superadmin')
         Route::post('/notifications/read/{id}', [AdminController::class, 'markAsRead']);
         Route::post('/superadmin/notifications/read-all', [AdminController::class, 'markAllAsRead']);
     });
+
+    Route::get('/storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    
+    if (strpos($fullPath, storage_path()) !== 0) {
+        abort(403);
+    }
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    
+    return response()->file($fullPath);
+})->where('path', '.*');

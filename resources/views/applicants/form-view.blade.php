@@ -83,8 +83,8 @@
             @include('modals.edit-education')
             @include('modals.edit-training-modal')
             @include('modals.edit-experience')
-            @include('modals.eligibility')
-            @include('modals.ipcrf')
+            @include('modals.edit-eligibility-modal')
+            @include('modals.view-ipcrf-modal')
             @include('modals.performance')
 
             <div class="row">
@@ -444,23 +444,27 @@ if(isset($application) && $application->levels){
         @endif
       </th>
     </tr>
-   <tr id="eligibility-row">
-    <td>Eligibility</td>
-    <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</td>
+  <tr id="eligibility-row">
+    <td>Eligibility</th>
+    <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</th>
     <td>
         @if($application->eligibilities && $application->eligibilities->count())
             @foreach($application->eligibilities as $el)
                 <div class="mb-2 border rounded p-2">
                     <strong>{{ $el->eligibility_name ?? 'Eligibility' }}</strong><br>
-                    <small>Expiry: {{ $el->expiry_date ?? '-' }}</small>
+                    <small>Expiry: {{ $el->expiry_date ?? 'No expiry' }}</small>
                     
+                    {{-- EDIT BUTTON PARA SA ELIGIBILITY --}}
                     @if($isQSEditor)
                         <div class="mt-2">
-                            <button type="button" class="btn btn-sm btn-warning edit-eligibility-btn"
+                            <button type="button"
+                                class="btn btn-sm btn-warning edit-eligibility-btn"
                                 data-id="{{ $el->id }}"
                                 data-name="{{ $el->eligibility_name }}"
-                                data-expiry="{{ $el->expiry_date }}">
-                                ✏ Edit Eligibility
+                                data-expiry="{{ $el->expiry_date }}"
+                                data-file="{{ $el->file_path ?? '' }}"
+                                data-remarks="{{ $application->scores->eligibility_remarks ?? 'Waiting for QS' }}">
+                                ✏ Edit
                             </button>
                         </div>
                     @endif
@@ -469,11 +473,17 @@ if(isset($application) && $application->levels){
         @else
             <div class="text-muted">No Eligibility Record Found</div>
         @endif
-    </td>
+      </th>
     <td id="eligibility_remark">
-        <span class="text-muted">Waiting for the QS</span>
-    </td>
-</tr>
+        @if($application->scores && $application->scores->eligibility_remarks)
+            <span class="{{ $application->scores->eligibility_remarks == 'MET' ? 'text-success fw-bold' : 'text-danger fw-bold' }}">
+                {{ $application->scores->eligibility_remarks }}
+            </span>
+        @else
+            <span class="text-muted">Waiting for the QS</span>
+        @endif
+      </th>
+    </tr>
         </tbody>
     </table>
 
@@ -484,21 +494,28 @@ if(isset($application) && $application->levels){
 </div>
 
     <!-- PERFORMANCE REQUIREMENTS -->
-     <div id="performanceRequirements">
+<div id="performanceRequirements">
     <h5 class="text-left fw-bold mt-4">II. PERFORMANCE REQUIREMENTS</h5>
     <div class="d-flex justify-content-between align-items-center mt-2">
-  <p class="mb-0">
-    1. Copy of duly approved IPCRF for the school year immediately preceeding the application.
-    <span id="ipcrfStatus" class="ms-2 d-none text-success fw-semibold">
-      <i class="bi bi-check-circle-fill me-1"></i> Uploaded
-    </span>
-  </p>
+        <p class="mb-0">
+            1. Copy of duly approved IPCRF for the school year immediately preceeding the application.
+            <span id="ipcrfStatus" class="ms-2 d-none text-success fw-semibold">
+                <i class="bi bi-check-circle-fill me-1"></i> Uploaded
+            </span>
+        </p>
 
-  <!-- <button type="button" class="btn btn-sm btn-outline-primary"
-      data-bs-toggle="modal" data-bs-target="#ipcrfModal">
-      View/Upload IPCRF
-  </button> -->
-</div>
+        @if($isQSEditor)
+            {{-- QS Editor: View Only --}}
+            <button type="button" class="btn btn-sm btn-outline-info" id="viewIpcrfBtn">
+                <i class="fas fa-eye me-1"></i> View IPCRF
+            </button>
+        @else
+            {{-- Applicant: Can Upload --}}
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ipcrfModal">
+                <i class="fas fa-upload me-1"></i> View/Upload IPCRF
+            </button>
+        @endif
+    </div>
     <p>2. The applicant must meet the following performance requirements depending on the position applied for.</p>
 
     <table class="table table-bordered mt-3 text-center align-middle" id="performanceTable">
@@ -893,18 +910,19 @@ if(isset($application) && $application->levels){
     window.applicationId = {{ $application->id ?? 0 }};
     window.trainingsData = @json($application->trainings);
     window.experiencesData = @json($application->experiences);
+    window.eligibilitiesData = @json($application->eligibilities);
+    window.ipcrfData = @json($application->ipcrfs);
     window.qsConfig = @json(config('qs'));
 </script>
   <script src="{{ asset('js/admin-load.js') }}"></script>
 
   <!-- LOAD JS FILES -->
-  <script src="{{ asset('js/ipcrf.js') }}"></script>
+  <script src="{{ asset('js/view-ipcrf.js') }}"></script>
   <script src="{{ asset('js/auto-check-qs.js') }}"></script>
   <script src="{{ asset('js/edit-experience.js') }}"></script>
   <script src="{{ asset('js/edit-education.js') }}"></script>
   <script src="{{ asset('js/edit-training.js') }}"></script>
-  <script src="{{ asset('js/eligibility.js') }}"></script>
-  <script src="{{ asset('js/dataprivacy.js') }}"></script>
+  <script src="{{ asset('js/edit-eligibility.js') }}"></script>
   <script src="{{ asset('js/indicators.js') }}"></script>
   <script src="{{ asset('js/fillout.js') }}"></script>
   <script src="{{ asset('js/performancerating.js') }}"></script>

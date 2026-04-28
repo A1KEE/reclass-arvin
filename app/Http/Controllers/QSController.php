@@ -27,7 +27,8 @@ class QSController extends Controller
             'trainings',
             'experiences',
             'eligibilities',
-            'scores'
+            'scores',
+            'ipcrfs'
         ])->findOrFail($id);
 
         // Always pass filteredNotifs
@@ -737,6 +738,65 @@ public function updateExperience(Request $request, $id)
         return response()->json([
             'success' => false,
             'message' => 'Error updating experience: ' . $e->getMessage()
+        ], 500);
+    }
+}
+public function updateEligibility(Request $request, $id)
+{
+    try {
+        $eligibility = \App\Models\Eligibility::with('application')->find($id);
+        
+        if (!$eligibility) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Eligibility record not found'
+            ], 404);
+        }
+        
+        if (!$eligibility->application) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No application found'
+            ], 404);
+        }
+        
+        $application = $eligibility->application;
+        
+        // Update eligibility record
+        $eligibility->update([
+            'eligibility_name' => $request->eligibility_name,
+            'expiry_date' => $request->expiry_date,
+        ]);
+        
+        // Use the MANUAL status from dropdown (QS Editor's evaluation)
+        $eligibilityRemarks = $request->eligibility_remarks;
+        
+        // Update scores
+        $score = $application->scores;
+        if ($score) {
+            $score->eligibility_remarks = $eligibilityRemarks;
+            
+            $score->total_score = ($score->education_points ?? 0) + 
+                                  ($score->training_points ?? 0) + 
+                                  ($score->experience_points ?? 0) + 
+                                  ($score->performance_points ?? 0) +
+                                  ($score->coi_score ?? 0) +
+                                  ($score->ncoi_score ?? 0) +
+                                  ($score->bei_score ?? 0);
+            $score->save();
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Eligibility updated successfully!',
+            'remarks' => $eligibilityRemarks,
+            'total_score' => $score->total_score ?? 0
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating eligibility: ' . $e->getMessage()
         ], 500);
     }
 }

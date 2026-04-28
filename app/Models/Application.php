@@ -48,7 +48,7 @@ class Application extends Model
 
     public function eligibilities()
     {
-        return $this->hasMany(Eligibility::class);
+        return $this->hasMany(Eligibility::class, 'application_id');
     }
 
     public function ipcrfs()
