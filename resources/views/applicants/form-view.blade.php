@@ -627,60 +627,108 @@ if(isset($application) && $application->levels){
     'ratings' => $ratings
 ])
 </div>
-
-
 {{-- ========================================================= --}}
 {{-- III. COMPARATIVE ASSESSMENT RESULT --}}
 {{-- ========================================================= --}}
-<form action="{{ 
-    $isQSEditor 
-        ? route('qs.application.update', $application->id)
-        : route('admin.scores.update', $application->id)
-}}" method="POST">
-    @csrf
-    @method('PUT')
+
 <div id="hr-section">
-<hr class="mt-5 mb-4">
-<h5 class="fw-bold text-uppercase">III. Comparative Assessment Result</h5>
+    <hr class="mt-5 mb-4">
+    <h5 class="fw-bold text-uppercase">III. Comparative Assessment Result</h5>
 
-<div class="table-responsive mb-4">
-  <table class="table table-bordered align-middle text-center">
-    <thead class="table-light">
-      <tr>
-        <th>Education</th>
-        <th>Training</th>
-        <th>Experience</th>
-        <th>Performance</th>
-        <th>Classroom Observable Indicators</th>
-        <th>Non-Classroom Observable Indicators</th>
-        <th>Behavioral Events Interview (BEI)</th>
-        <th>Total Score</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><input type="number" name="comparative[education]" class="form-control form-control-sm text-center"value="{{ $application->scores->education_points ?? 0 }}" readonly></td>
-        <td><input type="number" name="comparative[training]" class="form-control form-control-sm text-center"value="{{ $application->scores->training_points ?? 0 }}" readonly></td>
-        <td><input type="number" name="comparative[experience_points]" class="form-control form-control-sm text-center"value="{{ $application->scores->experience_points ?? 0 }}" readonly></td>
-        <td><input type="number" name="comparative[performance]" id="performanceFinal" class="form-control form-control-sm text-center" value="{{ $application->scores->performance_points ?? 0 }}">
-        <button type="button" class="btn btn-sm btn-outline-success"data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button></td>
-        <td><input type="number" name="comparative[coi_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->coi_score ?? 0 }}"></td>
-        <td><input type="number" name="comparative[ncoi_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->ncoi_score ?? 0 }}"></td>
-        <td><input type="number" name="comparative[bei_score]" class="form-control form-control-sm text-center" value="{{ $application->scores->bei_score ?? 0 }}"></td>
-        <td><input type="number" name="comparative[total]" class="form-control form-control-sm text-center"></td>
-      </tr>
-    </tbody>
-  </table>
+    @if($isQSEditor)
+        <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Note:</strong> You are in view-only mode. CAR (Comparative Assessment Result) is managed by HR/Admin.
+        </div>
+    @endif
+
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Education</th>
+                    <th>Training</th>
+                    <th>Experience</th>
+                    <th>Performance</th>
+                    <th>Classroom Observable Indicators</th>
+                    <th>Non-Classroom Observable Indicators</th>
+                    <th>Behavioral Events Interview (BEI)</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="number" 
+                            name="comparative[education]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->education_points ?? 0 }}" 
+                            readonly>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[training]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->training_points ?? 0 }}" 
+                            readonly>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[experience_points]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->experience_points ?? 0 }}" 
+                            readonly>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[performance]" 
+                            id="performanceFinal" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->performance_points ?? 0 }}"
+                            {{ $isQSEditor ? 'readonly' : '' }}>
+                        @if(!$isQSEditor)
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#performanceModal">Compute</button>
+                        @endif
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[coi_score]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->coi_score ?? 0 }}"
+                            {{ $isQSEditor ? 'readonly' : '' }}>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[ncoi_score]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->ncoi_score ?? 0 }}"
+                            {{ $isQSEditor ? 'readonly' : '' }}>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[bei_score]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ $application->scores->bei_score ?? 0 }}"
+                            {{ $isQSEditor ? 'readonly' : '' }}>
+                    </td>
+                    <td>
+                        <input type="number" 
+                            name="comparative[total]" 
+                            class="form-control form-control-sm text-center" 
+                            value="{{ number_format($application->scores->total_score ?? 0, 2) }}" 
+                            readonly>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
-
 
 <div class="row text-center mb-5 mt-5">
     <div class="col-md-6">
         <p class="fw-semibold mb-1">Conforme:</p>
         <br><br>
-        <p id="teacherApplicant" class="fw-bold text-decoration-underline mb-0">
-    {{ $application->name ?? '' }}
-</p>
+        <p id="teacherApplicant" class="fw-bold text-decoration-underline mb-0">{{ $application->name ?? '' }}</p>
         <p class="small mb-0">Teacher Applicant</p>
     </div>
 
@@ -695,190 +743,195 @@ if(isset($application) && $application->levels){
 {{-- ========================================================= --}}
 {{-- IV. DEPED SCHOOLS DIVISION OFFICE ACTION --}}
 {{-- ========================================================= --}}
+
 <h5 class="fw-bold text-uppercase">IV. DepEd Schools Division Office Action</h5>
 
 <div class="table-responsive mb-4">
-  <table class="table table-bordered align-middle text-center">
-    <thead class="table-light">
-      <tr>
-        <th>Reclassification of Position</th>
-        <th>From</th>
-        <th>Salary Grade</th>
-        <th>To</th>
-        <th>Salary Grade</th>
-        <th>Date Processed</th>
-        <th>Remarks</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-    <td>Reclassification of Position</td>
-
-    <!-- FROM POSITION -->
-    <td>
-        <textarea
-            name="division[from_position]"
-            id="from_position"
-            class="form-control form-control-sm text-center"
-            rows="2"
-            readonly>{{ $application->current_position ?? '' }}</textarea>
-    </td>
-
-    <!-- FROM GRADE -->
-    <td>
-        <input type="text"
-            name="division[from_grade]"
-            id="from_grade"
-            class="form-control form-control-sm text-center"
-            readonly>
-    </td>
-
-    <!-- TO POSITION -->
-    <td>
-        <textarea
-            name="division[to_position]"
-            id="to_position"
-            class="form-control form-control-sm text-center"
-            rows="2"
-            readonly>{{ $application->position_applied ?? '' }}</textarea>
-    </td>
-
-    <!-- TO GRADE -->
-    <td>
-        <input type="text"
-            name="division[to_grade]"
-            id="to_grade"
-            class="form-control form-control-sm text-center"
-            readonly>
-    </td>
-
-    <!-- DATE -->
-    <td>
-        <input type="date"
-            name="division[date_processed]"
-            class="form-control form-control-sm text-center" value="{{ old('division.date_processed', optional($application->scores)->sdo_date_processed) }}">
-    </td>
-
-    <!-- REMARKS -->
-    <td>
-        <input type="text"
-            name="division[remarks]"
-            class="form-control form-control-sm text-center" value="{{ old('division.remarks', optional($application->scores)->sdo_remarks) }}">
-    </td>
-</tr>
-    </tbody>
-  </table>
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+            <tr>
+                <th>Reclassification of Position</th>
+                <th>From</th>
+                <th>Salary Grade</th>
+                <th>To</th>
+                <th>Salary Grade</th>
+                <th>Date Processed</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Reclassification of Position</th>
+                <td>
+                    <textarea 
+                        name="division[from_position]" 
+                        id="from_position" 
+                        class="form-control form-control-sm text-center" 
+                        rows="2" 
+                        readonly>{{ $application->current_position ?? '' }}</textarea>
+                </th>
+                <td>
+                    <input type="text" 
+                        name="division[from_grade]" 
+                        id="from_grade" 
+                        class="form-control form-control-sm text-center" 
+                        readonly>
+                </th>
+                <td>
+                    <textarea 
+                        name="division[to_position]" 
+                        id="to_position" 
+                        class="form-control form-control-sm text-center" 
+                        rows="2" 
+                        readonly>{{ $application->position_applied ?? '' }}</textarea>
+                </th>
+                <td>
+                    <input type="text" 
+                        name="division[to_grade]" 
+                        id="to_grade" 
+                        class="form-control form-control-sm text-center" 
+                        readonly>
+                </th>
+                <td>
+                    <input type="date" 
+                        name="division[date_processed]" 
+                        class="form-control form-control-sm text-center" 
+                        value="{{ old('division.date_processed', optional($application->scores)->sdo_date_processed) }}"
+                        {{ $isQSEditor ? 'readonly' : '' }}>
+                </th>
+                <td>
+                    <input type="text" 
+                        name="division[remarks]" 
+                        class="form-control form-control-sm text-center" 
+                        value="{{ old('division.remarks', optional($application->scores)->sdo_remarks) }}"
+                        {{ $isQSEditor ? 'readonly' : '' }}>
+                </th>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <!-- ROW 1 : Evaluated (Right) -->
 <div class="row mb-4">
-  <div class="col-md-6"></div>
-  <div class="col-md-6 text-center">
-    <p class="fw-semibold mb-1">Evaluated by:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1">MA. CLARINDA L. OMO</p>
-    <p class="small mb-0">Administrative Officer IV (HRMO)</p>
-  </div>
+    <div class="col-md-6"></div>
+    <div class="col-md-6 text-center">
+        <p class="fw-semibold mb-1">Evaluated by:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1">MA. CLARINDA L. OMO</p>
+        <p class="small mb-0">Administrative Officer IV (HRMO)</p>
+    </div>
 </div>
 
 <!-- ROW 2 : Certified (Left) -->
 <div class="row mb-4">
-  <div class="col-md-6 text-center">
-    <p class="fw-semibold mb-1">Certified Correct:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1">ATTY.III MARK ANGELO S. ENRIQUEZ</p>
-    <p class="small mb-0">Administrative Officer V (Admin Services)</p>
-  </div>
-  <div class="col-md-6"></div>
+    <div class="col-md-6 text-center">
+        <p class="fw-semibold mb-1">Certified Correct:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1">ATTY.III MARK ANGELO S. ENRIQUEZ</p>
+        <p class="small mb-0">Administrative Officer V (Admin Services)</p>
+    </div>
+    <div class="col-md-6"></div>
 </div>
 
 <!-- ROW 3 : Recommending (Center) -->
 <div class="row text-center mb-4">
-  <div class="col-md-12">
-    <p class="fw-semibold mb-1">Recommending Approval:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1">NOEL D. BAGANO</p>
-    <p class="small mb-0">Schools Division Superintendent</p>
-  </div>
+    <div class="col-md-12">
+        <p class="fw-semibold mb-1">Recommending Approval:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1">NOEL D. BAGANO</p>
+        <p class="small mb-0">Schools Division Superintendent</p>
+    </div>
 </div>
-
-
 
 {{-- ========================================================= --}}
 {{-- V. DEPED REGIONAL OFFICE ACTION --}}
 {{-- ========================================================= --}}
+
 <h5 class="fw-bold text-uppercase">V. DepEd Regional Office Action</h5>
 
 <div class="table-responsive mb-4">
-  <table class="table table-bordered align-middle text-center">
-    <thead class="table-light">
-      <tr>
-        <th>Reclassification of Position</th>
-        <th>From</th>
-        <th>Salary Grade</th>
-        <th>To</th>
-        <th>Salary Grade</th>
-        <th>Date Processed</th>
-        <th>Remarks</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Reclassification of Position</td>
-        <td><input type="text" name="regional[from_position]" class="form-control form-control-sm"></td>
-        <td><input type="text" name="regional[from_grade]" class="form-control form-control-sm"></td>
-        <td><input type="text" name="regional[to_position]" class="form-control form-control-sm"></td>
-        <td><input type="text" name="regional[to_grade]" class="form-control form-control-sm"></td>
-        <td><input type="date" name="regional[date_processed]" class="form-control form-control-sm"></td>
-        <td><input type="text" name="regional[remarks]" class="form-control form-control-sm"></td>
-      </tr>
-    </tbody>
-  </table>
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+            <tr>
+                <th>Reclassification of Position</th>
+                <th>From</th>
+                <th>Salary Grade</th>
+                <th>To</th>
+                <th>Salary Grade</th>
+                <th>Date Processed</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Reclassification of Position</th>
+                <td><input type="text" name="regional[from_position]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+                <td><input type="text" name="regional[from_grade]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+                <td><input type="text" name="regional[to_position]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+                <td><input type="text" name="regional[to_grade]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+                <td><input type="date" name="regional[date_processed]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+                <td><input type="text" name="regional[remarks]" class="form-control form-control-sm" {{ $isQSEditor ? 'readonly' : '' }}></th>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <!-- ROW 1 : Evaluated (Right) -->
 <div class="row mb-4">
-  <div class="col-md-6"></div>
-  <div class="col-md-6 text-center">
-    <p class="fw-semibold mb-1">Evaluated by:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1"></p>
-    <p class="small mb-0">Teachers Credential Evaluator</p>
-  </div>
+    <div class="col-md-6"></div>
+    <div class="col-md-6 text-center">
+        <p class="fw-semibold mb-1">Evaluated by:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1"></p>
+        <p class="small mb-0">Teachers Credential Evaluator</p>
+    </div>
 </div>
 
 <!-- ROW 2 : Certified (Left) -->
 <div class="row mb-4">
-  <div class="col-md-6 text-center">
-    <p class="fw-semibold mb-1">Certified Correct:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1">Atty. JOYLYN P. DUNLUAN</p>
-    <p class="small mb-0">Chief, Administrative Division</p>
-  </div>
-  <div class="col-md-6"></div>
+    <div class="col-md-6 text-center">
+        <p class="fw-semibold mb-1">Certified Correct:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1">Atty. JOYLYN P. DUNLUAN</p>
+        <p class="small mb-0">Chief, Administrative Division</p>
+    </div>
+    <div class="col-md-6"></div>
 </div>
 
 <!-- ROW 3 : Approved (Center) -->
 <div class="row text-center mb-4">
-  <div class="col-md-12">
-    <p class="fw-semibold mb-1">Approved:</p>
-    <br>
-    <p class="fw-bold text-decoration-underline mb-1">JOCELYN DR. ANDAYA</p>
-    <p class="small mb-0">Regional Director, NCR</p>
-    <p class="small mb-0">Concurrent Officer-In-Charge, Office of the Assistant Secretary for Operations</p>
-  </div>
-</div>
-<div class="text-center my-4">
-    <button type="submit" class="btn btn-warning btn-lg px-5">
-    {{ $isQSEditor ? 'Update Qualification Standards' : 'Update Applications' }}
-</button>
-</div>
-        </form>
+    <div class="col-md-12">
+        <p class="fw-semibold mb-1">Approved:</p>
+        <br>
+        <p class="fw-bold text-decoration-underline mb-1">JOCELYN DR. ANDAYA</p>
+        <p class="small mb-0">Regional Director, NCR</p>
+        <p class="small mb-0">Concurrent Officer-In-Charge, Office of the Assistant Secretary for Operations</p>
     </div>
-   
 </div>
-</div>
-</div> <!-- /.container -->
+
+{{-- ========================================================= --}}
+{{-- SUBMIT BUTTONS --}}
+{{-- ========================================================= --}}
+
+@if(!$isQSEditor)
+    {{-- Admin/Super Admin Form Wrapper --}}
+    <form action="{{ route('admin.scores.update', $application->id) }}" method="POST">
+        @csrf
+        @method('PUT')
+        
+        {{-- Hidden fields for QS remarks --}}
+        <input type="hidden" name="education_remarks" value="{{ $application->scores->education_remarks ?? '' }}">
+        <input type="hidden" name="training_remarks" value="{{ $application->scores->training_remarks ?? '' }}">
+        <input type="hidden" name="experience_remarks" value="{{ $application->scores->experience_remarks ?? '' }}">
+        <input type="hidden" name="eligibility_remarks" value="{{ $application->scores->eligibility_remarks ?? '' }}">
+        
+        <div class="text-center my-4">
+            <button type="submit" class="btn btn-warning btn-lg px-5">
+                <i class="fas fa-save me-2"></i> Update Application
+            </button>
+        </div>
+    </form>
+@endif
 
 <div id="qsLoadingOverlay">
     <div class="qs-loader-wrapper">
@@ -1279,30 +1332,43 @@ function hideSubmitLoading() {
 </script>
 <script>
     $(document).ready(function() {
-    // Function para i-compute ang total
-    function calculateTotalScore() {
-    let total = 0;
-    $('input[name^="comparative"]').each(function() {
-        if ($(this).attr('name') !== 'comparative[total]') {
-            let val = parseFloat($(this).val());
-            if (!isNaN(val)) {
-                total += val;
-            }
+        // Function para i-compute ang total
+        function calculateTotalScore() {
+            // Kunin ang values
+            let education = parseFloat($('input[name="comparative[education]"]').val()) || 0;
+            let training = parseFloat($('input[name="comparative[training]"]').val()) || 0;
+            let experience = parseFloat($('input[name="comparative[experience_points]"]').val()) || 0;
+            let performance = parseFloat($('input[name="comparative[performance]"]').val()) || 0;
+            let coi = parseFloat($('input[name="comparative[coi_score]"]').val()) || 0;
+            let ncoi = parseFloat($('input[name="comparative[ncoi_score]"]').val()) || 0;
+            let bei = parseFloat($('input[name="comparative[bei_score]"]').val()) || 0;
+            
+            // Compute total
+            let total = education + training + experience + performance + coi + ncoi + bei;
+            
+            // I-set ang total (2 decimal places)
+            $('input[name="comparative[total]"]').val(total.toFixed(2));
+            
+            // I-log para sa debugging
+            console.log('Total Score Calculation:', {
+                education, training, experience, performance, coi, ncoi, bei, total: total.toFixed(2)
+            });
         }
-    });
-    $('input[name="comparative[total]"]').val(total.toFixed(3));
-    }
 
-    // Kapag nag manual type ang HR
-    $(document).on('input', 'input[name^="comparative"]', function() {
+        // Sa editable fields lang mag-trigger
+        $(document).on('input change', 
+            'input[name="comparative[performance]"], 
+             input[name="comparative[coi_score]"], 
+             input[name="comparative[ncoi_score]"], 
+             input[name="comparative[bei_score]"]', 
+            function() {
+                calculateTotalScore();
+            }
+        );
+
+        // Tawagin agad pag-load ng page
         calculateTotalScore();
     });
-
-    // Tawagin agad pag-load ng page para kung may existing scores, ma-compute ang total
-    $(document).ready(function() {
-        calculateTotalScore();
-    });
-});
 </script>
 <script>
     $('#adminScoreForm').on('submit', function() {

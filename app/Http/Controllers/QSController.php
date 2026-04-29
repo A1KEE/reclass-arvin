@@ -556,12 +556,29 @@ public function updateTrainings(Request $request)
         
         $trainingRemarks = ($totalTeachingHours >= $requiredHours && $requiredHours > 0) ? "MET" : "NOT MET";
         
-        // Update scores
+        // ✅ UPDATE SCORES WITH TOTAL_SCORE RECOMPUTE (gaya ng education at experience)
         $score = $application->scores;
         if ($score) {
             $score->training_points = $trainingPoints;
             $score->training_remarks = $trainingRemarks;
+            
+            // ✅ TOTAL SCORE RECOMPUTE - consistent sa iba
+            $score->total_score = ($score->education_points ?? 0) + 
+                                 $trainingPoints + 
+                                 ($score->experience_points ?? 0) + 
+                                 ($score->performance_points ?? 0) +
+                                 ($score->coi_score ?? 0) +
+                                 ($score->ncoi_score ?? 0) +
+                                 ($score->bei_score ?? 0);
+            
             $score->save();
+            
+            \Log::info('Training Updated - Total Score Recalculated', [
+                'application_id' => $applicationId,
+                'training_points' => $trainingPoints,
+                'total_hours' => $totalTeachingHours,
+                'new_total_score' => $score->total_score
+            ]);
         }
         
         return response()->json([
@@ -569,7 +586,8 @@ public function updateTrainings(Request $request)
             'data' => [
                 'total_hours' => $totalTeachingHours,
                 'points' => $trainingPoints,
-                'remarks' => $trainingRemarks
+                'remarks' => $trainingRemarks,
+                'total_score' => $score->total_score ?? 0
             ]
         ]);
         
@@ -581,7 +599,7 @@ public function updateTrainings(Request $request)
 public function updateExperiences(Request $request)
 {
     try {
-        \Log::info('Update Experiences Called', $request->all()); // Debug log
+        \Log::info('Update Experiences Called', $request->all());
         
         $experiences = $request->experiences;
         $applicationId = $request->application_id;
@@ -590,10 +608,16 @@ public function updateExperiences(Request $request)
             $applicationId = $experiences[0]['application_id'];
         }
         
+        if (!$applicationId) {
+            return response()->json(['success' => false, 'message' => 'Application ID is required'], 400);
+        }
+        
+        $application = Application::findOrFail($applicationId);
+        
         // Update each experience
         foreach ($experiences as $expData) {
             if (isset($expData['id']) && $expData['id']) {
-                $experience = Experience::find($expData['id']);  // Dapat gumana na ito
+                $experience = Experience::find($expData['id']);
                 if ($experience) {
                     $experience->update([
                         'position' => $expData['position'],
@@ -606,33 +630,13 @@ public function updateExperiences(Request $request)
             }
         }
         
-        // ==========================
-        // RECOMPUTE SCORES (OPTIONAL)
-        // ==========================
-        if ($applicationId) {
-            $this->recomputeExperienceScores($applicationId);
-        }
+        // Refresh application to get updated experiences
+        $application = $application->fresh();
         
-        return response()->json(['success' => true]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Update Experience Error: ' . $e->getMessage());
-        \Log::error($e->getTraceAsString());
-        
-        return response()->json([
-            'success' => false, 
-            'message' => $e->getMessage()
-        ], 500);
-    }
-}
-
-// Optional: Function to recompute scores
-private function recomputeExperienceScores($applicationId)
-{
-    try {
-        $experiences = Experience::where('application_id', $applicationId)->get();
-        
+        // Compute total years of experience
+        $experiences = $application->experiences;
         $totalYears = 0;
+        
         foreach ($experiences as $exp) {
             if ($exp->start_date) {
                 $start = new \DateTime($exp->start_date);
@@ -648,49 +652,66 @@ private function recomputeExperienceScores($applicationId)
         
         $totalYears = round($totalYears, 2);
         
-        // Get required years from application's position and school
-        $application = Application::find($applicationId);
+        // Get required years
         $position = $application->position_applied;
-        
-        // Get school level - adjust as needed
-        $level = 'elementary'; // Default, adjust based on your logic
+        $school = $application->school;
+        $level = $school ? strtolower($school->level_type) : 'elementary';
         
         $requiredYears = 0;
         $qsConfig = config('qs');
         
-        if ($qsConfig && isset($qsConfig[$level][$position])) {
-            $requiredYears = floatval($qsConfig[$level][$position]['experience_years'] ?? 0);
+        if ($qsConfig && isset($qsConfig[$level][$position]['experience_years'])) {
+            $requiredYears = floatval($qsConfig[$level][$position]['experience_years']);
         }
         
+        // Compute points
         $actualLevel = $this->getLevelFromYears($totalYears);
         $requiredLevel = $this->getLevelFromYears($requiredYears);
         $points = $this->calculateExperiencePoints($actualLevel, $requiredLevel);
         $remarks = $totalYears >= $requiredYears ? 'MET' : 'NOT MET';
         
-        // Update scores
-        $scores = \DB::table('application_scores')->where('application_id', $applicationId)->first();
-        
-        if ($scores) {
-            $totalScore = ($scores->education_points ?? 0) + 
-                         ($scores->training_points ?? 0) + 
-                         $points + 
-                         ($scores->performance_points ?? 0);
+        // Update scores with total_score recompute
+        $score = $application->scores;
+        if ($score) {
+            $score->experience_points = $points;
+            $score->experience_remarks = $remarks;
             
-            \DB::table('application_scores')
-                ->where('application_id', $applicationId)
-                ->update([
-                    'experience_points' => $points,
-                    'experience_remarks' => $remarks,
-                    'total_score' => $totalScore,
-                    'updated_at' => now(),
-                ]);
+            // ✅ CORRECTED TOTAL SCORE COMPUTATION
+            $score->total_score = ($score->education_points ?? 0) + 
+                                 ($score->training_points ?? 0) + 
+                                 $points + 
+                                 ($score->performance_points ?? 0) +
+                                 ($score->coi_score ?? 0) +
+                                 ($score->ncoi_score ?? 0) +
+                                 ($score->bei_score ?? 0);
+            
+            $score->save();
+            
+            \Log::info('Experience Updated - Total Score Recalculated', [
+                'application_id' => $applicationId,
+                'experience_points' => $points,
+                'new_total_score' => $score->total_score
+            ]);
         }
         
-        return true;
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_years' => $totalYears,
+                'points' => $points,
+                'remarks' => $remarks,
+                'total_score' => $score->total_score ?? 0
+            ]
+        ]);
         
     } catch (\Exception $e) {
-        \Log::error('Recompute Scores Error: ' . $e->getMessage());
-        return false;
+        \Log::error('Update Experience Error: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        
+        return response()->json([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ], 500);
     }
 }
 
