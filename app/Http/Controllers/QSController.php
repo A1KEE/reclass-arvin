@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use Illuminate\Http\Request;
+use App\Models\Experience;
 
 class QSController extends Controller
 {
@@ -439,307 +440,333 @@ class QSController extends Controller
         ], 500);
     }
 }
-
-public function updateTraining(Request $request, $id)
+public function updateTrainings(Request $request)
 {
     try {
-        $training = \App\Models\Training::findOrFail($id);
+        $trainings = $request->trainings;
+        $applicationId = $request->application_id;
         
-        if (!$training->application) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No application found for this training record'
-            ], 404);
+        if (!$applicationId) {
+            return response()->json(['success' => false, 'message' => 'Application ID is required'], 400);
         }
         
-        $application = $training->application;
+        $application = \App\Models\Application::findOrFail($applicationId);
         
-        // Update training record
-        $training->update([
-            'title' => $request->title,
-            'type' => $request->type,
-            'hours' => $request->hours ?? 0,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-        ]);
+        // Update each training
+        foreach ($trainings as $trainingData) {
+            if (isset($trainingData['id']) && $trainingData['id']) {
+                $training = \App\Models\Training::find($trainingData['id']);
+                if ($training) {
+                    $training->update([
+                        'title' => $trainingData['title'],
+                        'type' => $trainingData['type'],
+                        'hours' => $trainingData['hours'] ?? 0,
+                        'start_date' => $trainingData['start_date'],
+                        'end_date' => $trainingData['end_date'],
+                    ]);
+                }
+            }
+        }
         
-        // ================================
-        // 1. GET REQUIRED TRAINING HOURS FROM QS (based on position & level)
-        // ================================
+        // ✅ REFRESH APPLICATION PARA MAKUHA ANG UPDATED TRAININGS
+        $application = $application->fresh();
+        
+        // Get required hours
         $position = $application->position_applied;
-        $levels = $application->levels; // array of levels: ['elementary', 'junior_high', etc.]
+        $school = $application->school;
+        $level = $school ? strtolower($school->level_type) : 'elementary';
         
         $requiredHours = 0;
         $qsConfig = config('qs');
-        
-        // Hanapin ang required training hours sa QS config
-        if ($levels && is_array($levels)) {
-            foreach ($levels as $level) {
-                if (isset($qsConfig[$level][$position]['training_hours'])) {
-                    $requiredHours = (int) $qsConfig[$level][$position]['training_hours'];
-                    break;
-                }
-            }
+        if (isset($qsConfig[$level][$position]['training_hours'])) {
+            $requiredHours = (int) $qsConfig[$level][$position]['training_hours'];
         }
         
-        // ================================
-        // 2. TRAINING LEVELS MAPPING (Table 2.b)
-        // ================================
-        $trainingLevels = [
-            0 => 0,      // 0 hours
-            8 => 1,      // 8 hours → Level 1
-            16 => 2,     // 16 hours → Level 2
-            24 => 3,     // 24 hours → Level 3
-            32 => 4,     // 32 hours → Level 4
-            40 => 5,     // 40 hours → Level 5
-            48 => 6,     // 48 hours → Level 6
-            56 => 7,     // 56 hours → Level 7
-            64 => 8,     // 64 hours → Level 8
-            72 => 9,     // 72 hours → Level 9
-            80 => 10,    // 80 hours → Level 10
-            88 => 11,    // 88 hours → Level 11
-            96 => 12,    // 96 hours → Level 12
-            104 => 13,   // 104 hours → Level 13
-            112 => 14,   // 112 hours → Level 14
-            120 => 15,   // 120 hours → Level 15
-            128 => 16,   // 128 hours → Level 16
-            136 => 17,   // 136 hours → Level 17
-            144 => 18,   // 144 hours → Level 18
-            152 => 19,   // 152 hours → Level 19
-            160 => 20,   // 160 hours → Level 20
-            168 => 21,   // 168 hours → Level 21
-            176 => 22,   // 176 hours → Level 22
-            184 => 23,   // 184 hours → Level 23
-            192 => 24,   // 192 hours → Level 24
-            200 => 25,   // 200 hours → Level 25
-            208 => 26,   // 208 hours → Level 26
-            216 => 27,   // 216 hours → Level 27
-            224 => 28,   // 224 hours → Level 28
-            232 => 29,   // 232 hours → Level 29
-            240 => 30,   // 240 hours → Level 30
-        ];
-        
-        function getTrainingLevel($hours) {
-            $trainingLevels = [
-                0 => 0, 8 => 1, 16 => 2, 24 => 3, 32 => 4, 40 => 5,
-                48 => 6, 56 => 7, 64 => 8, 72 => 9, 80 => 10, 88 => 11,
-                96 => 12, 104 => 13, 112 => 14, 120 => 15, 128 => 16,
-                136 => 17, 144 => 18, 152 => 19, 160 => 20, 168 => 21,
-                176 => 22, 184 => 23, 192 => 24, 200 => 25, 208 => 26,
-                216 => 27, 224 => 28, 232 => 29, 240 => 30,
-            ];
-            
-            $level = 0;
-            foreach ($trainingLevels as $hour => $lvl) {
-                if ($hours >= $hour) {
-                    $level = $lvl;
-                } else {
-                    break;
-                }
-            }
-            return $level;
-        }
-        
-        // ================================
-        // 3. FILTER NON-TEACHING RELEVANT TRAININGS
-        // ================================
+        // Non-teaching keywords
         $nonTeachingKeywords = [
             "administrative", "accounting", "finance", "management",
             "ict", "computer", "leadership", "seminar", "orientation", "workshop"
         ];
         
-        function isTeachingRelevant($title) {
-            if (!$title) return false;
+        $isTeachingRelevant = function($title) use ($nonTeachingKeywords) {
+            if (empty($title)) return false;
             $title = strtolower($title);
-            $keywords = ["administrative", "accounting", "finance", "management",
-                         "ict", "computer", "leadership", "seminar", "orientation", "workshop"];
-            foreach ($keywords as $kw) {
+            foreach ($nonTeachingKeywords as $kw) {
                 if (strpos($title, $kw) !== false) return false;
             }
             return true;
-        }
+        };
         
-        // Kunin ang lahat ng trainings at i-compute ang total teaching-relevant hours
+        // Level mapping
+        $getTrainingLevel = function($hours) {
+            if ($hours >= 240) return 31;
+            if ($hours >= 232) return 30;
+            if ($hours >= 224) return 29;
+            if ($hours >= 216) return 28;
+            if ($hours >= 208) return 27;
+            if ($hours >= 200) return 26;
+            if ($hours >= 192) return 25;
+            if ($hours >= 184) return 24;
+            if ($hours >= 176) return 23;
+            if ($hours >= 168) return 22;
+            if ($hours >= 160) return 21;
+            if ($hours >= 152) return 20;
+            if ($hours >= 144) return 19;
+            if ($hours >= 136) return 18;
+            if ($hours >= 128) return 17;
+            if ($hours >= 120) return 16;
+            if ($hours >= 112) return 15;
+            if ($hours >= 104) return 14;
+            if ($hours >= 96) return 13;
+            if ($hours >= 88) return 12;
+            if ($hours >= 80) return 11;
+            if ($hours >= 72) return 10;
+            if ($hours >= 64) return 9;
+            if ($hours >= 56) return 8;
+            if ($hours >= 48) return 7;
+            if ($hours >= 40) return 6;
+            if ($hours >= 32) return 5;
+            if ($hours >= 24) return 4;
+            if ($hours >= 16) return 3;
+            if ($hours >= 8) return 2;
+            return 1;
+        };
+        
+        // ✅ COMPUTE TOTAL TEACHING HOURS (GAMIT ANG UPDATED TRAININGS)
         $allTrainings = $application->trainings;
         $totalTeachingHours = 0;
         
         foreach ($allTrainings as $t) {
-            if (isTeachingRelevant($t->title) && $t->hours > 0) {
+            if ($isTeachingRelevant($t->title) && $t->hours > 0) {
                 $totalTeachingHours += $t->hours;
             }
         }
         
-        // ================================
-        // 4. COMPUTE POINTS (2 points per level increment)
-        // ================================
-        $applicantLevel = getTrainingLevel($totalTeachingHours);
-        $requiredLevel = getTrainingLevel($requiredHours);
+        // Compute points
+        $applicantLevel = $getTrainingLevel($totalTeachingHours);
+        $requiredLevel = $getTrainingLevel($requiredHours);
         $increment = max(0, $applicantLevel - $requiredLevel);
         
-        // 2 points per increment (max 10 points)
-        $trainingPoints = min(10, $increment * 2);
+        $trainingPoints = 0;
+        if ($increment >= 10) $trainingPoints = 10;
+        elseif ($increment >= 8) $trainingPoints = 8;
+        elseif ($increment >= 6) $trainingPoints = 6;
+        elseif ($increment >= 4) $trainingPoints = 4;
+        elseif ($increment >= 2) $trainingPoints = 2;
         
-        // Determine MET or NOT MET
         $trainingRemarks = ($totalTeachingHours >= $requiredHours && $requiredHours > 0) ? "MET" : "NOT MET";
         
-        // ================================
-        // 5. UPDATE SCORES
-        // ================================
+        // Update scores
         $score = $application->scores;
         if ($score) {
             $score->training_points = $trainingPoints;
             $score->training_remarks = $trainingRemarks;
-            
-            // RECOMPUTE TOTAL SCORE
-            $score->total_score = ($score->education_points ?? 0) + 
-                                  ($score->training_points ?? 0) + 
-                                  ($score->experience_points ?? 0) + 
-                                  ($score->performance_points ?? 0) +
-                                  ($score->coi_score ?? 0) +
-                                  ($score->ncoi_score ?? 0) +
-                                  ($score->bei_score ?? 0);
             $score->save();
         }
         
         return response()->json([
             'success' => true,
-            'message' => 'Training updated successfully!',
-            'required_hours' => $requiredHours,
-            'required_level' => $requiredLevel,
-            'total_hours' => $totalTeachingHours,
-            'applicant_level' => $applicantLevel,
-            'increment' => $increment,
-            'points' => $trainingPoints,
-            'remarks' => $trainingRemarks,
-            'total_score' => $score->total_score ?? 0
+            'data' => [
+                'total_hours' => $totalTeachingHours,
+                'points' => $trainingPoints,
+                'remarks' => $trainingRemarks
+            ]
         ]);
         
     } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error updating training: ' . $e->getMessage()
-        ], 500);
+        \Log::error('Update Trainings Error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
 }
-public function getExperiences($applicationId)
+public function updateExperiences(Request $request)
 {
     try {
-        $application = Application::findOrFail($applicationId);
-        $experiences = $application->experiences()->get();
+        \Log::info('Update Experiences Called', $request->all()); // Debug log
         
-        return response()->json([
-            'success' => true,
-            'experiences' => $experiences
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error loading experiences: ' . $e->getMessage()
-        ], 500);
-    }
-}
-public function updateExperience(Request $request, $id)
-{
-    try {
-        $experience = \App\Models\Experience::findOrFail($id);
+        $experiences = $request->experiences;
+        $applicationId = $request->application_id;
         
-        if (!$experience->application) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No application found for this experience record'
-            ], 404);
+        if (!$applicationId && isset($experiences[0]['application_id'])) {
+            $applicationId = $experiences[0]['application_id'];
         }
         
-        $application = $experience->application;
-        
-        // Update experience record
-        $experience->update([
-            'position' => $request->position,
-            'school' => $request->school,
-            'school_type' => $request->school_type,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-        ]);
-        
-        // ================================
-        // 1. GET REQUIRED EXPERIENCE YEARS FROM QS
-        // ================================
-        $position = $application->position_applied;
-        $levels = $application->levels;
-        
-        $requiredYears = 0;
-        $qsConfig = config('qs');
-        
-        if ($levels && is_array($levels)) {
-            foreach ($levels as $level) {
-                if (isset($qsConfig[$level][$position]['experience_years'])) {
-                    $requiredYears = (int) $qsConfig[$level][$position]['experience_years'];
-                    break;
+        // Update each experience
+        foreach ($experiences as $expData) {
+            if (isset($expData['id']) && $expData['id']) {
+                $experience = Experience::find($expData['id']);  // Dapat gumana na ito
+                if ($experience) {
+                    $experience->update([
+                        'position' => $expData['position'],
+                        'school' => $expData['school'],
+                        'school_type' => $expData['school_type'],
+                        'start_date' => $expData['start_date'],
+                        'end_date' => $expData['end_date'],
+                    ]);
                 }
             }
         }
         
-        // ================================
-        // 2. COMPUTE TOTAL EXPERIENCE YEARS
-        // ================================
-        $allExperiences = $application->experiences;
-        $totalYears = 0;
+        // ==========================
+        // RECOMPUTE SCORES (OPTIONAL)
+        // ==========================
+        if ($applicationId) {
+            $this->recomputeExperienceScores($applicationId);
+        }
         
-        foreach ($allExperiences as $exp) {
+        return response()->json(['success' => true]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Update Experience Error: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        
+        return response()->json([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+// Optional: Function to recompute scores
+private function recomputeExperienceScores($applicationId)
+{
+    try {
+        $experiences = Experience::where('application_id', $applicationId)->get();
+        
+        $totalYears = 0;
+        foreach ($experiences as $exp) {
             if ($exp->start_date) {
                 $start = new \DateTime($exp->start_date);
                 $end = $exp->end_date ? new \DateTime($exp->end_date) : new \DateTime();
-                $diff = $start->diff($end);
-                $years = $diff->y + ($diff->m / 12) + ($diff->d / 365);
-                $totalYears += $years;
+                
+                if ($end >= $start) {
+                    $diff = $start->diff($end);
+                    $yearsDecimal = $diff->y + ($diff->m / 12) + ($diff->d / 365);
+                    $totalYears += $yearsDecimal;
+                }
             }
         }
         
-        // ================================
-        // 3. COMPUTE POINTS (2 points per year increment?)
-        // ================================
-        $increment = max(0, floor($totalYears) - $requiredYears);
-        $experiencePoints = min(10, $increment * 2);
+        $totalYears = round($totalYears, 2);
         
-        // Determine MET or NOT MET
-        $experienceRemarks = ($totalYears >= $requiredYears && $requiredYears > 0) ? "MET" : "NOT MET";
+        // Get required years from application's position and school
+        $application = Application::find($applicationId);
+        $position = $application->position_applied;
         
-        // ================================
-        // 4. UPDATE SCORES
-        // ================================
-        $score = $application->scores;
-        if ($score) {
-            $score->experience_points = $experiencePoints;
-            $score->experience_remarks = $experienceRemarks;
-            
-            // RECOMPUTE TOTAL SCORE
-            $score->total_score = ($score->education_points ?? 0) + 
-                                  ($score->training_points ?? 0) + 
-                                  ($score->experience_points ?? 0) + 
-                                  ($score->performance_points ?? 0) +
-                                  ($score->coi_score ?? 0) +
-                                  ($score->ncoi_score ?? 0) +
-                                  ($score->bei_score ?? 0);
-            $score->save();
+        // Get school level - adjust as needed
+        $level = 'elementary'; // Default, adjust based on your logic
+        
+        $requiredYears = 0;
+        $qsConfig = config('qs');
+        
+        if ($qsConfig && isset($qsConfig[$level][$position])) {
+            $requiredYears = floatval($qsConfig[$level][$position]['experience_years'] ?? 0);
         }
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Experience updated successfully!',
-            'required_years' => $requiredYears,
-            'total_years' => round($totalYears, 2),
-            'increment' => $increment,
-            'points' => $experiencePoints,
-            'remarks' => $experienceRemarks,
-            'total_score' => $score->total_score ?? 0
-        ]);
+        $actualLevel = $this->getLevelFromYears($totalYears);
+        $requiredLevel = $this->getLevelFromYears($requiredYears);
+        $points = $this->calculateExperiencePoints($actualLevel, $requiredLevel);
+        $remarks = $totalYears >= $requiredYears ? 'MET' : 'NOT MET';
+        
+        // Update scores
+        $scores = \DB::table('application_scores')->where('application_id', $applicationId)->first();
+        
+        if ($scores) {
+            $totalScore = ($scores->education_points ?? 0) + 
+                         ($scores->training_points ?? 0) + 
+                         $points + 
+                         ($scores->performance_points ?? 0);
+            
+            \DB::table('application_scores')
+                ->where('application_id', $applicationId)
+                ->update([
+                    'experience_points' => $points,
+                    'experience_remarks' => $remarks,
+                    'total_score' => $totalScore,
+                    'updated_at' => now(),
+                ]);
+        }
+        
+        return true;
         
     } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error updating experience: ' . $e->getMessage()
-        ], 500);
+        \Log::error('Recompute Scores Error: ' . $e->getMessage());
+        return false;
     }
+}
+
+private function getLevelFromYears($years)
+{
+    $experienceLevels = [
+        ['level' => 1, 'from' => 0, 'to' => 0.5],
+        ['level' => 2, 'from' => 0.5, 'to' => 1],
+        ['level' => 3, 'from' => 1, 'to' => 1.5],
+        ['level' => 4, 'from' => 1.5, 'to' => 2],
+        ['level' => 5, 'from' => 2, 'to' => 2.5],
+        ['level' => 6, 'from' => 2.5, 'to' => 3],
+        ['level' => 7, 'from' => 3, 'to' => 3.5],
+        ['level' => 8, 'from' => 3.5, 'to' => 4],
+        ['level' => 9, 'from' => 4, 'to' => 4.5],
+        ['level' => 10, 'from' => 4.5, 'to' => 5],
+        ['level' => 11, 'from' => 5, 'to' => 5.5],
+        ['level' => 12, 'from' => 5.5, 'to' => 6],
+        ['level' => 13, 'from' => 6, 'to' => 6.5],
+        ['level' => 14, 'from' => 6.5, 'to' => 7],
+        ['level' => 15, 'from' => 7, 'to' => 7.5],
+        ['level' => 16, 'from' => 7.5, 'to' => 8],
+        ['level' => 17, 'from' => 8, 'to' => 8.5],
+        ['level' => 18, 'from' => 8.5, 'to' => 9],
+        ['level' => 19, 'from' => 9, 'to' => 9.5],
+        ['level' => 20, 'from' => 9.5, 'to' => 10],
+        ['level' => 21, 'from' => 10, 'to' => 10.5],
+        ['level' => 22, 'from' => 10.5, 'to' => 11],
+        ['level' => 23, 'from' => 11, 'to' => 11.5],
+        ['level' => 24, 'from' => 11.5, 'to' => 12],
+        ['level' => 25, 'from' => 12, 'to' => 12.5],
+        ['level' => 26, 'from' => 12.5, 'to' => 13],
+        ['level' => 27, 'from' => 13, 'to' => 13.5],
+        ['level' => 28, 'from' => 13.5, 'to' => 14],
+        ['level' => 29, 'from' => 14, 'to' => 14.5],
+        ['level' => 30, 'from' => 14.5, 'to' => 15],
+        ['level' => 31, 'from' => 15, 'to' => 999]
+    ];
+    
+    $years = floatval($years);
+    if ($years < 0) return 1;
+    
+    foreach ($experienceLevels as $level) {
+        if ($years >= $level['from'] && $years < $level['to']) {
+            return $level['level'];
+        }
+    }
+    
+    return 31;
+}
+
+private function calculateExperiencePoints($actualLevel, $requiredLevel)
+{
+    if ($actualLevel <= $requiredLevel) {
+        return 0;
+    }
+    
+    $diff = $actualLevel - $requiredLevel;
+    
+    if ($diff >= 10) return 10;
+    if ($diff >= 8) return 8;
+    if ($diff >= 6) return 6;
+    if ($diff >= 4) return 4;
+    if ($diff >= 2) return 2;
+    
+    return 0;
+}
+private function getSchoolLevel($schoolName)
+{
+    // Adjust this based on how you determine school level
+    // This is just an example - modify according to your logic
+    $school = School::where('name', $schoolName)->first();
+    if ($school) {
+        return strtolower($school->level ?? 'elementary');
+    }
+    return 'elementary';
 }
 public function updateEligibility(Request $request, $id)
 {

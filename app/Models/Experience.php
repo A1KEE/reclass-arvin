@@ -16,4 +16,9 @@ class Experience extends Model
     'end_date',
     'file_path'
 ];
+
+public function application()
+{
+    return $this->belongsTo(Application::class, 'application_id');
+}
 }

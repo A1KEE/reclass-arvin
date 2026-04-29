@@ -106,14 +106,10 @@ Route::prefix('qs')
              ->name('education.update');
 
         // Training update route (para sa QS Editor)
-         Route::put('/training/update/{id}', [QSController::class, 'updateTraining'])
-            ->name('training.update');
+        Route::post('/trainings/update', [QSController::class, 'updateTrainings'])->name('trainings.update');
            
-        Route::get('/experiences/{applicationId}', [QSController::class, 'getExperiences'])
-             ->name('experiences');
-       
-        Route::put('/experience/update/{id}', [QSController::class, 'updateExperience'])
-            ->name('experience.update');
+        Route::post('/update-experiences', [QSController::class, 'updateExperiences'])
+            ->name('update.experiences');
 
         Route::put('/eligibility/update/{id}', [QSController::class, 'updateEligibility'])
             ->name('eligibility.update');

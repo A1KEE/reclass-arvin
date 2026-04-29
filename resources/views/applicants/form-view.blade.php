@@ -68,7 +68,7 @@
 
             <input type="hidden" name="training_points" id="training_points">
             <input type="hidden" name="training_remarks" id="remarksTraining">
-
+            <input type="hidden" id="application_id" value="{{ $application->id }}">
             <input type="hidden" name="experience_points" id="experience_points">
             <input type="hidden" name="experience_remarks" id="remarksExperience">
 
@@ -354,10 +354,36 @@ if(isset($application) && $application->levels){
         </span>
     </td>
 </tr>
-      <tr id="training-row">
-    <td>Training</th>
-    <td id="qs_training">{{ $qs['training'] ?? '—' }}</th>
+    <tr id="training-row">
+    <th>Training</th>
+    <td id="qs_training">{{ $qs['training'] ?? '—' }}</td>
     <td>
+
+        {{-- EDIT BUTTON (ISA LANG, NASA TAAS) --}}
+        @if($isQSEditor)
+            @php
+                $trainingsData = $application->trainings->map(function($t) {
+                    return [
+                        'id' => $t->id,
+                        'title' => $t->title,
+                        'type' => $t->type,
+                        'hours' => $t->hours,
+                        'start_date' => $t->start_date,
+                        'end_date' => $t->end_date,
+                        'file_path' => $t->file_path,
+                        'certificate_url' => $t->file_path ? asset('storage/' . $t->file_path) : null
+                    ];
+                })->values()->toArray();
+            @endphp
+            <button type="button"
+                class="btn btn-warning btn-sm mb-2"
+                id="editTrainingBtn"
+                data-trainings='@json($trainingsData)'>
+                ✏ Edit Training
+            </button>
+        @endif
+
+        {{-- DISPLAY TRAININGS --}}
         @if($application->trainings && $application->trainings->count())
             @foreach($application->trainings as $t)
                 <div class="mb-2 border rounded p-2">
@@ -367,30 +393,12 @@ if(isset($application) && $application->levels){
                         {{ $t->hours ?? 0 }} hrs |
                         {{ $t->start_date ?? '' }} - {{ $t->end_date ?? '' }}
                     </small>
-                    
-                    {{-- EDIT BUTTON LANG (WALANG VIEW CERTIFICATE DITO) --}}
-                    @if($isQSEditor)
-                        <div class="mt-2">
-                            <button type="button"
-                                class="btn btn-sm btn-warning edit-training-btn"
-                                data-id="{{ $t->id }}"
-                                data-title="{{ $t->title }}"
-                                data-type="{{ $t->type }}"
-                                data-hours="{{ $t->hours }}"
-                                data-start_date="{{ $t->start_date }}"
-                                data-end_date="{{ $t->end_date }}"
-                                data-file="{{ $t->file_path ?? '' }}"
-                                data-remarks="{{ $t->application->scores->training_remarks ?? 'Waiting for the QS' }}">
-                                ✏ Edit
-                            </button>
-                        </div>
-                    @endif
                 </div>
             @endforeach
         @else
             <div class="text-muted">No Training Record Found</div>
         @endif
-      </td>
+    </td>
     <td id="training_remark">
         @if($application->scores && $application->scores->training_remarks)
             <span class="{{ $application->scores->training_remarks == 'MET' ? 'text-success fw-bold' : 'text-danger fw-bold' }}">
@@ -399,41 +407,62 @@ if(isset($application) && $application->levels){
         @else
             <span class="text-muted">Waiting for the QS</span>
         @endif
-      </td>
-    </tr>
-      <tr id="experience-row">
+    </td>
+</tr>
+    <tr id="experience-row">
     <td>Experience</th>
-    <td id="qs_experience">{{ $qs['experience'] ?? '—' }}</th>
+
+    <td id="qs_experience">
+        {{ $qs['experience'] ?? '—' }}
+    </td>
+
     <td>
-        {{-- DISPLAY LANG NG MGA EXPERIENCES (WALANG EDIT BUTTON DITO) --}}
-        @if($application->experiences && $application->experiences->count())
-          @foreach($application->experiences as $exp)
-    <div class="mb-2 border rounded p-2">
-        <strong>{{ $exp->position }}</strong><br>
-        {{ $exp->school }} ({{ $exp->school_type }})<br>
-        <small>{{ $exp->start_date }} - {{ $exp->end_date ?? 'Present' }}</small>
-        
+        {{-- EDIT BUTTON (ISA LANG, NASA TAAS) --}}
         @if($isQSEditor)
-            <div class="mt-2">
-                <button type="button"
-                    class="btn btn-sm btn-warning edit-single-experience-btn"
-                    data-id="{{ $exp->id }}"
-                    data-position="{{ $exp->position }}"
-                    data-school="{{ $exp->school }}"
-                    data-school_type="{{ $exp->school_type }}"
-                    data-start_date="{{ $exp->start_date }}"
-                    data-end_date="{{ $exp->end_date }}"
-                    data-file="{{ $exp->file_path ?? '' }}">
-                    ✏ Edit
-                </button>
-            </div>
+           @php
+    $experiencesData = $application->experiences->map(function($exp) {
+        return [
+            'id' => $exp->id,
+            'position' => $exp->position,
+            'school' => $exp->school,
+            'school_type' => $exp->school_type,
+            'start_date' => $exp->start_date,
+            'end_date' => $exp->end_date,
+            'file_path' => $exp->file_path,  // ← IDAGDAG ITO
+            'certificate_url' => $exp->file_path ? asset('storage/' . $exp->file_path) : null  // ← O ITO
+        ];
+    })->values()->toArray();
+@endphp
+
+<button type="button"
+    class="btn btn-warning btn-sm mb-2"
+    id="editExperienceBtn"
+    data-experiences='@json($experiencesData)'>
+    ✏ Edit Experience
+</button>
         @endif
-    </div>
-@endforeach
+
+        {{-- DISPLAY EXPERIENCES --}}
+        @if($application->experiences && $application->experiences->count())
+            @foreach($application->experiences as $exp)
+                <div class="mb-2 border rounded p-2">
+                    <strong>{{ $exp->position }}</strong><br>
+                    {{ $exp->school }} ({{ $exp->school_type }})<br>
+                    <small>
+                        {{ \Carbon\Carbon::parse($exp->start_date)->format('M Y') }}
+                        -
+                        {{ $exp->end_date 
+                            ? \Carbon\Carbon::parse($exp->end_date)->format('M Y') 
+                            : 'Present' 
+                        }}
+                    </small>
+                </div>
+            @endforeach
         @else
             <div class="text-muted">No Experience Record Found</div>
         @endif
-      </th>
+     </td>
+
     <td id="experience_remark">
         @if($application->scores && $application->scores->experience_remarks)
             <span class="{{ $application->scores->experience_remarks == 'MET' ? 'text-success fw-bold' : 'text-danger fw-bold' }}">
@@ -442,8 +471,8 @@ if(isset($application) && $application->levels){
         @else
             <span class="text-muted">Waiting for the QS</span>
         @endif
-      </th>
-    </tr>
+     </td>
+</tr>
   <tr id="eligibility-row">
     <td>Eligibility</th>
     <td id="qs_eligibility">{{ $qs['eligibility'] ?? '—' }}</th>
@@ -913,6 +942,30 @@ if(isset($application) && $application->levels){
     window.eligibilitiesData = @json($application->eligibilities);
     window.ipcrfData = @json($application->ipcrfs);
     window.qsConfig = @json(config('qs'));
+    window.currentSchoolLevel = '{{ $application->school->level_type ?? "elementary" }}';
+    
+    @php
+        $position = $application->position_applied;
+        $level = $application->school->level_type ?? 'elementary';
+        $requiredTrainingHours = isset(config('qs')[$level][$position]['training_hours']) ? config('qs')[$level][$position]['training_hours'] : 0;
+        $requiredYears = isset(config('qs')[$level][$position]['experience_years']) ? config('qs')[$level][$position]['experience_years'] : 0;
+    @endphp
+    
+    window.savedTraining = {
+        points: {{ $application->scores->training_points ?? 0 }},
+        remarks: '{{ $application->scores->training_remarks ?? "Waiting" }}',
+        required_hours: {{ $requiredTrainingHours }}
+    };
+    
+    window.savedExperience = {
+        points: {{ $application->scores->experience_points ?? 0 }},
+        remarks: '{{ $application->scores->experience_remarks ?? "Waiting" }}',
+        required_years: {{ $requiredYears }}
+    };
+    
+    function getSelectedLevel() {
+        return window.currentSchoolLevel || 'elementary';
+    }
 </script>
   <script src="{{ asset('js/admin-load.js') }}"></script>
 
