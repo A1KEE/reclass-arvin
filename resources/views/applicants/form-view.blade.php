@@ -493,7 +493,7 @@ if(isset($application) && $application->levels){
                                 data-expiry="{{ $el->expiry_date }}"
                                 data-file="{{ $el->file_path ?? '' }}"
                                 data-remarks="{{ $application->scores->eligibility_remarks ?? 'Waiting for QS' }}">
-                                ✏ Edit
+                                ✏ Edit Eligibility
                             </button>
                         </div>
                     @endif
@@ -1003,6 +1003,15 @@ if(isset($application) && $application->levels){
         $requiredTrainingHours = isset(config('qs')[$level][$position]['training_hours']) ? config('qs')[$level][$position]['training_hours'] : 0;
         $requiredYears = isset(config('qs')[$level][$position]['experience_years']) ? config('qs')[$level][$position]['experience_years'] : 0;
     @endphp
+
+    // ✅ IDAGDAG ITO - POSITION FOR EDUCATION
+    window.currentPosition = '{{ $application->position_applied ?? "" }}';
+    window.currentPositionLevel = '{{ $level }}';
+    
+    // For debugging
+    console.log("=== WINDOW VARIABLES SET ===");
+    console.log("currentPosition:", window.currentPosition);
+    console.log("currentSchoolLevel:", window.currentSchoolLevel);
     
     window.savedTraining = {
         points: {{ $application->scores->training_points ?? 0 }},
@@ -1018,6 +1027,10 @@ if(isset($application) && $application->levels){
     
     function getSelectedLevel() {
         return window.currentSchoolLevel || 'elementary';
+    }
+      // ✅ IDAGDAG ITO - FUNCTION PARA KUHANIN ANG POSITION FOR EDUCATION
+    function getCurrentPositionForEducation() {
+        return window.currentPosition || '';
     }
 </script>
   <script src="{{ asset('js/admin-load.js') }}"></script>

@@ -1,3 +1,6 @@
+<!-- Add these hidden fields inside your edit modal -->
+<input type="hidden" id="edit_education_computed_remarks">
+<input type="hidden" id="edit_education_computed_points">
 <!-- EDIT EDUCATION MODAL -->
 <div class="modal fade" id="editEducationModal" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">

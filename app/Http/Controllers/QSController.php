@@ -299,7 +299,7 @@ class QSController extends Controller
         ->with('success', 'Qualification Standards updated successfully!');
 }
 
-  public function updateEducation(Request $request, $id)
+ public function updateEducation(Request $request, $id)
 {
     try {
         $education = \App\Models\Education::findOrFail($id);
@@ -317,7 +317,9 @@ class QSController extends Controller
         // Get the selected value from dropdown
         $selectedValue = $request->units;
         
-        // Education levels mapping (same as your JS)
+        // =============================================
+        // EDUCATION LEVELS MAPPING (Original)
+        // =============================================
         $educationLevels = [
             0 => "No Formal Education",
             1 => "Can Read and Write",
@@ -353,15 +355,161 @@ class QSController extends Controller
             31 => "Doctorate Degree (completed)"
         ];
         
+        // =============================================
+        // PROFESSIONAL EDUCATION LEVELS (Added)
+        // =============================================
+        $professionalLevels = [
+            32 => "6 units of Professional Education",
+            33 => "9 units of Professional Education",
+            34 => "12 units of Professional Education",
+            35 => "15 units of Professional Education",
+            36 => "18 units of Professional Education (Required)"
+        ];
+        
         // Convert numeric to text
         $unitsToSave = $selectedValue;
-        $userLevel = (int)$selectedValue;
+        $userLevel = 0;
         
-        if (is_numeric($selectedValue) && isset($educationLevels[(int)$selectedValue])) {
-            $unitsToSave = $educationLevels[(int)$selectedValue];
+        // Check if selected value is numeric (from dropdown)
+        if (is_numeric($selectedValue)) {
+            $intValue = (int)$selectedValue;
+            
+            // Check if it's professional education (32-36)
+            if ($intValue >= 32 && $intValue <= 36) {
+                $unitsToSave = $professionalLevels[$intValue];
+                $userLevel = $intValue;
+            } 
+            // Check if it's regular education level
+            elseif (isset($educationLevels[$intValue])) {
+                $unitsToSave = $educationLevels[$intValue];
+                $userLevel = $intValue;
+            }
+        } else {
+            // Text value - find its level
+            $unitsToSave = $selectedValue;
+            foreach ($educationLevels as $level => $label) {
+                if ($label === $selectedValue) {
+                    $userLevel = $level;
+                    break;
+                }
+            }
+            foreach ($professionalLevels as $level => $label) {
+                if ($label === $selectedValue) {
+                    $userLevel = $level;
+                    break;
+                }
+            }
         }
         
-        // Update education record
+        // =============================================
+        // CHECK IF NON-EDUCATION DEGREE
+        // =============================================
+        $degreeName = strtolower($request->degree);
+        $isNonEducation = false;
+        
+        $nonEducKeywords = ['bsit', 'it', 'information technology', 'computer science', 
+                           'engineering', 'business', 'accountancy', 'nursing', 'psychology',
+                           'bsba', 'bsa', 'criminology', 'architecture'];
+        
+        foreach ($nonEducKeywords as $keyword) {
+            if (strpos($degreeName, $keyword) !== false) {
+                $isNonEducation = true;
+                break;
+            }
+        }
+        
+        // =============================================
+        // CHECK IF PROFESSIONAL EDUCATION SELECTED
+        // =============================================
+        $isProfessionalEducation = false;
+        $professionalUnits = 0;
+        
+        foreach ($professionalLevels as $level => $label) {
+            if ($label === $unitsToSave) {
+                $isProfessionalEducation = true;
+                // Extract units (6,9,12,15,18)
+                if (preg_match('/(\d+)\s+units/', $label, $matches)) {
+                    $professionalUnits = (int)$matches[1];
+                }
+                break;
+            }
+        }
+        
+        // =============================================
+        // CHECK IF HIGHER ATTAINMENT (Masters/Doctorate)
+        // =============================================
+        $isHigherAttainment = false;
+        $higherAttainmentText = strtolower($unitsToSave);
+        if (strpos($higherAttainmentText, 'masters') !== false || 
+            strpos($higherAttainmentText, 'doctorate') !== false ||
+            strpos($higherAttainmentText, 'doctor') !== false) {
+            $isHigherAttainment = true;
+        }
+        
+        // =============================================
+        // COMPUTE EDUCATION POINTS AND REMARKS
+        // =============================================
+        $educationPoints = 0;
+        $educationRemarks = "NOT MET";
+        
+        $position = strtolower($application->position_applied ?? '');
+        $baseLevel = (strpos($position, 'master teacher') !== false) ? 21 : 6;
+        
+        // =============================================
+        // CASE 1: NON-EDUCATION DEGREE
+        // =============================================
+        if ($isNonEducation) {
+            
+            // SUB-CASE A: Professional Education only
+            if ($isProfessionalEducation) {
+                if ($professionalUnits == 18) {
+                    $educationRemarks = "MET";
+                    $educationPoints = 0;
+                } else {
+                    $educationRemarks = "NOT MET";
+                    $educationPoints = 0;
+                }
+            }
+            // SUB-CASE B: Higher Attainment (Masters/Doctorate) - may points na!
+            elseif ($isHigherAttainment) {
+                $increment = max(0, $userLevel - $baseLevel);
+                
+                // Points based on increment (2,4,6,8,10)
+                if ($increment >= 10) $educationPoints = 10;
+                elseif ($increment >= 8) $educationPoints = 8;
+                elseif ($increment >= 6) $educationPoints = 6;
+                elseif ($increment >= 4) $educationPoints = 4;
+                elseif ($increment >= 2) $educationPoints = 2;
+                else $educationPoints = 0;
+                
+                $educationRemarks = ($userLevel >= $baseLevel) ? "MET" : "NOT MET";
+            }
+            // SUB-CASE C: Walang Professional Education or Higher Attainment
+            else {
+                $educationRemarks = "NOT MET";
+                $educationPoints = 0;
+            }
+        }
+        // =============================================
+        // CASE 2: EDUCATION DEGREE (Normal scoring with increments)
+        // =============================================
+        else {
+            $increment = max(0, $userLevel - $baseLevel);
+            
+            // Points based on increment (2,4,6,8,10)
+            if ($increment >= 10) $educationPoints = 10;
+            elseif ($increment >= 8) $educationPoints = 8;
+            elseif ($increment >= 6) $educationPoints = 6;
+            elseif ($increment >= 4) $educationPoints = 4;
+            elseif ($increment >= 2) $educationPoints = 2;
+            else $educationPoints = 0;
+            
+            $educationRemarks = ($userLevel >= $baseLevel) ? "MET" : "NOT MET";
+        }
+        
+        // =============================================
+        // UPDATE EDUCATION RECORD
+        // =============================================
         $education->update([
             'degree' => $request->degree,
             'school' => $request->school,
@@ -369,32 +517,9 @@ class QSController extends Controller
             'units' => $unitsToSave,
         ]);
         
-        // Compute points based on your logic
-        $position = strtolower($application->position_applied ?? '');
-        $degreeName = strtolower($request->degree);
-        
-        // Check if Master Teacher
-        $baseLevel = 6; // BASE_LEVEL for Teacher
-        if (strpos($position, 'master teacher') !== false) {
-            $baseLevel = 21; // MASTER_TEACHER_BASE_LEVEL
-        }
-        
-        // Compute increment and points
-        $increment = max(0, $userLevel - $baseLevel);
-        
-        // Get points based on increment
-        $educationPoints = 0;
-        if ($increment >= 10) $educationPoints = 10;
-        elseif ($increment >= 8) $educationPoints = 8;
-        elseif ($increment >= 6) $educationPoints = 6;
-        elseif ($increment >= 4) $educationPoints = 4;
-        elseif ($increment >= 2) $educationPoints = 2;
-        else $educationPoints = 0;
-        
-        // Determine MET or NOT MET
-        $educationRemarks = ($userLevel >= $baseLevel) ? "MET" : "NOT MET";
-        
-     // I-check kung may scores record
+        // =============================================
+        // UPDATE OR CREATE SCORES
+        // =============================================
         $score = $application->scores;
         if (!$score) {
             $score = new \App\Models\Score();
@@ -407,11 +532,10 @@ class QSController extends Controller
             $score->total_score = $educationPoints;
             $score->save();
         } else {
-            // UPDATE EDUCATION LANG TALAGA
             $score->education_points = $educationPoints;
             $score->education_remarks = $educationRemarks;
             
-            // RECOMPUTE TOTAL SCORE (para updated ang total)
+            // RECOMPUTE TOTAL SCORE
             $score->total_score = ($score->education_points ?? 0) + 
                                 ($score->training_points ?? 0) + 
                                 ($score->experience_points ?? 0) + 
@@ -430,7 +554,10 @@ class QSController extends Controller
             'total_score' => $score->total_score,
             'user_level' => $userLevel,
             'base_level' => $baseLevel,
-            'increment' => $increment
+            'is_non_education' => $isNonEducation,
+            'is_professional_education' => $isProfessionalEducation,
+            'is_higher_attainment' => $isHigherAttainment,
+            'professional_units' => $professionalUnits
         ]);
         
     } catch (\Exception $e) {
